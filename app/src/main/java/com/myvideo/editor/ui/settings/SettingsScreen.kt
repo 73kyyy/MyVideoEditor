@@ -10,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.myvideo.editor.theme.AppColors
@@ -52,12 +54,10 @@ fun SettingsScreen(
     )
 
     Column(modifier = Modifier.fillMaxSize().background(AppColors.BgPrimary)) {
-        // 顶部
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Text("设置", style = AppTypography.HeadingLarge.copy(color = AppColors.TextPrimary))
         }
-
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
             groups.forEach { group ->
                 item {
@@ -87,11 +87,11 @@ private fun SettingRow(item: SettingItem) {
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(item.title, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium, color = AppColors.TextPrimary)
+            Text(item.title, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = AppColors.TextPrimary)
             Text(item.subtitle, fontSize = 10.sp, color = AppColors.TextTertiary, modifier = Modifier.padding(top = 2.dp))
         }
         if (item.value.isNotEmpty()) {
-            Text(item.value, fontSize = 10.sp, color = AppColors.TextDisabled, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+            Text(item.value, fontSize = 10.sp, color = AppColors.TextDisabled, fontFamily = FontFamily.Monospace)
         }
         Text(">", fontSize = 12.sp, color = AppColors.TextDisabled, modifier = Modifier.padding(start = 6.dp))
     }
