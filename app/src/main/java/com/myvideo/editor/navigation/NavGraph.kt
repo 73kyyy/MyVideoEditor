@@ -16,6 +16,8 @@ import com.myvideo.editor.ui.dashboard.ProjectItem
 import androidx.compose.ui.graphics.Color
 import com.myvideo.editor.ui.settings.SettingsScreen
 import com.myvideo.editor.ui.settings.TutorialScreen
+import com.myvideo.editor.ui.editor.EditorScreen
+import com.myvideo.editor.ui.color.ColorScreen
 
 @Composable
 fun NavGraph() {
@@ -43,8 +45,12 @@ fun NavGraph() {
                         onDuplicateProject = {}
                     )
                 }
-                currentTab == "editor" -> PagePlaceholder("剪辑工作区")
-                currentTab == "color" -> PagePlaceholder("调色面板")
+                currentTab == "editor" -> {
+                    EditorScreen()
+                }
+                currentTab == "color" -> {
+                    ColorScreen(onBack = { currentTab = "dashboard" })
+                }
                 currentTab == "audio" -> PagePlaceholder("音频编辑")
                 currentTab == "settings" -> {
                     SettingsScreen(
