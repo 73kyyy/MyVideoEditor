@@ -12,17 +12,22 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 /**
- * NexClip 类目十二：持续监控
+ * NexClip 类目十二：持续监控（精简版）
  * 编号55：自适应监控引擎
- * 编号56：挑战应答认证（简化：核心流程+mTLS+完整性证明）
- * 编号57：服务端行为分析（简化：注册UI+客户端上报）
- * 编号58：许可证token管理（简化：刷新+异常标记+下载安全+远程防护）
+ * 编号56：挑战应答认证（核心流程+完整性证明+mTLS）
+ * 编号57：服务端行为分析（客户端上报+验证码UI）
+ * 编号58：许可证token管理（刷新+异常标记+下载安全+远程防护）
+ *
+ * 架构原则：检测和业务代码交织——
+ * 视频处理中嵌入安全检测，素材加载时顺便验证完整性，
+ * 绕过检测=破坏业务功能，让两者不可分离。
  *
  * 防崩溃方式：fork隔离+后台线程+catch包裹
  * 崩溃率：零（主进程）
  */
 object ContinuousMonitor {
 
+    // 编号55：风险等级
     enum class RiskLevel { NORMAL, SUSPICIOUS, DANGER }
 
     private var currentRisk = RiskLevel.NORMAL
@@ -43,8 +48,8 @@ object ContinuousMonitor {
 
     // ===== 编号55：自适应监控引擎 =====
     // 程度：正常5分钟5项/可疑2分钟10项/高风险30秒20项
-    //       检测项智能选择+检测函数随机化+事件触发
-    //       时间锁+趋势分析+电量自适应+业务交织
+    //       检测项智能选择（权重排序）+检测函数随机化
+    //       事件触发+时间锁+趋势分析+电量自适应
 
     data class CheckItem(
         val name: String, val weight: Int,
@@ -67,9 +72,8 @@ object ContinuousMonitor {
                 Triple(5L, 5, checks)
             }
             RiskLevel.SUSPICIOUS -> {
-                val checks = allChecks.filter {
-                    it.minRisk <= RiskLevel.SUSPICIOUS
-                }.sortedByDescending { it.weight }.take(10)
+                val checks = allChecks.filter { it.minRisk <= RiskLevel.SUSPICIOUS }
+                    .sortedByDescending { it.weight }.take(10)
                 Triple(2L, 10, checks)
             }
             RiskLevel.DANGER -> {
@@ -104,7 +108,7 @@ object ContinuousMonitor {
     }
 
     /**
-     * 检测函数随机化：执行顺序每次随机
+     * 检测函数随机化：Fisher-Yates洗牌
      * 攻击者无法预判下一次检测内容和顺序
      */
     private fun randomizeChecks(checks: List<CheckItem>): List<CheckItem> {
@@ -223,11 +227,10 @@ object ContinuousMonitor {
         }, delayMinutes * 60 * 1000L)
     }
 
-    // ===== 编号56：挑战应答认证（简化版）=====
-    // 保留：挑战应答核心流程+进程完整性证明+mTLS客户端证书
-    // 删除：超时处理（标准逻辑）、设备证明（调用51）
-    // 程度：客户端发送nonce1+设备指纹→服务端返回nonce2+token
-    //       客户端用私有算法处理nonce2返回应答→服务端验证
+    // ===== 编号56：挑战应答认证（精简版）=====
+    // 保留：挑战应答核心流程+进程完整性证明+mTLS
+    // 删除：设备证明（调用51+22）、超时处理（标准逻辑）
+    // 程度：客户端nonce1+设备指纹→服务端返回nonce2+token→客户端计算应答→服务端验证
     //       进程完整性证明：服务端随机挑战→客户端计算证明值
     //       mTLS：所有API请求出示客户端证书
     // 崩溃率：零
@@ -243,11 +246,7 @@ object ContinuousMonitor {
             val nonce1 = ByteArray(32)
             SecureRandom().nextBytes(nonce1)
             sessionNonce = nonce1
-
-            val deviceFingerprint = try {
-                DeviceIdentifier.getCachedFingerprint()
-            } catch (e: Exception) { "unknown" }
-
+            val deviceFingerprint = try { DeviceIdentifier.getCachedFingerprint() } catch (e: Exception) { "unknown" }
             val nonce1Hex = nonce1.joinToString("") { "%02x".format(it) }
             Pair(nonce1Hex, deviceFingerprint)
         } catch (e: Exception) { Pair("", "") }
@@ -255,7 +254,7 @@ object ContinuousMonitor {
 
     /**
      * 挑战应答：处理服务端返回的nonce2，计算应答
-     * 应答 = HMAC-SHA256(nonce2 + 设备指纹 + 代码hash, 私有密钥)
+     * 应答 = SHA-256(nonce2 + 设备指纹 + 完整性证明)
      */
     fun computeChallengeResponse(nonce2Hex: String): String? {
         return try {
@@ -264,14 +263,21 @@ object ContinuousMonitor {
             val integrityProof = try { nativeComputeIntegrityProof(nonce2) } catch (e: Exception) { null }
 
             val input = nonce2 + deviceFp + (integrityProof ?: ByteArray(0))
-            val md = MessageDigest.getInstance("SHA-256")
-            val response = md.digest(input)
+            val response = MessageDigest.getInstance("SHA-256").digest(input)
 
             // 安全清零
             nonce2.fill(0); deviceFp.fill(0); input.fill(0)
-
             response.joinToString("") { "%02x".format(it) }
         } catch (e: Exception) { null }
+    }
+
+    /**
+     * 进程完整性证明
+     * 服务端发送随机挑战→客户端计算证明值
+     * 篡改后的客户端无法计算正确证明值
+     */
+    fun proveIntegrity(challenge: ByteArray): ByteArray? {
+        return try { nativeComputeIntegrityProof(challenge) } catch (e: Exception) { null }
     }
 
     /**
@@ -286,16 +292,7 @@ object ContinuousMonitor {
         } catch (e: Exception) { false }
     }
 
-    /**
-     * 进程完整性证明
-     * 服务端发送随机挑战→客户端计算证明值
-     * 篡改后的客户端无法计算正确证明值
-     */
-    fun proveIntegrity(challenge: ByteArray): ByteArray? {
-        return try {
-            nativeComputeIntegrityProof(challenge)
-        } catch (e: Exception) { null }
-    }
+    fun isMtlsInitialized(): Boolean = mTlsInitialized
 
     /**
      * 清理挑战应答数据
@@ -305,9 +302,9 @@ object ContinuousMonitor {
     }
 
     // ===== 编号57：服务端行为分析（客户端简化版）=====
-    // 保留：注册安全UI（验证码控件）+客户端行为数据上报接口
-    // 删除：频率分析/时间模式/爬虫特征库（全部服务端逻辑）
-    // 删除：会话安全（移到58统一处理）
+    // 保留：客户端行为上报接口+验证码UI
+    // 删除：频率分析/请求序列/时间模式/行为一致性/爬虫特征库（纯服务端）
+    // 删除：登录安全+会话安全（移到58统一处理）
     // 崩溃率：零
 
     data class BehaviorReport(
@@ -325,9 +322,8 @@ object ContinuousMonitor {
      */
     fun reportBehavior(context: Context, eventType: String, metadata: Map<String, String> = emptyMap()) {
         try {
-            val report = BehaviorReport(eventType, metadata = metadata)
             synchronized(behaviorQueue) {
-                behaviorQueue.add(report)
+                behaviorQueue.add(BehaviorReport(eventType, metadata = metadata))
                 if (behaviorQueue.size > 50) behaviorQueue.removeAt(0)
             }
         } catch (e: Exception) { }
@@ -338,25 +334,20 @@ object ContinuousMonitor {
      */
     fun getPendingReports(): List<BehaviorReport> {
         return synchronized(behaviorQueue) {
-            val copy = behaviorQueue.toList()
-            behaviorQueue.clear()
-            copy
+            val copy = behaviorQueue.toList(); behaviorQueue.clear(); copy
         }
     }
 
     /**
      * 验证码校验接口（注册安全UI配合）
-     * 客户端展示验证码，用户输入后校验
      */
     fun verifyCaptcha(input: String, expected: String): Boolean {
-        return try {
-            input.trim().lowercase() == expected.trim().lowercase()
-        } catch (e: Exception) { false }
+        return try { input.trim().lowercase() == expected.trim().lowercase() } catch (e: Exception) { false }
     }
 
-    // ===== 编号58：许可证token管理（简化版）=====
-    // 保留：Token刷新机制+设备异常标记+下载链接安全+远程锁定/擦除
-    // 删除：Token内容签名（调用编号13）、登录拦截（移到57）
+    // ===== 编号58：许可证token管理（精简版）=====
+    // 保留：Token刷新+设备异常标记+使用中拦截+异常解除+下载安全+远程防护+登录拦截
+    // 删除：Token内容签名（调用13）、注册安全（57已处理）、登录安全服务端逻辑（保留上报）
     // 崩溃率：零
 
     private var currentToken: String = ""
@@ -367,12 +358,9 @@ object ContinuousMonitor {
     private var abnormalReason: String = ""
 
     data class TokenInfo(
-        val token: String,
-        val refreshToken: String,
-        val expiry: Long,
-        val refreshExpiry: Long,
-        val userId: String,
-        val permissions: List<String>
+        val token: String, val refreshToken: String,
+        val expiry: Long, val refreshExpiry: Long,
+        val userId: String, val permissions: List<String>
     )
 
     /**
@@ -381,20 +369,13 @@ object ContinuousMonitor {
      */
     fun storeToken(info: TokenInfo) {
         try {
-            currentToken = info.token
-            tokenExpiry = info.expiry
-            refreshToken = info.refreshToken
-            refreshExpiry = info.refreshExpiry
+            currentToken = info.token; tokenExpiry = info.expiry
+            refreshToken = info.refreshToken; refreshExpiry = info.refreshExpiry
         } catch (e: Exception) { }
     }
 
-    fun isTokenExpired(): Boolean {
-        return System.currentTimeMillis() > tokenExpiry
-    }
-
-    fun isRefreshExpired(): Boolean {
-        return System.currentTimeMillis() > refreshExpiry
-    }
+    fun isTokenExpired(): Boolean = System.currentTimeMillis() > tokenExpiry
+    fun isRefreshExpired(): Boolean = System.currentTimeMillis() > refreshExpiry
 
     fun getCurrentToken(): String? {
         return if (!isTokenExpired() && !deviceMarkedAbnormal) currentToken else null
@@ -407,35 +388,71 @@ object ContinuousMonitor {
     /**
      * 设备异常标记
      * 安全检测异常=上报服务端=标记异常=拒绝所有功能
-     * 唯一解除方式：正常设备上检测通过后上报恢复
+     * 唯一解除：正常设备检测通过后上报恢复
      */
-    fun markDeviceAbnormal(reason: String) {
-        deviceMarkedAbnormal = true
-        abnormalReason = reason
-        try {
-            reportBehavior(android.app.Application(), "device_abnormal",
-                mapOf("reason" to reason))
-        } catch (e: Exception) { }
+    fun markDeviceAbnormal(context: Context, reason: String) {
+        deviceMarkedAbnormal = true; abnormalReason = reason
+        reportBehavior(context, "device_abnormal", mapOf("reason" to reason))
     }
 
-    fun clearAbnormalMark() {
-        deviceMarkedAbnormal = false
-        abnormalReason = ""
-    }
-
+    fun clearAbnormalMark() { deviceMarkedAbnormal = false; abnormalReason = "" }
     fun isDeviceAbnormal(): Boolean = deviceMarkedAbnormal
-
     fun getAbnormalReason(): String = abnormalReason
 
     /**
+     * 使用中拦截
+     * 每次API请求携带token+设备指纹
+     * 定期上报安全状态，异常=服务端拒绝
+     */
+    fun prepareApiRequest(context: Context): Map<String, String>? {
+        return try {
+            if (deviceMarkedAbnormal) return null
+            if (isTokenExpired()) return null
+            mapOf(
+                "token" to currentToken,
+                "device_fingerprint" to DeviceIdentifier.getCachedFingerprint(),
+                "timestamp" to System.currentTimeMillis().toString(),
+                "safety_status" to if (deviceMarkedAbnormal) "abnormal" else "normal"
+            )
+        } catch (e: Exception) { null }
+    }
+
+    /**
+     * 登录拦截
+     * 登录请求携带账号+密码+设备指纹+安全检测签名
+     * 服务端验证全部项，失败原因不透露具体哪项（防探测）
+     */
+    fun prepareLoginRequest(context: Context, email: String, passwordHash: String): Map<String, String>? {
+        return try {
+            if (deviceMarkedAbnormal) return null
+            mapOf(
+                "email" to email,
+                "password_hash" to passwordHash,
+                "device_fingerprint" to DeviceIdentifier.getCachedFingerprint(),
+                "timestamp" to System.currentTimeMillis().toString(),
+                "safety_sign" to computeSafetySignature(context)
+            )
+        } catch (e: Exception) { null }
+    }
+
+    /**
+     * 安全检测签名（调用编号13 HMAC）
+     */
+    private fun computeSafetySignature(context: Context): String {
+        return try {
+            val input = "${DeviceIdentifier.getCachedFingerprint()}|${System.currentTimeMillis()}"
+            MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
+                .joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) { "" }
+    }
+
+    /**
      * 下载链接安全
-     * 链接包含签名+时间戳+有效期5分钟+设备绑定+单次使用
+     * 签名+时间戳+有效期5分钟+设备绑定+单次使用
      */
     data class SecureDownloadLink(
-        val url: String,
-        val signature: String,
-        val timestamp: Long,
-        val deviceFingerprint: String,
+        val url: String, val signature: String,
+        val timestamp: Long, val deviceFingerprint: String,
         val used: Boolean = false
     )
 
@@ -445,121 +462,89 @@ object ContinuousMonitor {
         return try {
             val timestamp = System.currentTimeMillis()
             val deviceFp = DeviceIdentifier.getCachedFingerprint()
-            val nonce = ByteArray(16)
-            SecureRandom().nextBytes(nonce)
+            val nonce = ByteArray(16); SecureRandom().nextBytes(nonce)
             val nonceHex = nonce.joinToString("") { "%02x".format(it) }
 
-            // 签名：调用编号13的HMAC
             val signInput = "$resourceUrl|$timestamp|$deviceFp|$nonceHex"
-            val md = MessageDigest.getInstance("SHA-256")
-            val signature = md.digest(signInput.toByteArray()).joinToString("") { "%02x".format(it) }
+            val signature = MessageDigest.getInstance("SHA-256")
+                .digest(signInput.toByteArray()).joinToString("") { "%02x".format(it) }
 
             val link = SecureDownloadLink(
                 url = "$resourceUrl?sig=$signature&ts=$timestamp&dev=$deviceFp&nonce=$nonceHex",
-                signature = signature, timestamp = timestamp,
-                deviceFingerprint = deviceFp
+                signature = signature, timestamp = timestamp, deviceFingerprint = deviceFp
             )
-            downloadLinks[nonceHex] = link
-            link
+            downloadLinks[nonceHex] = link; link
         } catch (e: Exception) { null }
     }
 
     /**
-     * 验证下载链接
-     * 有效期5分钟+设备绑定+单次使用
+     * 验证下载链接：5分钟有效+设备绑定+单次使用
      */
     fun validateDownloadLink(nonce: String, deviceFingerprint: String): Boolean {
         return try {
             val link = downloadLinks[nonce] ?: return false
-            val now = System.currentTimeMillis()
-            // 有效期5分钟
-            if (now - link.timestamp > 5 * 60 * 1000) return false
-            // 设备绑定
+            if (System.currentTimeMillis() - link.timestamp > 5 * 60 * 1000) return false
             if (link.deviceFingerprint != deviceFingerprint) return false
-            // 单次使用
             if (link.used) return false
-            // 标记已使用
-            downloadLinks[nonce] = link.copy(used = true)
-            true
+            downloadLinks[nonce] = link.copy(used = true); true
         } catch (e: Exception) { false }
     }
 
     /**
      * 远程锁定
-     * 服务端下发锁定指令，客户端立即锁定
      */
-    private var deviceLocked = false
-    private var lockReason = ""
+    private var deviceLocked = false; private var lockReason = ""
 
     fun remoteLock(reason: String) {
-        deviceLocked = true
-        lockReason = reason
-        currentToken = ""
-        refreshToken = ""
+        deviceLocked = true; lockReason = reason; currentToken = ""; refreshToken = ""
     }
-
     fun isDeviceLocked(): Boolean = deviceLocked
     fun getLockReason(): String = lockReason
 
     /**
-     * 远程擦除
-     * 清除所有本地数据（模型缓存/密钥/临时文件）
+     * 远程擦除：清除所有本地数据
      */
     fun remoteWipe(context: Context) {
         try {
-            // 清除Token
             currentToken = ""; refreshToken = ""
-            // 清除密钥
             try { DataProtector.fullCleanup(context) } catch (e: Exception) { }
-            // 清除临时文件
             try { DataProtector.cleanupAllTempFiles(context) } catch (e: Exception) { }
-            // 清除模型缓存
+            try { DeviceIdentifier.clearBehaviorData() } catch (e: Exception) { }
             try {
                 val modelDir = java.io.File(context.filesDir, "models")
                 if (modelDir.exists()) modelDir.deleteRecursively()
             } catch (e: Exception) { }
-            // 清除设备指纹缓存
-            try { DeviceIdentifier.clearBehaviorData() } catch (e: Exception) { }
         } catch (e: Exception) { }
-    }
-
-    /**
-     * 获取登录历史（用于设备丢失防护）
-     */
-    fun getLoginHistory(): List<BehaviorReport> {
-        return synchronized(behaviorQueue) {
-            behaviorQueue.filter { it.eventType == "login" }
-        }
     }
 
     /**
      * 强制下线
      */
     fun forceLogout() {
-        currentToken = ""
-        refreshToken = ""
-        tokenExpiry = 0
-        refreshExpiry = 0
+        currentToken = ""; refreshToken = ""; tokenExpiry = 0; refreshExpiry = 0
+    }
+
+    /**
+     * 获取登录历史
+     */
+    fun getLoginHistory(): List<BehaviorReport> {
+        return synchronized(behaviorQueue) { behaviorQueue.filter { it.eventType == "login" } }
     }
 
     // ===== 综合初始化 =====
 
     fun initAll(context: Context) {
         try {
-            // 注册默认事件触发
             registerEventTrigger("export") {
                 try { DataProtector.verifyModelIntegrity("main", java.io.File("")) } catch (e: Exception) { true }
             }
             registerEventTrigger("page_switch") { true }
-
-            // 启动监控
             startMonitor(context)
         } catch (e: Exception) { }
     }
 
     fun cleanup() {
-        stopMonitor()
-        clearChallengeData()
+        stopMonitor(); clearChallengeData()
         currentToken = ""; refreshToken = ""
         synchronized(behaviorQueue) { behaviorQueue.clear() }
         synchronized(detectionHistory) { detectionHistory.clear() }
