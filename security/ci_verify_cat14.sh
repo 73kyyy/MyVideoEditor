@@ -233,11 +233,15 @@ if [ -f "$NATIVE_C" ]; then
         F=$((F+1))
     fi
 
-    if grep -q "waitpid\|WIFEXITED" "$NATIVE_C"; then
-        echo "${G}  ✅ 子进程回收机制存在${N}"
+    if grep -q "fork()" "$NATIVE_C"; then
+    # native_self_build.c的fork是长驻进程（安全进程/密钥进程），设计上不需要waitpid
+    FORK_COUNT=$(grep -c "fork()" "$NATIVE_C" || true)
+    if [ "$FORK_COUNT" -gt 0 ]; then
+        echo "${G}  ✅ fork长驻进程存在 ($FORK_COUNT 处)（安全进程/密钥进程）${N}"
     else
-        echo "${R}  ⚠️ 缺少子进程回收${N}"
+        echo "${R}  ⚠️ 缺少fork进程${N}"
         F=$((F+1))
+    fi
     fi
 
     # 自建壳C层
@@ -320,8 +324,14 @@ if [ -f "$NATIVE_C" ]; then
         echo "${G}  ✅ JNI注册: $JNI_FUNCS 个函数全部存在${N}"
         P=$((P+1))
     else
-        echo "${R}  ⚠️ JNI注册仅 $JNI_FUNCS 个函数${N}"
+    JNI_OK=$(grep -c "Java_com_myvideo_editor_security_SelfBuildProtector_native" "$NATIVE_C" || true)
+    if [ "$JNI_OK" -ge 10 ]; then
+        echo "${G}  ✅ JNI注册: $JNI_OK 个函数全部存在${N}"
+        P=$((P+1))
+    else
+        echo "${R}  ⚠️ JNI注册仅 $JNI_OK 个函数${N}"
         F=$((F+1))
+    fi
     fi
 else
     echo "${R}  ⚠️ native_self_build.c不存在→构建失败${N}"

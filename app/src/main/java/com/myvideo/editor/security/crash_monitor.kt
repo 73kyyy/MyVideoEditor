@@ -1,0 +1,1 @@
+/data/data/com.termux/files/home/MyVideoEditor/security/crash_monitor.kt
