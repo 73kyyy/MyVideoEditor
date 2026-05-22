@@ -1,36 +1,98 @@
-name: Build APK
+name: NexClip Build
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+    - name: Setup JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+    - name: Install NDK
+      run: |
+        sdkmanager "ndk;26.1.10909125"
+        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+    - name: Build OpenSSL for Android
+      run: |
+        wget -q https://github.com/openssl/openssl/releases/download/openssl-3.2.1/openssl-3.2.1.tar.gz
+        tar -xzf openssl-3.2.1.tar.gz
+        cd openssl-3.2.1
+        NDK=$ANDROID_NDK_HOME
+        TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+        API=26
 
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-apk
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 7
+        build_ssl() {
+          local ARCH=$1 CFG=$2 PREFIX=$3
+          export CC=$TOOLCHAIN/bin/${PREFIX}${API}-clang
+          export AR=$TOOLCHAIN/bin/llvm-ar
+          export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
+          mkdir -p build_$ARCH && cd build_$ARCH
+          ../Configure $CFG --prefix=$GITHUB_WORKSPACE/openssl/$ARCH \
+            no-shared no-tests no-asm -D__ANDROID_API__=$API
+          make -j$(nproc) build_libs && make install_sw
+          cd ..
+        }
+
+        build_ssl "arm64-v8a" "android-arm64" "aarch64-linux-android"
+        build_ssl "armeabi-v7a" "android-arm" "armv7a-linux-androideabi"
+
+        mkdir -p $GITHUB_WORKSPACE/app/src/main/cpp/openssl/include
+        mkdir -p $GITHUB_WORKSPACE/app/src/main/cpp/openssl/arm64-v8a
+        mkdir -p $GITHUB_WORKSPACE/app/src/main/cpp/openssl/armeabi-v7a
+        cp -r $GITHUB_WORKSPACE/openssl/arm64-v8a/include/* $GITHUB_WORKSPACE/app/src/main/cpp/openssl/include/
+        cp $GITHUB_WORKSPACE/openssl/arm64-v8a/lib/libcrypto.a $GITHUB_WORKSPACE/app/src/main/cpp/openssl/arm64-v8a/
+        cp $GITHUB_WORKSPACE/openssl/armeabi-v7a/lib/libcrypto.a $GITHUB_WORKSPACE/app/src/main/cpp/openssl/armeabi-v7a/
+
+    - name: Create keystore
+      run: |
+        mkdir -p keystore
+        keytool -genkeypair -v -keystore keystore/nexclip.jks \
+          -alias nexclip -keyalg RSA -keysize 2048 -validity 10000 \
+          -storepass nexclip123 -keypass nexclip123 \
+          -dname "CN=NexClip,OU=Dev,O=NexClip,L=Shanghai,ST=Shanghai,C=CN"
+        keytool -genkeypair -v -keystore keystore/debug.jks \
+          -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+          -storepass android -keypass android \
+          -dname "CN=Android Debug,OU=Android,O=Android,L=Mountain View,ST=California,C=US"
+
+    - name: Build Debug APK
+      run: |
+        export KEYSTORE_PASSWORD=nexclip123
+        export KEY_PASSWORD=nexclip123
+        chmod +x gradlew
+        ./gradlew assembleFreeDebug --stacktrace 2>&1 | tail -100
+
+    - name: Security Verification
+      run: |
+        PASS=0; FAIL=0
+        for i in 2 3 4 5 6 7 8 9 10 11 12 13 14; do
+          script="security/ci_verify_cat${i}.sh"
+          if [ -f "$script" ]; then
+            if bash "$script" "app/src/main/java" "security"; then
+              PASS=$((PASS+1))
+            else
+              FAIL=$((FAIL+1))
+            fi
+          fi
+        done
+        echo "Security: $PASS passed / $FAIL failed"
+        if [ "$FAIL" -gt 0 ]; then exit 1; fi
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: nexclip-debug
+        path: app/build/outputs/apk/free/debug/*.apk
