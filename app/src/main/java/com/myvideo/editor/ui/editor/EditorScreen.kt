@@ -69,43 +69,34 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
         // Toast
         if (vm.showToast) {
             Box(modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
-                .clip(RoundedCornerShape(10.dp)).background(EC.CardH).border(1.dp, EC.Line2, RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(10.dp)).background(EC.CardH)
+                .border(1.dp, EC.Line2, RoundedCornerShape(10.dp))
                 .padding(horizontal = 16.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
                 Text(vm.toastMessage, fontSize = 11.sp, color = EC.T1)
             }
         }
         // 右键菜单
         if (vm.showContextMenu) {
-            Box(modifier = Modifier.fillMaxSize().clickable { vm.showContextMenu = false }) {
-        }
-        // 面板
-        PanelOverlay(vm)
-                Column(modifier = Modifier.offset((vm.contextMenuPosition.x / 2).dp, (vm.contextMenuPosition.y / 2).dp)
+            Box(modifier = Modifier.fillMaxSize()
+                .clickable { vm.showContextMenu = false }) {
+                Column(modifier = Modifier
+                    .offset((vm.contextMenuPosition.x / 2).dp, (vm.contextMenuPosition.y / 2).dp)
                     .width(130.dp).clip(RoundedCornerShape(10.dp)).background(EC.CardH)
                     .border(1.dp, EC.Line2, RoundedCornerShape(10.dp)).padding(4.dp)) {
                     CtxItem("复制") { vm.showToast("已复制"); vm.showContextMenu = false }
-        }
-        // 面板
-        PanelOverlay(vm)
                     CtxItem("粘贴") { vm.showToast("已粘贴"); vm.showContextMenu = false }
-        }
-        // 面板
-        PanelOverlay(vm)
                     CtxItem("添加关键帧") { vm.addKeyframe(); vm.showContextMenu = false }
-        }
-        // 面板
-        PanelOverlay(vm)
                     CtxItem("速度") { vm.activePanel = "speed"; vm.showContextMenu = false }
-        }
-        // 面板
-        PanelOverlay(vm)
-                    CtxItem("删除", true) { vm.deleteSelectedClip(); vm.showContextMenu = false; vm.showToast("已删除") }
-        }
-        // 面板
-        PanelOverlay(vm)
+                    CtxItem("删除", true) {
+                        vm.deleteSelectedClip()
+                        vm.showContextMenu = false
+                        vm.showToast("已删除")
+                    }
                 }
             }
         }
+        // 面板
+        PanelOverlay(vm)
     }
 }
 
@@ -119,72 +110,75 @@ private fun PreviewCanvas(vm: EditorViewModel) {
         val h = if (!isLandscape) 0.95f else 0.5f
         Box(modifier = Modifier.fillMaxWidth(w).fillMaxHeight(h)
             .clip(RoundedCornerShape(4.dp))
-            .background(Brush.linearGradient(listOf(Color(0xFF1A1A20), Color(0xFF0A1520), Color(0xFF101818)))),
+            .background(Brush.linearGradient(listOf(
+                Color(0xFF1A1A20), Color(0xFF0A1520), Color(0xFF101818)))),
             contentAlignment = Alignment.Center) {
-            // 中心标记
             Box(modifier = Modifier.fillMaxWidth(0.3f).fillMaxHeight(0.3f)
                 .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(50)))
-            // 模拟对象
             Box(modifier = Modifier.fillMaxWidth(0.44f).fillMaxHeight(0.3f)
                 .clip(RoundedCornerShape(4.dp)).background(Color.White.copy(alpha = 0.08f)))
-            // 光效
             Box(modifier = Modifier.fillMaxWidth(0.3f).fillMaxHeight(0.2f)
                 .clip(RoundedCornerShape(50)).background(Color(0x0F6496FF)))
         }
-        // 左上角分辨率标签
+        // 分辨率标签
         val resText = if (vm.canvasRatio == "自定义") "${vm.customWidth}×${vm.customHeight}"
-            else when(vm.canvasRatio) { "16:9" -> "1920×1080"; "9:16" -> "1080×1920"; "1:1" -> "1080×1080"; "4:3" -> "1440×1080"; "21:9" -> "2560×1080"; else -> "1920×1080" }
+        else when(vm.canvasRatio) {
+            "16:9" -> "1920×1080"; "9:16" -> "1080×1920"; "1:1" -> "1080×1080"
+            "4:3" -> "1440×1080"; "21:9" -> "2560×1080"; else -> "1920×1080"
+        }
         Text(resText, fontSize = 7.sp, color = EC.T3, fontFamily = FontFamily.Monospace,
             modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
-                .clip(RoundedCornerShape(3.dp)).background(Color.Black.copy(alpha = 0.55f)).padding(5.dp, 2.dp))
-        // 右下角帧率
+                .clip(RoundedCornerShape(3.dp)).background(Color.Black.copy(alpha = 0.55f))
+                .padding(5.dp, 2.dp))
+        // 帧率
         Text("30fps", fontSize = 7.sp, color = EC.T3, fontFamily = FontFamily.Monospace,
             modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)
-                .clip(RoundedCornerShape(3.dp)).background(Color.Black.copy(alpha = 0.55f)).padding(5.dp, 2.dp))
+                .clip(RoundedCornerShape(3.dp)).background(Color.Black.copy(alpha = 0.55f))
+                .padding(5.dp, 2.dp))
     }
 }
 
 @Composable
 private fun PlaybackBar(vm: EditorViewModel) {
-    Row(modifier = Modifier.fillMaxWidth().height(44.dp).background(EC.Surf).border(1.dp, EC.Line),
-        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().height(44.dp).background(EC.Surf)
+        .border(1.dp, EC.Line),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically) {
         Text(vm.currentTime, fontSize = 9.sp, color = EC.T2, fontFamily = FontFamily.Monospace,
-            modifier = Modifier.width(48.dp), textAlign = androidx.compose.ui.text.style.TextAlign.End)
+            modifier = Modifier.width(48.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.End)
         Spacer(modifier = Modifier.width(10.dp))
-        // 上一帧
-        Box(modifier = Modifier.size(26.dp).clip(RoundedCornerShape(7.dp)).clickable { vm.stepBackward() }, contentAlignment = Alignment.Center) {
-            Text("⏮", fontSize = 12.sp, color = EC.T3)
-        }
-        // 快退
-        Box(modifier = Modifier.size(26.dp).clip(RoundedCornerShape(7.dp)).clickable { vm.stepBackward() }, contentAlignment = Alignment.Center) {
-            Text("◀◀", fontSize = 10.sp, color = EC.T3)
-        }
+        PlaybackBtn("⏮") { vm.stepBackward() }
+        PlaybackBtn("◀◀") { vm.stepBackward() }
         Spacer(modifier = Modifier.width(10.dp))
-        // 播放/暂停
         Box(modifier = Modifier.size(34.dp).clip(RoundedCornerShape(17.dp))
             .background(Brush.linearGradient(listOf(EC.Acc, EC.AccL)))
             .clickable { vm.isPlaying = !vm.isPlaying }, contentAlignment = Alignment.Center) {
             Text(if (vm.isPlaying) "⏸" else "▶", fontSize = 14.sp, color = Color.White)
         }
         Spacer(modifier = Modifier.width(10.dp))
-        // 快进
-        Box(modifier = Modifier.size(26.dp).clip(RoundedCornerShape(7.dp)).clickable { vm.stepForward() }, contentAlignment = Alignment.Center) {
-            Text("▶▶", fontSize = 10.sp, color = EC.T3)
-        }
-        // 下一帧
-        Box(modifier = Modifier.size(26.dp).clip(RoundedCornerShape(7.dp)).clickable { vm.stepForward() }, contentAlignment = Alignment.Center) {
-            Text("⏭", fontSize = 12.sp, color = EC.T3)
-        }
+        PlaybackBtn("▶▶") { vm.stepForward() }
+        PlaybackBtn("⏭") { vm.stepForward() }
         Spacer(modifier = Modifier.width(10.dp))
         Text(vm.totalDuration, fontSize = 9.sp, color = EC.T4, fontFamily = FontFamily.Monospace)
     }
 }
 
 @Composable
+private fun PlaybackBtn(label: String, onClick: () -> Unit) {
+    Box(modifier = Modifier.size(26.dp).clip(RoundedCornerShape(7.dp))
+        .clickable { onClick() }, contentAlignment = Alignment.Center) {
+        Text(label, fontSize = 12.sp, color = EC.T3)
+    }
+}
+
+@Composable
 private fun CtxItem(label: String, danger: Boolean = false, onClick: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(7.dp)).clickable { onClick() }.padding(8.dp, 8.dp, 12.dp, 8.dp),
+    Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(7.dp))
+        .clickable { onClick() }.padding(8.dp, 8.dp, 12.dp, 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = if (danger) EC.Red else EC.T2)
+        Text(label, fontSize = 11.sp, fontWeight = FontWeight.Medium,
+            color = if (danger) EC.Red else EC.T2)
     }
 }
 
@@ -194,7 +188,8 @@ private fun EditorViewModel.showToast(msg: String) {
 
 @Composable
 private fun EditorToolbar(vm: EditorViewModel) {
-    Row(modifier = Modifier.fillMaxWidth().height(40.dp).background(EC.Surf).border(1.dp, EC.Line).padding(horizontal = 6.dp),
+    Row(modifier = Modifier.fillMaxWidth().height(40.dp).background(EC.Surf)
+        .border(1.dp, EC.Line).padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically) {
         ToolbarBtn("撤销") { vm.showToast("已撤销") }
         ToolbarBtn("重做") { vm.showToast("已重做") }
@@ -202,8 +197,7 @@ private fun EditorToolbar(vm: EditorViewModel) {
         ToolbarBtn("分割") { vm.splitSelectedClip(); vm.showToast("已分割") }
         ToolbarBtn("删除") { vm.deleteSelectedClip(); vm.showToast("已删除") }
         Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
-        val penActive = vm.penMode
-        ToolbarBtn("钢笔", penActive) { vm.penMode = !vm.penMode }
+        ToolbarBtn("钢笔", vm.penMode) { vm.penMode = !vm.penMode }
         ToolbarBtn("清除") { vm.maskPoints.clear(); vm.maskClosed = false }
         Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
         ToolbarBtn("关键帧") { vm.addKeyframe(); vm.showToast("已添加关键帧") }
@@ -227,7 +221,8 @@ private fun ToolbarBtn(label: String, active: Boolean = false, onClick: () -> Un
     Box(modifier = Modifier.size(32.dp).clip(RoundedCornerShape(7.dp))
         .background(if (active) EC.AccS else Color.Transparent)
         .clickable { onClick() }, contentAlignment = Alignment.Center) {
-        Text(label, fontSize = 8.sp, color = if (active) EC.AccL else EC.T2, fontWeight = FontWeight.Medium)
+        Text(label, fontSize = 8.sp, color = if (active) EC.AccL else EC.T2,
+            fontWeight = FontWeight.Medium)
     }
 }
 
@@ -235,42 +230,62 @@ private fun ToolbarBtn(label: String, active: Boolean = false, onClick: () -> Un
 @Composable
 private fun PanelOverlay(vm: EditorViewModel) {
     if (vm.activePanel == null) return
-    Box(modifier = Modifier.fillMaxSize().background(Color(0x80000000)).clickable { vm.activePanel = null }) {
-        Column(modifier = Modifier.align(androidx.compose.ui.Alignment.BottomCenter)
+    Box(modifier = Modifier.fillMaxSize().background(Color(0x80000000))
+        .clickable { vm.activePanel = null }) {
+        Column(modifier = Modifier.align(Alignment.BottomCenter)
             .fillMaxWidth().clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
             .background(EC.Surf).clickable { }) {
             Row(modifier = Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 16.dp)
-                .border(1.dp, EC.Line), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                .border(1.dp, EC.Line),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
                 Text(when (vm.activePanel) {
-                    "color" -> "调色 · AE级"; "speed" -> "变速"; "text" -> "文字编辑"; "fx" -> "效果"; "blend" -> "混合模式"
-                    "audio" -> "音频"; "export" -> "导出"; "transitions" -> "转场"; "tracking" -> "运动追踪"; "stabilizer" -> "视频稳定器"
-                    "pip" -> "画中画"; "chroma" -> "绿幕抠像"; "motionblur" -> "动态模糊"; "particles" -> "粒子效果"
-                    "lens" -> "镜头效果"; "film" -> "胶片颗粒"; "template" -> "项目模板"; else -> "面板"
-                }, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, color = EC.T1)
-                Box(modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(EC.Card)
-                    .clickable { vm.activePanel = null }, contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    "color" -> "调色 · AE级"
+                    "speed" -> "变速"
+                    "text" -> "文字编辑"
+                    "fx" -> "效果"
+                    "blend" -> "混合模式"
+                    "audio" -> "音频"
+                    "export" -> "导出"
+                    "transitions" -> "转场"
+                    "tracking" -> "运动追踪"
+                    "stabilizer" -> "视频稳定器"
+                    "pip" -> "画中画"
+                    "chroma" -> "绿幕抠像"
+                    "motionblur" -> "动态模糊"
+                    "particles" -> "粒子效果"
+                    "lens" -> "镜头效果"
+                    "film" -> "胶片颗粒"
+                    "template" -> "项目模板"
+                    else -> "面板"
+                }, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = EC.T1)
+                Box(modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp))
+                    .background(EC.Card).clickable { vm.activePanel = null },
+                    contentAlignment = Alignment.Center) {
                     Text("✕", fontSize = 14.sp, color = EC.T3)
                 }
             }
             Box(modifier = Modifier.fillMaxWidth().heightIn(max = 500.dp)) {
                 when (vm.activePanel) {
-                    "color" -> com.myvideo.editor.ui.editor.panels.ColorGradingPanel { vm.activePanel = null }
-                    "speed" -> com.myvideo.editor.ui.editor.panels.SpeedPanel { vm.activePanel = null }
-                    "text" -> com.myvideo.editor.ui.editor.panels.TextPanel { vm.activePanel = null }
-                    "fx" -> com.myvideo.editor.ui.editor.panels.EffectsPanel { vm.activePanel = null }
-                    "blend" -> com.myvideo.editor.ui.editor.panels.BlendPanel { vm.activePanel = null }
-                    "audio" -> com.myvideo.editor.ui.editor.panels.AudioPanel { vm.activePanel = null }
-                    "export" -> com.myvideo.editor.ui.editor.panels.ExportPanel { vm.activePanel = null }
-                    "transitions" -> com.myvideo.editor.ui.editor.panels.TransitionPanel { vm.activePanel = null }
-                    "tracking" -> com.myvideo.editor.ui.editor.panels.TrackingPanel { vm.activePanel = null }
-                    "stabilizer" -> com.myvideo.editor.ui.editor.panels.StabilizerPanel { vm.activePanel = null }
-                    "pip" -> com.myvideo.editor.ui.editor.panels.PiPPanel { vm.activePanel = null }
-                    "chroma" -> com.myvideo.editor.ui.editor.panels.ChromaPanel { vm.activePanel = null }
-                    "motionblur" -> com.myvideo.editor.ui.editor.panels.MotionBlurPanel { vm.activePanel = null }
-                    "particles" -> com.myvideo.editor.ui.editor.panels.ParticlePanel { vm.activePanel = null }
-                    "lens" -> com.myvideo.editor.ui.editor.panels.LensPanel { vm.activePanel = null }
-                    "film" -> com.myvideo.editor.ui.editor.panels.FilmPanel { vm.activePanel = null }
-                    "template" -> com.myvideo.editor.ui.editor.panels.TemplatePanel(onApply = { vm.showToast("已套用: $it") }) { vm.activePanel = null }
+                    "color" -> ColorGradingPanel { vm.activePanel = null }
+                    "speed" -> SpeedPanel { vm.activePanel = null }
+                    "text" -> TextPanel { vm.activePanel = null }
+                    "fx" -> EffectsPanel { vm.activePanel = null }
+                    "blend" -> BlendPanel { vm.activePanel = null }
+                    "audio" -> AudioPanel { vm.activePanel = null }
+                    "export" -> ExportPanel(vm = vm) { vm.activePanel = null }
+                    "transitions" -> TransitionPanel { vm.activePanel = null }
+                    "tracking" -> TrackingPanel { vm.activePanel = null }
+                    "stabilizer" -> StabilizerPanel { vm.activePanel = null }
+                    "pip" -> PiPPanel { vm.activePanel = null }
+                    "chroma" -> ChromaPanel { vm.activePanel = null }
+                    "motionblur" -> MotionBlurPanel { vm.activePanel = null }
+                    "particles" -> ParticlePanel { vm.activePanel = null }
+                    "lens" -> LensPanel { vm.activePanel = null }
+                    "film" -> FilmPanel { vm.activePanel = null }
+                    "template" -> TemplatePanel(onApply = { vm.showToast("已套用: $it") }) {
+                        vm.activePanel = null
+                    }
                 }
             }
         }
