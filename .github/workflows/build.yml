@@ -26,6 +26,16 @@ jobs:
         echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
         echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
 
+    - name: Link security Kotlin files
+      run: |
+        mkdir -p app/src/main/java/com/myvideo/editor/security
+        for f in security/*.kt; do
+          filename=$(basename "$f")
+          ln -sf "$PWD/$f" "app/src/main/java/com/myvideo/editor/security/$filename"
+        done
+        echo "=== 链接结果 ==="
+        ls -la app/src/main/java/com/myvideo/editor/security/
+
     - name: Build OpenSSL for Android
       run: |
         wget -q https://github.com/openssl/openssl/releases/download/openssl-3.2.1/openssl-3.2.1.tar.gz
@@ -35,7 +45,6 @@ jobs:
         NDK=$ANDROID_NDK_HOME
         TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
         API=26
-        SYSROOT=$TOOLCHAIN/sysroot
 
         export ANDROID_NDK_ROOT=$NDK
         export PATH=$TOOLCHAIN/bin:$PATH
