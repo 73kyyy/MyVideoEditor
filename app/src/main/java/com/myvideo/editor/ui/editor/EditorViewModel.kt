@@ -71,6 +71,15 @@ class EditorViewModel {
     )
     var selectedClipId by mutableStateOf<String?>(null)
 
+    // 视频URI存储（clipId -> uri）
+    val videoUris = mutableMapOf<String, String>()
+
+    // 导出状态
+    var exportProgress by mutableStateOf(0f)
+    var isExporting by mutableStateOf(false)
+    var exportDone by mutableStateOf(false)
+    var exportError by mutableStateOf<String?>(null)
+
     // 钢笔蒙版
     var penMode by mutableStateOf(false)
     val maskPoints = mutableStateListOf<MaskPoint>()
