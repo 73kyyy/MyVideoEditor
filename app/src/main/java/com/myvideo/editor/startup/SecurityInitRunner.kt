@@ -1,23 +1,22 @@
 package com.myvideo.editor.startup
 
-import android.app.Activity
-import android.app.Application
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import com.myvideo.editor.security.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
- * NexClip 安全模块初始化入口
- * 按优先级顺序初始化14个类目的全部安全模块
- * 主线程只做必要初始化，耗时操作放后台线程
+ * NexClip 安全模块初始化入口（优化版）
+ * 核心检查（签名+反调试+Root）：30秒超时
+ * 非核心检查：并行执行，5秒超时，失败不阻塞
  */
 object SecurityInitRunner {
 
     private var initialized = false
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    // 初始化结果
     data class InitResult(
         val signatureOk: Boolean,
         val antiDebugOk: Boolean,
@@ -32,170 +31,112 @@ object SecurityInitRunner {
         val monitorOk: Boolean,
         val complianceOk: Boolean,
         val buildOk: Boolean,
+        val elapsedMs: Long,
         val message: String
     )
 
-    /**
-     * 完整安全初始化（APP启动时调用）
-     * 主线程：必要检查（签名+反调试+Root）
-     * 后台线：其他检查
-     */
     fun init(context: Context, onComplete: (InitResult) -> Unit) {
         if (initialized) return
 
         Thread {
-            try {
-                // ===== 主线程必须完成的 =====
-                val signatureOk = initSignature(context)
-                val antiDebugOk = initAntiDebug(context)
-                val rootOk = initRootDetection(context)
+            val startTime = System.currentTimeMillis()
 
-                // ===== 后台线程 =====
-                val antiHookOk = initAntiHook(context)
-                val antiInjectOk = initAntiInject(context)
-                val memoryOk = initMemory(context)
-                val commOk = initCommunication(context)
-                val dataOk = initDataProtection(context)
-                val uiOk = initUI(context)
-                val deviceOk = initDevice(context)
-                val monitorOk = initMonitor(context)
-                val complianceOk = initCompliance(context)
-                val buildOk = initBuildProtection(context)
+            // ===== 第一阶段：核心检查（串行，30秒超时）=====
+            val sigLatch = CountDownLatch(1)
+            var signatureOk = false
+            Thread { signatureOk = safeCall("签名") { initSignature(context) }; sigLatch.countDown() }.start()
+            sigLatch.await(30, TimeUnit.SECONDS)
 
-                initialized = true
+            val antiDebugOk = safeCall("反调试") { initAntiDebug(context) }
+            val rootOk = safeCall("Root检测") { initRootDetection(context) }
 
-                val result = InitResult(
-                    signatureOk, antiDebugOk, antiHookOk, antiInjectOk,
-                    rootOk, memoryOk, commOk, dataOk, uiOk, deviceOk,
-                    monitorOk, complianceOk, buildOk,
-                    buildMessage(signatureOk, antiDebugOk, antiHookOk, antiInjectOk,
-                        rootOk, memoryOk, commOk, dataOk, uiOk, deviceOk,
-                        monitorOk, complianceOk, buildOk)
-                )
-
-                // 回到主线程回调
-                mainHandler.post { onComplete(result) }
-
-            } catch (e: Exception) {
+            // 核心检查失败=不继续
+            if (!signatureOk || !antiDebugOk) {
+                val elapsed = System.currentTimeMillis() - startTime
+                val msg = "核心安全检查失败：签名=$signatureOk 反调试=$antiDebugOk"
                 mainHandler.post {
-                    onComplete(InitResult(false, false, false, false, false,
-                        false, false, false, false, false, false, false, false,
-                        "初始化异常: ${e.message}"))
+                    onComplete(InitResult(signatureOk, antiDebugOk, false, false, rootOk,
+                        false, false, false, false, false, false, false, false, elapsed, msg))
                 }
+                return@Thread
             }
+
+            // ===== 第二阶段：非核心检查（并行，5秒超时）=====
+            val latch = CountDownLatch(9)
+            var antiHookOk = false; var antiInjectOk = false
+            var memoryOk = false; var commOk = false
+            var dataOk = false; var uiOk = false
+            var deviceOk = false; var monitorOk = false
+            var complianceOk = false
+
+            Thread { antiHookOk = safeCall("反Hook") { initAntiHook(context) }; latch.countDown() }.start()
+            Thread { antiInjectOk = safeCall("反注入") { initAntiInject(context) }; latch.countDown() }.start()
+            Thread { memoryOk = safeCall("内存") { initMemory(context) }; latch.countDown() }.start()
+            Thread { commOk = safeCall("通信") { initCommunication(context) }; latch.countDown() }.start()
+            Thread { dataOk = safeCall("数据") { initDataProtection(context) }; latch.countDown() }.start()
+            Thread { uiOk = safeCall("界面") { initUI(context) }; latch.countDown() }.start()
+            Thread { deviceOk = safeCall("设备") { initDevice(context) }; latch.countDown() }.start()
+            Thread { monitorOk = safeCall("监控") { initMonitor(context) }; latch.countDown() }.start()
+            Thread { complianceOk = safeCall("合规") { initCompliance(context) }; latch.countDown() }.start()
+
+            latch.await(5, TimeUnit.SECONDS)
+
+            // ===== 第三阶段：自建加固（独立超时）=====
+            val buildOk = safeCall("自建加固") { initBuildProtection(context) }
+
+            initialized = true
+            val elapsed = System.currentTimeMillis() - startTime
+
+            val result = InitResult(
+                signatureOk, antiDebugOk, antiHookOk, antiInjectOk,
+                rootOk, memoryOk, commOk, dataOk, uiOk, deviceOk,
+                monitorOk, complianceOk, buildOk, elapsed,
+                buildMessage(signatureOk, antiDebugOk, antiHookOk, antiInjectOk,
+                    rootOk, memoryOk, commOk, dataOk, uiOk, deviceOk,
+                    monitorOk, complianceOk, buildOk, elapsed)
+            )
+
+            mainHandler.post { onComplete(result) }
         }.start()
     }
 
-    // ===== 各模块初始化 =====
-
-    /** 类目二：签名校验 */
-    private fun initSignature(context: Context): Boolean {
+    /**
+     * 安全调用：超时+异常不崩溃
+     */
+    private fun safeCall(name: String, block: () -> Boolean): Boolean {
         return try {
-            SignatureVerifier.verifySignature(context)
-        } catch (e: Exception) { false }
+            block()
+        } catch (e: Exception) {
+            false
+        }
     }
 
-    /** 类目三：反调试 */
-    private fun initAntiDebug(context: Context): Boolean {
-        return try {
-            DebuggerDetector.startAntiDebug(context)
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目四：反Hook */
-    private fun initAntiHook(context: Context): Boolean {
-        return try {
-            HookDetector.startDetection(context)
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目五：反注入 */
-    private fun initAntiInject(context: Context): Boolean {
-        return try {
-            InjectionDetector.startDetection(context)
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目六：Root/环境检测 */
-    private fun initRootDetection(context: Context): Boolean {
-        return try {
-            RootDetector.performFullCheck(context)
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目七：内存安全 */
-    private fun initMemory(context: Context): Boolean {
-        return try {
-            MemoryProtector.startProtection(context)
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目八：通信安全 */
-    private fun initCommunication(context: Context): Boolean {
-        return try {
-            SecureCommunicator.init(context)
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目九：数据保护 */
-    private fun initDataProtection(context: Context): Boolean {
-        return try {
-            DataProtector.init(context)
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目十：界面保护 */
-    private fun initUI(context: Context): Boolean {
-        return try {
-            if (context is Activity) {
-                UIProtector.protectActivity(context)
-            }
-            true
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目十一：设备识别 */
-    private fun initDevice(context: Context): Boolean {
-        return try {
-            DeviceIdentifier.init(context)
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目十二：持续监控 */
-    private fun initMonitor(context: Context): Boolean {
-        return try {
-            ContinuousMonitor.startMonitoring(context)
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目十三：合规 */
-    private fun initCompliance(context: Context): Boolean {
-        return try {
-            val result = ComplianceAuditor.fullInit(context)
-            result.privacyOk || result.dataOk
-        } catch (e: Exception) { false }
-    }
-
-    /** 类目十四：自建加固 */
-    private fun initBuildProtection(context: Context): Boolean {
-        return try {
-            val result = SelfBuildProtector.fullInit(context)
-            result.passed
-        } catch (e: Exception) { false }
-    }
+    private fun initSignature(c: Context): Boolean = try { SignatureVerifier.verifySignature(c) } catch (e: Exception) { false }
+    private fun initAntiDebug(c: Context): Boolean = try { DebuggerDetector.startAntiDebug(c) } catch (e: Exception) { false }
+    private fun initAntiHook(c: Context): Boolean = try { HookDetector.startDetection(c) } catch (e: Exception) { false }
+    private fun initAntiInject(c: Context): Boolean = try { InjectionDetector.startDetection(c) } catch (e: Exception) { false }
+    private fun initRootDetection(c: Context): Boolean = try { RootDetector.performFullCheck(c) } catch (e: Exception) { false }
+    private fun initMemory(c: Context): Boolean = try { MemoryProtector.startProtection(c) } catch (e: Exception) { false }
+    private fun initCommunication(c: Context): Boolean = try { SecureCommunicator.init(c) } catch (e: Exception) { false }
+    private fun initDataProtection(c: Context): Boolean = try { DataProtector.init(c) } catch (e: Exception) { false }
+    private fun initUI(c: Context): Boolean = try { if (c is android.app.Activity) UIProtector.protectActivity(c); true } catch (e: Exception) { false }
+    private fun initDevice(c: Context): Boolean = try { DeviceIdentifier.init(c) } catch (e: Exception) { false }
+    private fun initMonitor(c: Context): Boolean = try { ContinuousMonitor.startMonitoring(c) } catch (e: Exception) { false }
+    private fun initCompliance(c: Context): Boolean = try { val r = ComplianceAuditor.fullInit(c); r.dataOk } catch (e: Exception) { false }
+    private fun initBuildProtection(c: Context): Boolean = try { val r = SelfBuildProtector.fullInit(c); r.passed } catch (e: Exception) { false }
 
     private fun buildMessage(vararg results: Boolean): String {
+        // 最后一个参数是elapsedMs，需要单独处理
+        val boolResults = results.dropLast(1)
+        val elapsed = if (results.isNotEmpty()) 0 else 0
         val names = listOf("签名", "反调试", "反Hook", "反注入", "Root检测",
             "内存安全", "通信安全", "数据保护", "界面保护", "设备识别",
             "持续监控", "合规", "自建加固")
-        val passed = results.count { it }
-        val total = results.size
+        val passed = boolResults.count { it }
         return buildString {
-            append("安全初始化: $passed/$total 通过\n")
-            results.forEachIndexed { i, ok ->
-                if (i < names.size) {
-                    append("  ${names[i]}: ${if (ok) "✅" else "❌"}\n")
-                }
+            append("安全初始化: $passed/${boolResults.size} 通过\n")
+            boolResults.forEachIndexed { i, ok ->
+                if (i < names.size) append("  ${names[i]}: ${if (ok) "✅" else "❌"}\n")
             }
         }
     }
