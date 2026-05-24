@@ -1,59 +1,76 @@
 cmake_minimum_required(VERSION 3.22.1)
-project("nexclip_security" C)
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -fvisibility=hidden -fstack-protector-strong -fPIE -pie")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -Wformat-security")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FORTIFY_SOURCE=2")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s -fomit-frame-pointer")
+project("nexclip_native")
 
-set(OPENSSL_DIR ${CMAKE_SOURCE_DIR}/openssl)
-set(OPENSSL_INCLUDE ${OPENSSL_DIR}/include)
-set(OPENSSL_LIB ${OPENSSL_DIR}/${ANDROID_ABI}/libcrypto.a)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${OPENSSL_INCLUDE})
-include_directories(${CMAKE_SOURCE_DIR}/../../security)
+# 项目源码
+file(GLOB_RECURSE SOURCES
+    "*.c"
+    "*.cpp"
+)
 
+# 安全模块源码（从security目录）
+set(SECURITY_DIR "${CMAKE_SOURCE_DIR}/../../../../security")
+file(GLOB SECURITY_SOURCES "${SECURITY_DIR}/*.c")
+
+add_library(nexclip_native SHARED
+    ${SOURCES}
+    ${SECURITY_SOURCES}
+)
+
+target_include_directories(nexclip_native PRIVATE
+    ${CMAKE_SOURCE_DIR}
+    ${SECURITY_DIR}
+)
+
+# ===== opencv-mobile =====
+set(OpenCV_DIR "${CMAKE_SOURCE_DIR}/third_party/opencv-mobile")
+if(EXISTS "${OpenCV_DIR}/sdk/native/jni")
+    include_directories("${OpenCV_DIR}/sdk/native/jni/include")
+    link_directories("${OpenCV_DIR}/sdk/native/jni/libs/${ANDROID_ABI}")
+    target_link_libraries(nexclip_native opencv_java4)
+    target_compile_definitions(nexclip_native PRIVATE HAS_OPENCV=1)
+endif()
+
+# ===== ncnn =====
+set(ncnn_DIR "${CMAKE_SOURCE_DIR}/third_party/ncnn")
+if(EXISTS "${ncnn_DIR}/${ANDROID_ABI}/lib/libncnn.a")
+    include_directories("${ncnn_DIR}/${ANDROID_ABI}/include")
+    target_link_libraries(nexclip_native
+        "${ncnn_DIR}/${ANDROID_ABI}/lib/libncnn.a")
+    target_compile_definitions(nexclip_native PRIVATE HAS_NCNN=1)
+endif()
+
+# ===== MNN =====
+set(MNN_DIR "${CMAKE_SOURCE_DIR}/third_party/mnn")
+if(EXISTS "${MNN_DIR}/${ANDROID_ABI}/lib/libMNN.so")
+    include_directories("${MNN_DIR}/include")
+    link_directories("${MNN_DIR}/${ANDROID_ABI}/lib")
+    target_link_libraries(nexclip_native MNN MNN_Express)
+    target_compile_definitions(nexclip_native PRIVATE HAS_MNN=1)
+endif()
+
+# ===== RNNoise =====
+set(RNNOISE_DIR "${CMAKE_SOURCE_DIR}/third_party/rnnoise")
+if(EXISTS "${RNNOISE_DIR}/${ANDROID_ABI}/lib/librnnoise.a")
+    include_directories("${RNNOISE_DIR}/include")
+    target_link_libraries(nexclip_native
+        "${RNNOISE_DIR}/${ANDROID_ABI}/lib/librnnoise.a")
+    target_compile_definitions(nexclip_native PRIVATE HAS_RNNOISE=1)
+endif()
+
+# 系统库
 find_library(log-lib log)
 find_library(android-lib android)
+find_library(jnigraphics-lib jnigraphics)
+find_library(gles-lib GLESv3)
+find_library(egl-lib EGL)
 
-# 无OpenSSL的模块（仅需log）
-add_library(native_anti_debug SHARED ${CMAKE_SOURCE_DIR}/../../security/native_anti_debug.c)
-target_link_libraries(native_anti_debug ${log-lib})
-
-add_library(native_verify SHARED ${CMAKE_SOURCE_DIR}/../../security/native_verify.c)
-target_link_libraries(native_verify ${log-lib})
-
-add_library(native_hook_detect SHARED ${CMAKE_SOURCE_DIR}/../../security/native_hook_detect.c)
-target_link_libraries(native_hook_detect ${log-lib})
-
-add_library(native_inject_detect SHARED ${CMAKE_SOURCE_DIR}/../../security/native_inject_detect.c)
-target_link_libraries(native_inject_detect ${log-lib})
-
-add_library(native_root_detect SHARED ${CMAKE_SOURCE_DIR}/../../security/native_root_detect.c)
-target_link_libraries(native_root_detect ${log-lib})
-
-add_library(native_memory_protect SHARED ${CMAKE_SOURCE_DIR}/../../security/native_memory_protect.c)
-target_link_libraries(native_memory_protect ${log-lib})
-
-add_library(native_ui_protect SHARED ${CMAKE_SOURCE_DIR}/../../security/native_ui_protect.c)
-target_link_libraries(native_ui_protect ${log-lib})
-
-add_library(native_device_fingerprint SHARED ${CMAKE_SOURCE_DIR}/../../security/native_device_fingerprint.c)
-target_link_libraries(native_device_fingerprint ${log-lib})
-
-# 需要OpenSSL的模块
-add_library(native_comm_secure SHARED ${CMAKE_SOURCE_DIR}/../../security/native_comm_secure.c)
-target_link_libraries(native_comm_secure ${log-lib} ${OPENSSL_LIB})
-
-add_library(native_data_protect SHARED ${CMAKE_SOURCE_DIR}/../../security/native_data_protect.c)
-target_link_libraries(native_data_protect ${log-lib} ${OPENSSL_LIB})
-
-add_library(native_continuous_monitor SHARED ${CMAKE_SOURCE_DIR}/../../security/native_continuous_monitor.c)
-target_link_libraries(native_continuous_monitor ${log-lib} ${OPENSSL_LIB})
-
-add_library(native_compliance SHARED ${CMAKE_SOURCE_DIR}/../../security/native_compliance.c)
-target_link_libraries(native_compliance ${log-lib} ${OPENSSL_LIB})
-
-add_library(native_self_build SHARED ${CMAKE_SOURCE_DIR}/../../security/native_self_build.c)
-target_link_libraries(native_self_build ${log-lib} ${OPENSSL_LIB} ${android-lib} dl)
+target_link_libraries(nexclip_native
+    ${log-lib}
+    ${android-lib}
+    ${jnigraphics-lib}
+    ${gles-lib}
+    ${egl-lib}
+)

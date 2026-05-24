@@ -1,6 +1,4 @@
 // NexClip - app/build.gradle.kts
-// 编号1：构建期防护 + 编号60：供应链安全
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -17,7 +15,6 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        // 编号1：Native构建
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17 -O2 -fvisibility=hidden -fno-exceptions -fno-rtti"
@@ -28,17 +25,14 @@ android {
             }
         }
 
-        // 编号1：ABI过滤
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
 
-        // 编号1：版本信息
         buildConfigField("String", "BUILD_TIME", "\"${System.currentTimeMillis()}\"")
         buildConfigField("String", "GIT_HASH", "\"local_build\"")
     }
 
-    // 编号1：签名配置
     signingConfigs {
         create("release") {
             storeFile = file("../keystore/nexclip.jks")
@@ -72,7 +66,6 @@ android {
         }
     }
 
-    // 编号1：CMake Native构建
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
@@ -89,7 +82,6 @@ android {
         jvmTarget = "17"
     }
 
-    // 编号1：构建变体
     flavorDimensions += "tier"
     productFlavors {
         create("free") {
@@ -114,9 +106,8 @@ android {
     }
 }
 
-// ===== 编号1+60：依赖版本锁定 =====
 dependencies {
-    // AndroidX - 固定版本
+    // ===== AndroidX =====
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.activity:activity-compose:1.8.2")
@@ -125,7 +116,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // Compose - 固定版本
+    // ===== Compose =====
     implementation(platform("androidx.compose:compose-bom:2024.01.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -134,21 +125,42 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.animation:animation")
 
-    // 网络 - 固定版本
+    // ===== 网络 =====
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // JSON - 固定版本
+    // ===== JSON =====
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
-    // 图片加载 - 固定版本
+    // ===== 图片加载 =====
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-    // 视频处理 - 固定版本
-    implementation("com.google.android.exoplayer:exoplayer-core:2.19.1")
-    implementation("androidx.media3:media3-exoplayer:1.2.1")
+    // ===== 音视频处理：FFmpeg =====
+    implementation("com.arthenica:ffmpeg-kit-full:6.0-2")
 
-    // 测试
+    // ===== 视频播放：Media3 ExoPlayer =====
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
+    implementation("androidx.media3:media3-ui:1.2.1")
+    implementation("androidx.media3:media3-transformer:1.2.1")
+    implementation("androidx.media3:media3-effect:1.2.1")
+    implementation("com.google.android.exoplayer:exoplayer-core:2.19.1")
+
+    // ===== GPU滤镜：GPUImage =====
+    implementation("jp.co.cyberagent.android:gpuimage:2.1.0")
+
+    // ===== AI推理：ONNX Runtime =====
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")
+
+    // ===== AI推理：PyTorch Mobile =====
+    implementation("org.pytorch:pytorch_android:2.1.0")
+    implementation("org.pytorch:pytorch_android_torchvision:2.1.0")
+
+    // ===== AI框架：MediaPipe =====
+    implementation("com.google.mediapipe:tasks-vision:0.10.8")
+    implementation("com.google.mediapipe:tasks-text:0.10.8")
+    implementation("com.google.mediapipe:tasks-audio:0.10.8")
+
+    // ===== 测试 =====
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     debugImplementation("androidx.compose.ui:ui-tooling")

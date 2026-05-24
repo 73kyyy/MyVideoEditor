@@ -2,138 +2,147 @@ package com.myvideo.editor.engine
 
 import android.content.Context
 import android.graphics.Bitmap
-import java.io.File
+import com.myvideo.editor.startup.DeviceTierDetector
+import com.myvideo.editor.startup.ModelConfig
 
 /**
- * NexClip AI功能引擎
- * 智能字幕/智能剪辑/智能抠图/超分辨率
- * 本地轻量模型+云端大模型
+ * NexClip AI功能统一管理引擎
+ * 根据设备档位自动选择对应精度模型
  */
 class AIFeatureEngine(private val context: Context) {
 
-    // ===== 智能字幕 =====
-
-    data class SubtitleSegment(
-        val startTimeMs: Long,
-        val endTimeMs: Long,
-        val text: String,
-        val confidence: Float
-    )
-
-    /**
-     * 语音转字幕（本地Whisper轻量模型）
-     * 输入：音频文件路径
-     * 输出：字幕片段列表
-     */
-    fun speechToSubtitle(audioPath: String): List<SubtitleSegment> {
-        // TODO: 集成Whisper/Android SpeechRecognizer
-        return emptyList()
-    }
-
-    // ===== 智能剪辑 =====
-
-    data class SceneChange(
-        val timeMs: Long,
-        val confidence: Float,
-        val type: String  // "cut", "fade", "motion"
-    )
-
-    /**
-     * 场景切换检测
-     * 输入：视频路径
-     * 输出：场景切换点列表
-     */
-    fun detectSceneChanges(videoUri: android.net.Uri): List<SceneChange> {
-        // TODO: 基于帧差检测
-        return emptyList()
-    }
-
-    /**
-     * 智能卡点
-     * 输入：音频路径
-     * 输出：节拍点列表（ms）
-     */
-    fun detectBeats(audioPath: String): List<Long> {
-        // TODO: 节拍检测算法
-        return emptyList()
-    }
-
-    // ===== 智能抠图 =====
-
-    /**
-     * 人像分割（本地模型）
-     * 输入：Bitmap
-     * 输出：遮罩Bitmap（白色=前景，黑色=背景）
-     */
-    fun segmentPerson(source: Bitmap): Bitmap? {
-        // TODO: 集成ML Kit Selfie Segmentation
-        return null
-    }
-
-    /**
-     * 背景替换
-     */
-    fun replaceBackground(foreground: Bitmap, background: Bitmap, mask: Bitmap): Bitmap {
-        val result = Bitmap.createBitmap(foreground.width, foreground.height, foreground.config)
-        val fgPixels = IntArray(foreground.width * foreground.height)
-        val bgPixels = IntArray(background.width * background.height)
-        val maskPixels = IntArray(mask.width * mask.height)
-
-        foreground.getPixels(fgPixels, 0, foreground.width, 0, 0, foreground.width, foreground.height)
-        background.getPixels(bgPixels, 0, background.width, 0, 0, background.width, background.height)
-        mask.getPixels(maskPixels, 0, mask.width, 0, 0, mask.width, mask.height)
-
-        val resultPixels = IntArray(fgPixels.size)
-        for (i in fgPixels.indices) {
-            val maskVal = (maskPixels[i] shr 16) and 0xFF
-            resultPixels[i] = if (maskVal > 128) fgPixels[i] else bgPixels[i]
-        }
-
-        result.setPixels(resultPixels, 0, foreground.width, 0, 0, foreground.width, foreground.height)
-        return result
-    }
-
-    // ===== 智能美颜 =====
+    private val modelDownloader = ModelDownloader(context)
+    private var esrganManager: RealESRGANManager? = null
+    private var rifeManager: RIFEManager? = null
 
     data class BeautyParams(
-        val smoothSkin: Float = 0f,   // 0~100
-        val whiten: Float = 0f,       // 0~100
-        val slimFace: Float = 0f,     // 0~100
-        val enlargeEyes: Float = 0f   // 0~100
+        val smoothSkin: Float = 0f,
+        val whiten: Float = 0f,
+        val slimFace: Float = 0f,
+        val enlargeEyes: Float = 0f,
+        val thinNose: Float = 0f,
+        val thinBody: Float = 0f
     )
 
-    fun applyBeauty(source: Bitmap, params: BeautyParams): Bitmap {
-        // 磨皮：高斯模糊+混合
-        if (params.smoothSkin > 0) {
-            return applySmoothSkin(source, params.smoothSkin / 100f)
+    /**
+     * 初始化AI引擎
+     */
+    fun init(): Boolean {
+        return try {
+            val tier = DeviceTierDetector.detect(context).tier
+            val models = ModelConfig.getModelSet(tier)
+            // 模型按需加载，不全部加载到内存
+            true
+        } catch (e: Exception) { false }
+    }
+
+    /**
+     * 获取当前设备的模型信息
+     */
+    fun getDeviceInfo(): String = modelDownloader.getDeviceInfoSummary()
+
+    /**
+     * 获取当前设备模型总下载大小
+     */
+    fun getTotalModelSizeMB(): Int = ModelConfig.getTotalDownloadSizeMB(context)
+
+    /**
+     * 获取当前设备可用的最大分辨率
+     */
+    fun getMaxResolution(): String = ModelConfig.getMaxResolution(context)
+
+    /**
+     * 获取当前设备最大帧率
+     */
+    fun getMaxFps(): Int = ModelConfig.getMaxFps(context)
+
+    /**
+     * AI美颜处理
+     */
+    fun applyBeauty(bitmap: Bitmap, params: BeautyParams): Bitmap? {
+        return try {
+            val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+            if (params.smoothSkin > 0) applySmoothSkin(result, params.smoothSkin)
+            if (params.whiten > 0) applyWhiten(result, params.whiten)
+            result
+        } catch (e: Exception) { null }
+    }
+
+    private fun applySmoothSkin(bitmap: Bitmap, strength: Float) {
+        val factor = strength / 100f
+        val w = bitmap.width
+        val h = bitmap.height
+        val pixels = IntArray(w * h)
+        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+        for (i in pixels.indices) {
+            val p = pixels[i]
+            val r = (p shr 16 and 0xFF)
+            val g = (p shr 8 and 0xFF)
+            val b = (p and 0xFF)
+            val avg = (r + g + b) / 3
+            val nr = (r + (avg - r) * factor * 0.3f).toInt().coerceIn(0, 255)
+            val ng = (g + (avg - g) * factor * 0.3f).toInt().coerceIn(0, 255)
+            val nb = (b + (avg - b) * factor * 0.3f).toInt().coerceIn(0, 255)
+            pixels[i] = (p and 0xFF000000.toInt()) or (nr shl 16) or (ng shl 8) or nb
         }
-        return source
+        bitmap.setPixels(pixels, 0, w, 0, 0, w, h)
     }
 
-    private fun applySmoothSkin(source: Bitmap, strength: Float): Bitmap {
-        // 简化实现：亮度微调代替磨皮
-        val result = Bitmap.createBitmap(source.width, source.height, source.config)
-        val canvas = android.graphics.Canvas(result)
-        val paint = android.graphics.Paint()
-        val cm = ColorMatrix(floatArrayOf(
-            1f, 0f, 0f, 0f, strength * 10f,
-            0f, 1f, 0f, 0f, strength * 10f,
-            0f, 0f, 1f, 0f, strength * 10f,
-            0f, 0f, 0f, 1f, 0f
-        ))
-        paint.colorFilter = android.graphics.ColorMatrixColorFilter(cm)
-        canvas.drawBitmap(source, 0f, 0f, paint)
-        return result
+    private fun applyWhiten(bitmap: Bitmap, strength: Float) {
+        val factor = 1f + strength / 200f
+        val w = bitmap.width
+        val h = bitmap.height
+        val pixels = IntArray(w * h)
+        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+        for (i in pixels.indices) {
+            val p = pixels[i]
+            val r = ((p shr 16 and 0xFF) * factor).toInt().coerceIn(0, 255)
+            val g = ((p shr 8 and 0xFF) * factor).toInt().coerceIn(0, 255)
+            val b = ((p and 0xFF) * factor).toInt().coerceIn(0, 255)
+            pixels[i] = (p and 0xFF000000.toInt()) or (r shl 16) or (g shl 8) or b
+        }
+        bitmap.setPixels(pixels, 0, w, 0, 0, w, h)
     }
 
-    // ===== 模型管理 =====
-
-    fun isModelReady(modelName: String): Boolean {
-        val modelDir = File(context.filesDir, "ai_models")
-        return File(modelDir, modelName).exists()
+    /**
+     * AI超分辨率
+     */
+    fun upscale(bitmap: Bitmap, scale: Int = 4): Bitmap? {
+        if (esrganManager == null) {
+            esrganManager = RealESRGANManager(context)
+            esrganManager?.init()
+        }
+        return esrganManager?.upscale4x(bitmap)
     }
 
-    fun getModelPath(modelName: String): String {
-        return File(File(context.filesDir, "ai_models"), modelName).absolutePath
+    /**
+     * AI插帧
+     */
+    fun interpolateFrames(frame1: Bitmap, frame2: Bitmap, t: Float = 0.5f): Bitmap? {
+        if (rifeManager == null) {
+            rifeManager = RIFEManager(context)
+            rifeManager?.init()
+        }
+        return rifeManager?.interpolate(frame1, frame2, t)
+    }
+
+    /**
+     * AI慢动作
+     */
+    fun slowMotion(frames: List<Bitmap>, speed: Float): List<Bitmap> {
+        if (rifeManager == null) {
+            rifeManager = RIFEManager(context)
+            rifeManager?.init()
+        }
+        return when {
+            speed <= 0.25f -> rifeManager?.slowMotion4x(frames) ?: frames
+            speed <= 0.5f -> rifeManager?.interpolate2x(frames) ?: frames
+            else -> frames
+        }
+    }
+
+    fun release() {
+        esrganManager?.release()
+        rifeManager?.release()
     }
 }
