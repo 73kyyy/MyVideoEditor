@@ -75,6 +75,76 @@ jobs:
         cp $GITHUB_WORKSPACE/openssl/arm64-v8a/lib/libcrypto.a $GITHUB_WORKSPACE/app/src/main/cpp/openssl/arm64-v8a/
         cp $GITHUB_WORKSPACE/openssl/armeabi-v7a/lib/libcrypto.a $GITHUB_WORKSPACE/app/src/main/cpp/openssl/armeabi-v7a/
 
+    - name: Download opencv-mobile
+      run: |
+        mkdir -p app/src/main/cpp/third_party/opencv-mobile
+        curl -L -o opencv-mobile.zip \
+          "https://github.com/nihui/opencv-mobile/releases/download/v14/opencv-mobile-4.9.0-android-sdk.zip"
+        unzip -q opencv-mobile.zip -d app/src/main/cpp/third_party/opencv-mobile/
+        echo "=== opencv-mobile ==="
+        ls app/src/main/cpp/third_party/opencv-mobile/
+
+    - name: Download ncnn
+      run: |
+        curl -L -o ncnn.zip \
+          "https://github.com/Tencent/ncnn/releases/download/20240410/ncnn-20240410-android-vulkan.zip"
+        unzip -q ncnn.zip
+        mkdir -p app/src/main/cpp/third_party/ncnn/arm64-v8a
+        mkdir -p app/src/main/cpp/third_party/ncnn/armeabi-v7a
+        cp -r ncnn-20240410-android-vulkan/arm64-v8a/* app/src/main/cpp/third_party/ncnn/arm64-v8a/
+        cp -r ncnn-20240410-android-vulkan/armeabi-v7a/* app/src/main/cpp/third_party/ncnn/armeabi-v7a/
+        echo "=== ncnn ==="
+        ls app/src/main/cpp/third_party/ncnn/
+
+    - name: Download MNN
+      run: |
+        curl -L -o MNN.zip \
+          "https://github.com/alibaba/MNN/releases/download/2.9.0/MNN-2.9.0-android.zip"
+        unzip -q MNN.zip
+        mkdir -p app/src/main/cpp/third_party/mnn/arm64-v8a/lib
+        mkdir -p app/src/main/cpp/third_party/mnn/armeabi-v7a/lib
+        cp MNN-2.9.0-android/arm64-v8a/libMNN.so app/src/main/cpp/third_party/mnn/arm64-v8a/lib/
+        cp MNN-2.9.0-android/armeabi-v7a/libMNN.so app/src/main/cpp/third_party/mnn/armeabi-v7a/lib/
+        mkdir -p app/src/main/cpp/third_party/mnn/include
+        cp -r MNN-2.9.0-android/include/* app/src/main/cpp/third_party/mnn/include/
+        echo "=== MNN ==="
+        ls app/src/main/cpp/third_party/mnn/
+
+    - name: Build RNNoise
+      run: |
+        git clone https://github.com/xiph/rnnoise.git
+        cd rnnoise
+        ./autogen.sh || true
+
+        NDK=$ANDROID_NDK_HOME
+        TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+        API=26
+
+        build_rnnoise() {
+          local ABI=$1 CC_PREFIX=$2
+          export CC="${TOOLCHAIN}/bin/${CC_PREFIX}${API}-clang"
+          export CXX="${TOOLCHAIN}/bin/${CC_PREFIX}${API}-clang++"
+          export AR="${TOOLCHAIN}/bin/llvm-ar"
+          export RANLIB="${TOOLCHAIN}/bin/llvm-ranlib"
+
+          mkdir -p build_$ABI && cd build_$ABI
+          ../configure --host=${CC_PREFIX} --disable-shared --enable-static \
+            CFLAGS="-O2" CXXFLAGS="-O2"
+          make -j$(nproc) || true
+          cd ..
+
+          mkdir -p $GITHUB_WORKSPACE/app/src/main/cpp/third_party/rnnoise/$ABI/lib
+          mkdir -p $GITHUB_WORKSPACE/app/src/main/cpp/third_party/rnnoise/include
+          cp build_$ABI/.libs/librnnoise.a $GITHUB_WORKSPACE/app/src/main/cpp/third_party/rnnoise/$ABI/lib/ 2>/dev/null || true
+          cp ../include/rnnoise.h $GITHUB_WORKSPACE/app/src/main/cpp/third_party/rnnoise/include/ 2>/dev/null || true
+        }
+
+        build_rnnoise "arm64-v8a" "aarch64-linux-android"
+        build_rnnoise "armeabi-v7a" "armv7a-linux-androideabi"
+
+        echo "=== RNNoise ==="
+        ls $GITHUB_WORKSPACE/app/src/main/cpp/third_party/rnnoise/
+
     - name: Create keystore
       run: |
         rm -rf keystore
