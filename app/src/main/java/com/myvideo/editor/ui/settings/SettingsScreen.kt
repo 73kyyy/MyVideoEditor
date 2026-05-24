@@ -38,7 +38,10 @@ fun SettingsScreen(
     onOpenMemberCenter: () -> Unit = {},
     onOpenTutorial: () -> Unit = {},
     onOpenLicenses: () -> Unit = {},
-    onClearCache: () -> Unit = {}
+    onClearCache: () -> Unit = {},
+    onOpenPrivacy: () -> Unit = {},
+    onOpenTerms: () -> Unit = {},
+    onOpenAbout: () -> Unit = {}
 ) {
     val groups = listOf(
         SGroup("工程设置", listOf(
@@ -62,33 +65,30 @@ fun SettingsScreen(
         ))
     )
     val aboutGroup = SGroup("关于", listOf(
-        SItem("ℹ", "版本信息", "当前版本", "v1.0.0", SC.T3),
+        SItem("ℹ", "版本信息", "当前版本", "v1.0.0", SC.T3, onOpenAbout),
         SItem("🏢", "归属权", "© 2025 NexClip Team", "", SC.T3),
         SItem("🤖", "模型声明", "AI 模型来源及许可说明", "", SC.T3, onOpenLicenses),
         SItem("📜", "开源许可", "第三方库许可证", "", SC.T2, onOpenLicenses),
-        SItem("🔒", "隐私政策", "数据收集与使用说明", "", SC.T2),
-        SItem("📋", "用户协议", "服务条款", "", SC.T2),
+        SItem("🔒", "隐私政策", "数据收集与使用说明", "", SC.T2, onOpenPrivacy),
+        SItem("📋", "用户协议", "服务条款", "", SC.T2, onOpenTerms),
         SItem("💬", "意见反馈", "提交问题或建议", "", SC.Acc),
         SItem("🔄", "检查更新", "检查新版本", "", SC.Acc2),
-        SItem("👥", "关于我们", "团队介绍", "", SC.T2),
+        SItem("👥", "关于我们", "团队介绍", "", SC.T2, onOpenAbout),
         SItem("❓", "常见问题", "FAQ", "", SC.T2),
         SItem("🔗", "官方社群", "微信群 / QQ 群入口", "", SC.Acc)
     ))
 
     Column(modifier = Modifier.fillMaxSize().background(SC.Bg)) {
-        // 顶栏
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text("设置", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = SC.T1, letterSpacing = (-0.5).sp)
         }
 
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
-            // 账号区
             item {
                 AccountCard(onOpenMemberCenter)
                 Spacer(modifier = Modifier.height(8.dp))
             }
-            // 设置分组
             (groups + aboutGroup).forEach { group ->
                 item {
                     Text(group.title, fontSize = 9.sp, color = SC.T3, letterSpacing = 1.sp,
@@ -110,7 +110,6 @@ fun SettingsScreen(
                 }
             }
             item {
-                // 底部声明
                 Text("NexClip · AI 智能视频编辑器", fontSize = 9.sp, color = SC.T3,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center)
@@ -124,7 +123,6 @@ private fun AccountCard(onMember: () -> Unit) {
     Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SC.Card)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // 头像
                 Box(modifier = Modifier.size(48.dp).clip(CircleShape)
                     .background(Brush.linearGradient(listOf(SC.Acc, SC.Acc2))),
                     contentAlignment = Alignment.Center) {
