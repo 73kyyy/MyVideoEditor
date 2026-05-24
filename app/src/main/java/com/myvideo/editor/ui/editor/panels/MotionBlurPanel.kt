@@ -7,36 +7,58 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.myvideo.editor.ui.editor.EditorViewModel
 
 @Composable
-fun MotionBlurPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
-    var type by remember { mutableStateOf("方向模糊") }
+fun MotionBlurPanel(vm: EditorViewModel = EditorViewModel(), onClose: () -> Unit = {}) {
+    var strength by remember { mutableFloatStateOf(50f) }
+    var angle by remember { mutableFloatStateOf(0f) }
+    var direction by remember { mutableStateOf("水平") }
+    var quality by remember { mutableStateOf("高") }
+    var useKeyframes by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("模糊类型", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Text("强度: ${"%.0f".format(strength)}%", fontSize = 10.sp, color = CG.T2)
+        Spacer(modifier = Modifier.height(4.dp))
+        CgSlider("强度", 0, strength.toInt(), 100)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text("角度: ${"%.0f".format(angle)}°", fontSize = 10.sp, color = CG.T2)
+        Spacer(modifier = Modifier.height(4.dp))
+        CgSlider("角度", 0, angle.toInt(), 360)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text("方向", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("方向模糊", "径向模糊", "旋转模糊", "自动运动模糊").forEach { t ->
-                OptionChip(t, type == t) { type = t }
+            listOf("水平", "垂直", "自定义").forEach { d ->
+                OptionChip(d, direction == d) { direction = d }
             }
         }
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        Text("参数", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
-        CgSlider("模糊量", 0, 10, 50)
-        CgSlider("方向", -180, 0, 180)
-        CgSlider("采样数", 2, 8, 32)
-        Spacer(modifier = Modifier.height(14.dp))
+        Text("质量", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf("低", "中", "高").forEach { q ->
+                OptionChip(q, quality == q) { quality = q }
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
 
-        Text("快门", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
-        CgSlider("快门角度", 0, 180, 360)
-        CgSlider("偏移", -180, 0, 180)
-        Spacer(modifier = Modifier.height(14.dp))
+        Text("关键帧", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OptionChip("启用关键帧", useKeyframes) { useKeyframes = !useKeyframes }
+        }
 
-        Text("高级", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
-        CgSlider("衰减", 0, 50, 100)
-        CgSlider("品质", 1, 5, 10)
         Spacer(modifier = Modifier.height(16.dp))
-        ApplyButton("应用动态模糊") { onClose() }
+        ApplyButton("应用") {
+            val clip = vm.selectedClip()
+            if (clip != null) {
+                vm.showToast("动态模糊: ${"%.0f".format(strength)}% $direction")
+            } else { vm.showToast("请先选择片段") }
+            onClose()
+        }
     }
 }

@@ -7,38 +7,58 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.myvideo.editor.ui.editor.EditorViewModel
 
 @Composable
-fun FilmPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
-    var filmType by remember { mutableStateOf("35mm") }
+fun FilmPanel(vm: EditorViewModel = EditorViewModel(), onClose: () -> Unit = {}) {
+    var grain by remember { mutableFloatStateOf(30f) }
+    var scratches by remember { mutableFloatStateOf(0f) }
+    var dust by remember { mutableFloatStateOf(0f) }
+    var flicker by remember { mutableFloatStateOf(0f) }
+    var fade by remember { mutableFloatStateOf(0f) }
+    var halation by remember { mutableFloatStateOf(0f) }
+    var filmStock by remember { mutableStateOf("Kodak") }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("颗粒", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
-        CgSlider("强度", 0, 30, 100)
-        CgSlider("大小", 1, 3, 10)
-        Spacer(modifier = Modifier.height(14.dp))
-
-        Text("胶片类型", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Text("胶片预设", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("35mm", "16mm", "8mm", "Super 8").forEach { t ->
-                OptionChip(t, filmType == t) { filmType = t }
+            listOf("Kodak", "Fuji", "Agfa", "Ilford").forEach { f ->
+                OptionChip(f, filmStock == f) { filmStock = f }
             }
         }
         Spacer(modifier = Modifier.height(14.dp))
 
-        Text("划痕", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
-        CgSlider("数量", 0, 0, 20)
-        CgSlider("长度", 0, 30, 100)
-        Spacer(modifier = Modifier.height(14.dp))
+        Text("颗粒: ${"%.0f".format(grain)}%", fontSize = 10.sp, color = CG.T2)
+        CgSlider("颗粒", 0, grain.toInt(), 100)
+        Spacer(modifier = Modifier.height(10.dp))
 
-        Text("闪烁", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
-        CgSlider("亮度闪烁", 0, 0, 50)
-        CgSlider("频率", 0, 30, 100)
-        Spacer(modifier = Modifier.height(14.dp))
+        Text("划痕: ${"%.0f".format(scratches)}%", fontSize = 10.sp, color = CG.T2)
+        CgSlider("划痕", 0, scratches.toInt(), 100)
+        Spacer(modifier = Modifier.height(10.dp))
 
-        CgSlider("暗角", 0, 20, 100)
+        Text("灰尘: ${"%.0f".format(dust)}%", fontSize = 10.sp, color = CG.T2)
+        CgSlider("灰尘", 0, dust.toInt(), 100)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text("闪烁: ${"%.0f".format(flicker)}%", fontSize = 10.sp, color = CG.T2)
+        CgSlider("闪烁", 0, flicker.toInt(), 100)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text("褪色: ${"%.0f".format(fade)}%", fontSize = 10.sp, color = CG.T2)
+        CgSlider("褪色", 0, fade.toInt(), 100)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text("光晕: ${"%.0f".format(halation)}%", fontSize = 10.sp, color = CG.T2)
+        CgSlider("光晕", 0, halation.toInt(), 100)
+
         Spacer(modifier = Modifier.height(16.dp))
-        ApplyButton("应用胶片颗粒") { onClose() }
+        ApplyButton("应用") {
+            val clip = vm.selectedClip()
+            if (clip != null) {
+                vm.showToast("胶片效果: $filmStock 颗粒${"%.0f".format(grain)}%")
+            } else { vm.showToast("请先选择片段") }
+            onClose()
+        }
     }
 }
