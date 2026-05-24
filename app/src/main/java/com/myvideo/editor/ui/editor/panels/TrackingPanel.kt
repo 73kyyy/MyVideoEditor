@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun TrackingPanel(onClose: () -> Unit = {}) {
+fun TrackingPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var mode by remember { mutableStateOf("位置") }
     var applyTo by remember { mutableStateOf("位置X/Y") }
     var tracking by remember { mutableStateOf(false) }

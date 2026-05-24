@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun LensPanel(onClose: () -> Unit = {}) {
+fun LensPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var lensType by remember { mutableStateOf("50mm") }
 
     Column(modifier = Modifier.fillMaxWidth()) {

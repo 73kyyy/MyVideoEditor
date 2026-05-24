@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun MotionBlurPanel(onClose: () -> Unit = {}) {
+fun MotionBlurPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var type by remember { mutableStateOf("方向模糊") }
 
     Column(modifier = Modifier.fillMaxWidth()) {

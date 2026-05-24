@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun ParticlePanel(onClose: () -> Unit = {}) {
+fun ParticlePanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var type by remember { mutableStateOf("雪花") }
     var color by remember { mutableStateOf(Color.White) }
 

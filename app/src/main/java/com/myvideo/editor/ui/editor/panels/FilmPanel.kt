@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun FilmPanel(onClose: () -> Unit = {}) {
+fun FilmPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var filmType by remember { mutableStateOf("35mm") }
 
     Column(modifier = Modifier.fillMaxWidth()) {

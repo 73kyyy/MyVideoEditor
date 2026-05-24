@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun StabilizerPanel(onClose: () -> Unit = {}) {
+fun StabilizerPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var mode by remember { mutableStateOf("平滑") }
     var range by remember { mutableStateOf("位置") }
     var stabilizing by remember { mutableStateOf(false) }

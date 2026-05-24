@@ -23,7 +23,7 @@ data class ProjectTemplate(
 )
 
 @Composable
-fun TemplatePanel(onApply: (String) -> Unit = {}, onClose: () -> Unit = {}) {
+fun TemplatePanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onApply: (String) -> Unit = {}, onClose: () -> Unit = {}) {
     var selectedIndex by remember { mutableIntStateOf(-1) }
 
     val templates = listOf(

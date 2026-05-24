@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun AudioPanel(onClose: () -> Unit = {}) {
+fun AudioPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var selectedAudio by remember { mutableStateOf<String?>(null) }
     var effect by remember { mutableStateOf("无") }
 

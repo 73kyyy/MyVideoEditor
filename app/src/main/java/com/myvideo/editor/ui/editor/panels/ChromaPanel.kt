@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun ChromaPanel(onClose: () -> Unit = {}) {
+fun ChromaPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var bgColor by remember { mutableStateOf(Color(0xFF00FF00)) }
     var bgHex by remember { mutableStateOf("#00FF00") }
     var bgType by remember { mutableStateOf("透明") }

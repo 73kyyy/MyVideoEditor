@@ -32,7 +32,7 @@ internal object CG {
 }
 
 @Composable
-fun ColorGradingPanel(onClose: () -> Unit = {}) {
+fun ColorGradingPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var tab by remember { mutableStateOf(0) }
     val tabs = listOf("色轮", "曲线", "HSL", "色阶", "色彩平衡", "LUT")
     Column(modifier = Modifier.fillMaxWidth()) {

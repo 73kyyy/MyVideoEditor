@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun PiPPanel(onClose: () -> Unit = {}) {
+fun PiPPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var animation by remember { mutableStateOf("淡入") }
 
     Column(modifier = Modifier.fillMaxWidth()) {

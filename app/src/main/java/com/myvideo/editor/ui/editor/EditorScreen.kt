@@ -274,23 +274,23 @@ private fun PanelOverlay(vm: EditorViewModel) {
             }
             Box(modifier = Modifier.fillMaxWidth().heightIn(max = 500.dp)) {
                 when (vm.activePanel) {
-                    "color" -> ColorGradingPanel { vm.activePanel = null }
+                    "color" -> ColorGradingPanel(vm = vm) { vm.activePanel = null }
                     "speed" -> SpeedPanel(vm = vm) { vm.activePanel = null }
                     "text" -> TextPanel(vm = vm) { vm.activePanel = null }
                     "fx" -> EffectsPanel(vm = vm) { vm.activePanel = null }
                     "blend" -> BlendPanel(vm = vm) { vm.activePanel = null }
-                    "audio" -> AudioPanel { vm.activePanel = null }
+                    "audio" -> AudioPanel(vm = vm) { vm.activePanel = null }
                     "export" -> ExportPanel(vm = vm) { vm.activePanel = null }
                     "transitions" -> TransitionPanel(vm = vm) { vm.activePanel = null }
-                    "tracking" -> TrackingPanel { vm.activePanel = null }
-                    "stabilizer" -> StabilizerPanel { vm.activePanel = null }
-                    "pip" -> PiPPanel { vm.activePanel = null }
-                    "chroma" -> ChromaPanel { vm.activePanel = null }
-                    "motionblur" -> MotionBlurPanel { vm.activePanel = null }
-                    "particles" -> ParticlePanel { vm.activePanel = null }
-                    "lens" -> LensPanel { vm.activePanel = null }
-                    "film" -> FilmPanel { vm.activePanel = null }
-                    "template" -> TemplatePanel(onApply = { vm.showToast("已套用: $it") }) {
+                    "tracking" -> TrackingPanel(vm = vm) { vm.activePanel = null }
+                    "stabilizer" -> StabilizerPanel(vm = vm) { vm.activePanel = null }
+                    "pip" -> PiPPanel(vm = vm) { vm.activePanel = null }
+                    "chroma" -> ChromaPanel(vm = vm) { vm.activePanel = null }
+                    "motionblur" -> MotionBlurPanel(vm = vm) { vm.activePanel = null }
+                    "particles" -> ParticlePanel(vm = vm) { vm.activePanel = null }
+                    "lens" -> LensPanel(vm = vm) { vm.activePanel = null }
+                    "film" -> FilmPanel(vm = vm) { vm.activePanel = null }
+                    "template" -> TemplatePanel(vm = vm, onApply = { vm.showToast("已套用: $it") }) {
                         vm.activePanel = null
                     }
                 }
