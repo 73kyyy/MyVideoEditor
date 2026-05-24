@@ -162,6 +162,10 @@ class EditorViewModel {
         freeUsed = (freeUsed + 1).coerceAtMost(freeMax)
     }
 
+    fun showToast(msg: String) {
+        toastMessage = msg; showToast = true
+    }
+
     fun movePlayhead(x: Float) {
         playheadPosition = x.coerceAtLeast(rulerStartPx)
         val seconds = ((playheadPosition - rulerStartPx) / pixelsPerSecond).coerceAtLeast(0f)

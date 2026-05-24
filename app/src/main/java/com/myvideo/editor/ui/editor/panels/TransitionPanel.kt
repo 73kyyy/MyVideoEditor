@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun TransitionPanel(onClose: () -> Unit = {}) {
+fun TransitionPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var selected by remember { mutableStateOf("淡入淡出") }
     var easing by remember { mutableStateOf("线性") }
 
@@ -37,6 +37,10 @@ fun TransitionPanel(onClose: () -> Unit = {}) {
             listOf("线性", "缓入", "缓出", "弹性").forEach { e -> OptionChip(e, easing == e) { easing = e } }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        ApplyButton("应用") { onClose() }
+        ApplyButton("应用") {
+            val clip = vm.selectedClip()
+            if (clip != null) vm.showToast("已应用转场: $selected") else vm.showToast("请先选择片段")
+            onClose()
+        }
     }
 }

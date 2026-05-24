@@ -268,13 +268,13 @@ private fun PanelOverlay(vm: EditorViewModel) {
             Box(modifier = Modifier.fillMaxWidth().heightIn(max = 500.dp)) {
                 when (vm.activePanel) {
                     "color" -> ColorGradingPanel { vm.activePanel = null }
-                    "speed" -> SpeedPanel { vm.activePanel = null }
-                    "text" -> TextPanel { vm.activePanel = null }
-                    "fx" -> EffectsPanel { vm.activePanel = null }
-                    "blend" -> BlendPanel { vm.activePanel = null }
+                    "speed" -> SpeedPanel(vm = vm) { vm.activePanel = null }
+                    "text" -> TextPanel(vm = vm) { vm.activePanel = null }
+                    "fx" -> EffectsPanel(vm = vm) { vm.activePanel = null }
+                    "blend" -> BlendPanel(vm = vm) { vm.activePanel = null }
                     "audio" -> AudioPanel { vm.activePanel = null }
                     "export" -> ExportPanel(vm = vm) { vm.activePanel = null }
-                    "transitions" -> TransitionPanel { vm.activePanel = null }
+                    "transitions" -> TransitionPanel(vm = vm) { vm.activePanel = null }
                     "tracking" -> TrackingPanel { vm.activePanel = null }
                     "stabilizer" -> StabilizerPanel { vm.activePanel = null }
                     "pip" -> PiPPanel { vm.activePanel = null }

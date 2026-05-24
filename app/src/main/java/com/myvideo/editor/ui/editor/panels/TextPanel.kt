@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun TextPanel(onClose: () -> Unit = {}) {
+fun TextPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var text by remember { mutableStateOf("双击编辑文字") }
     var font by remember { mutableStateOf("默认") }
     var animation by remember { mutableStateOf("淡入") }
@@ -83,6 +83,14 @@ fun TextPanel(onClose: () -> Unit = {}) {
             listOf("无", "淡入", "弹出", "逐字", "打字机").forEach { a -> OptionChip(a, animation == a) { animation = a } }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        ApplyButton("应用") { onClose() }
+        ApplyButton("应用") {
+            val clip = vm.selectedClip()
+            if (clip != null) {
+                vm.showToast("已应用文字: $text")
+            } else {
+                vm.showToast("请先选择片段")
+            }
+            onClose()
+        }
     }
 }

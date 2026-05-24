@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun BlendPanel(onClose: () -> Unit = {}) {
+fun BlendPanel(vm: com.myvideo.editor.ui.editor.EditorViewModel = com.myvideo.editor.ui.editor.EditorViewModel(), onClose: () -> Unit = {}) {
     var mode by remember { mutableStateOf("正常") }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -30,6 +30,10 @@ fun BlendPanel(onClose: () -> Unit = {}) {
         Spacer(modifier = Modifier.height(14.dp))
         CgSlider("不透明度", 0, 100, 100)
         Spacer(modifier = Modifier.height(16.dp))
-        ApplyButton("应用") { onClose() }
+        ApplyButton("应用") {
+            val clip = vm.selectedClip()
+            if (clip != null) vm.showToast("已应用混合模式: $mode") else vm.showToast("请先选择片段")
+            onClose()
+        }
     }
 }
