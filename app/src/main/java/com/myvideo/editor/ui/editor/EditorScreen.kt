@@ -19,6 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.myvideo.editor.ui.editor.panels.*
+import com.myvideo.editor.engine.VideoPlayerManager
+import com.myvideo.editor.engine.rememberVideoPlayer
+import android.net.Uri
 
 private object EC {
     val Bg = Color(0xFF1E1E1E); val Surf = Color(0xFF282828)
@@ -33,7 +36,8 @@ private object EC {
 
 @Composable
 fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
-    LaunchedEffect(vm.showToast) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val playerManager = rememberVideoPlayer(context, vm)
         if (vm.showToast) { kotlinx.coroutines.delay(2000); vm.showToast = false }
     }
 
@@ -148,17 +152,20 @@ private fun PlaybackBar(vm: EditorViewModel) {
             modifier = Modifier.width(48.dp),
             textAlign = androidx.compose.ui.text.style.TextAlign.End)
         Spacer(modifier = Modifier.width(10.dp))
-        PlaybackBtn("⏮") { vm.stepBackward() }
-        PlaybackBtn("◀◀") { vm.stepBackward() }
+        PlaybackBtn("⏮") { playerManager?.stepBackward() ?: vm.stepBackward() }
+        PlaybackBtn("◀◀") { playerManager?.stepBackward() ?: vm.stepBackward() }
         Spacer(modifier = Modifier.width(10.dp))
         Box(modifier = Modifier.size(34.dp).clip(RoundedCornerShape(17.dp))
             .background(Brush.linearGradient(listOf(EC.Acc, EC.AccL)))
-            .clickable { vm.isPlaying = !vm.isPlaying }, contentAlignment = Alignment.Center) {
+            .clickable { if (playerManager != null) {
+                            playerManager?.togglePlay()
+                            vm.playerIsPlaying = playerManager?.isPlaying ?: false
+                        } else { vm.isPlaying = !vm.isPlaying } }, contentAlignment = Alignment.Center) {
             Text(if (vm.isPlaying) "⏸" else "▶", fontSize = 14.sp, color = Color.White)
         }
         Spacer(modifier = Modifier.width(10.dp))
-        PlaybackBtn("▶▶") { vm.stepForward() }
-        PlaybackBtn("⏭") { vm.stepForward() }
+        PlaybackBtn("▶▶") { playerManager?.stepForward() ?: vm.stepForward() }
+        PlaybackBtn("⏭") { playerManager?.stepForward() ?: vm.stepForward() }
         Spacer(modifier = Modifier.width(10.dp))
         Text(vm.totalDuration, fontSize = 9.sp, color = EC.T4, fontFamily = FontFamily.Monospace)
     }

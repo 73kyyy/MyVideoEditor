@@ -80,6 +80,12 @@ class EditorViewModel {
     var exportDone by mutableStateOf(false)
     var exportError by mutableStateOf<String?>(null)
 
+    // 播放器（ExoPlayer）
+    var playerReady by mutableStateOf(false)
+    var playerDurationMs by mutableStateOf(0L)
+    var playerCurrentMs by mutableStateOf(0L)
+    var playerIsPlaying by mutableStateOf(false)
+
     // 钢笔蒙版
     var penMode by mutableStateOf(false)
     val maskPoints = mutableStateListOf<MaskPoint>()
