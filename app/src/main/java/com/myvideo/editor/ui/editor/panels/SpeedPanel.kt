@@ -11,14 +11,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.myvideo.editor.engine.EditorBridge
 import com.myvideo.editor.ui.editor.EditorViewModel
 
 @Composable
 fun SpeedPanel(vm: EditorViewModel = EditorViewModel(), onClose: () -> Unit = {}) {
+    val context = LocalContext.current
+    val bridge = remember { EditorBridge(context) }
     val clip = vm.selectedClip()
     var speed by remember { mutableStateOf(clip?.speed?.toString() ?: "1.00") }
     var reversed by remember { mutableStateOf(clip?.isReversed ?: false) }
@@ -55,13 +59,24 @@ fun SpeedPanel(vm: EditorViewModel = EditorViewModel(), onClose: () -> Unit = {}
         }
         Spacer(modifier = Modifier.height(16.dp))
         ApplyButton("应用") {
-            // 连接EditorViewModel：应用速度到选中片段
             clip?.let { c ->
+                val newSpeed = speed.toFloatOrNull() ?: 1f
+                // 更新ViewModel状态
                 val idx = vm.clips.indexOf(c)
                 if (idx >= 0) {
-                    val newSpeed = speed.toFloatOrNull() ?: 1f
                     vm.clips[idx] = c.copy(speed = newSpeed, isReversed = reversed)
-                    vm.showToast("已应用: ${speed}x ${if (reversed) "倒放" else ""}")
+                }
+                // 连接FFmpeg实际处理
+                if (reversed) {
+                    bridge.applyReverse(vm,
+                        onComplete = { vm.showToast("倒放完成") },
+                        onError = { vm.showToast("倒放失败: $it") }
+                    )
+                } else if (newSpeed != 1f) {
+                    bridge.applySpeed(vm, newSpeed,
+                        onComplete = { vm.showToast("变速完成: ${newSpeed}x") },
+                        onError = { vm.showToast("变速失败: $it") }
+                    )
                 }
             }
             onClose()
