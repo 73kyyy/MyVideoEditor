@@ -1,0 +1,2 @@
+@rem Gradle wrapper
+@gradle %*
