@@ -3,6 +3,8 @@ package com.myvideo.editor.ui.editor.panels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -12,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,15 +30,49 @@ internal object CG {
 }
 
 @Composable
-internal fun CgSlider(label: String, min: Int, value: Int, max: Int) {
-    var v by remember { mutableStateOf(value) }
-    val pct = ((v - min).toFloat() / (max - min) * 100).coerceIn(0f, 100f)
+internal fun CgSlider(label: String, min: Int, value: Int, max: Int, onChange: (Int) -> Unit = {}) {
+    var sliderWidth by remember { mutableStateOf(1) }
+    var currentValue by remember { mutableStateOf(value.toFloat()) }
+    LaunchedEffect(value) { currentValue = value.toFloat() }
+    val range = (max - min).toFloat().coerceAtLeast(1f)
+    val pct = ((currentValue - min) / range * 100f).coerceIn(0f, 100f)
+
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 9.sp, color = CG.T3, modifier = Modifier.width(40.dp))
-        Box(modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(CG.Card)) {
-            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(pct / 100f).clip(RoundedCornerShape(3.dp)).background(CG.Acc))
+        Text(label, fontSize = 9.sp, color = CG.T3, modifier = Modifier.width(48.dp))
+        Box(modifier = Modifier.weight(1f).height(20.dp)
+            .onSizeChanged { sliderWidth = it.width }
+            .pointerInput(min, max) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        val newValue = min + (offset.x / size.width.coerceAtLeast(1)) * range
+                        currentValue = newValue.coerceIn(min.toFloat(), max.toFloat())
+                        onChange(currentValue.toInt())
+                    }
+                ) { change, dragAmount ->
+                    change.consume()
+                    val delta = dragAmount.x / size.width.coerceAtLeast(1) * range
+                    currentValue = (currentValue + delta).coerceIn(min.toFloat(), max.toFloat())
+                    onChange(currentValue.toInt())
+                }
+            }
+            .pointerInput(min, max) {
+                detectTapGestures { offset ->
+                    val newValue = min + (offset.x / size.width.coerceAtLeast(1)) * range
+                    currentValue = newValue.coerceIn(min.toFloat(), max.toFloat())
+                    onChange(currentValue.toInt())
+                }
+            },
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(CG.Card))
+            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(pct / 100f).clip(RoundedCornerShape(3.dp))
+                .background(Brush.horizontalGradient(listOf(CG.Acc, CG.AccL))))
+            Box(modifier = Modifier.offset(x = ((pct / 100f) * (sliderWidth - 12)).coerceAtLeast(0f).dp)
+                .size(12.dp).clip(RoundedCornerShape(6.dp))
+                .background(Color.White).border(1.5.dp, CG.Acc, RoundedCornerShape(6.dp)))
         }
-        Text("$v", fontSize = 8.sp, color = CG.T2, fontFamily = FontFamily.Monospace, modifier = Modifier.width(30.dp), textAlign = TextAlign.End)
+        Text("${currentValue.toInt()}", fontSize = 8.sp, color = CG.T2, fontFamily = FontFamily.Monospace,
+            modifier = Modifier.width(32.dp), textAlign = TextAlign.End)
     }
 }
 

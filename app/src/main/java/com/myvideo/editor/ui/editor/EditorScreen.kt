@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -38,30 +40,23 @@ private object EC {
 fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val playerManager = rememberVideoPlayer(context, vm)
-        if (vm.showToast) { kotlinx.coroutines.delay(2000); vm.showToast = false }
-    }
+    if (vm.showToast) { kotlinx.coroutines.delay(2000); vm.showToast = false }
 
     Box(modifier = Modifier.fillMaxSize().background(EC.Bg)) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // 预览区
             Box(modifier = Modifier.fillMaxWidth().height(vm.previewHeightPx.dp).background(Color.Black)) {
                 PreviewCanvas(vm)
             }
-            // 拖拽手柄
             Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(EC.Surf)
                 .border(1.dp, EC.Line), contentAlignment = Alignment.Center) {
                 Box(modifier = Modifier.width(36.dp).height(3.dp).clip(RoundedCornerShape(2.dp)).background(EC.Line2))
             }
-            // 工具栏
             EditorToolbar(vm)
-            // 时间轴
             Box(modifier = Modifier.weight(1f).fillMaxWidth().background(EC.Card)) {
                 TimelineView(vm)
             }
-            // 播放控制栏
             PlaybackBar(vm)
         }
-        // FAB
         if (vm.selectedClipId != null) {
             Box(modifier = Modifier.align(Alignment.Center).padding(bottom = 60.dp)
                 .size(36.dp).clip(RoundedCornerShape(18.dp))
@@ -70,7 +65,6 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
                 Text("+", fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
-        // Toast
         if (vm.showToast) {
             Box(modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
                 .clip(RoundedCornerShape(10.dp)).background(EC.CardH)
@@ -79,10 +73,8 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
                 Text(vm.toastMessage, fontSize = 11.sp, color = EC.T1)
             }
         }
-        // 右键菜单
         if (vm.showContextMenu) {
-            Box(modifier = Modifier.fillMaxSize()
-                .clickable { vm.showContextMenu = false }) {
+            Box(modifier = Modifier.fillMaxSize().clickable { vm.showContextMenu = false }) {
                 Column(modifier = Modifier
                     .offset((vm.contextMenuPosition.x / 2).dp, (vm.contextMenuPosition.y / 2).dp)
                     .width(130.dp).clip(RoundedCornerShape(10.dp)).background(EC.CardH)
@@ -91,15 +83,10 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
                     CtxItem("粘贴") { vm.showToast("已粘贴"); vm.showContextMenu = false }
                     CtxItem("添加关键帧") { vm.addKeyframe(); vm.showContextMenu = false }
                     CtxItem("速度") { vm.activePanel = "speed"; vm.showContextMenu = false }
-                    CtxItem("删除", true) {
-                        vm.deleteSelectedClip()
-                        vm.showContextMenu = false
-                        vm.showToast("已删除")
-                    }
+                    CtxItem("删除", true) { vm.deleteSelectedClip(); vm.showContextMenu = false; vm.showToast("已删除") }
                 }
             }
         }
-        // 面板
         PanelOverlay(vm)
     }
 }
@@ -108,14 +95,39 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
 private fun PreviewCanvas(vm: EditorViewModel) {
     val ratio = vm.getCanvasRatioFloat()
     val isLandscape = ratio >= 1f
+    var previewScale by remember { mutableStateOf(1f) }
+    var previewRotation by remember { mutableStateOf(0f) }
+    var previewOffsetX by remember { mutableStateOf(0f) }
+    var previewOffsetY by remember { mutableStateOf(0f) }
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         val w = if (isLandscape) 0.95f else 0.5f
         val h = if (!isLandscape) 0.95f else 0.5f
         Box(modifier = Modifier.fillMaxWidth(w).fillMaxHeight(h)
             .clip(RoundedCornerShape(4.dp))
+            .graphicsLayer {
+                scaleX = previewScale; scaleY = previewScale
+                rotationZ = previewRotation
+                translationX = previewOffsetX; translationY = previewOffsetY
+            }
             .background(Brush.linearGradient(listOf(
-                Color(0xFF1A1A20), Color(0xFF0A1520), Color(0xFF101818)))),
+                Color(0xFF1A1A20), Color(0xFF0A1520), Color(0xFF101818))))
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, zoom, rotation ->
+                    previewScale = (previewScale * zoom).coerceIn(0.5f, 5f)
+                    previewRotation += rotation
+                    previewOffsetX += pan.x
+                    previewOffsetY += pan.y
+                }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        previewScale = 1f; previewRotation = 0f
+                        previewOffsetX = 0f; previewOffsetY = 0f
+                    }
+                )
+            },
             contentAlignment = Alignment.Center) {
             Box(modifier = Modifier.fillMaxWidth(0.3f).fillMaxHeight(0.3f)
                 .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(50)))
@@ -124,7 +136,6 @@ private fun PreviewCanvas(vm: EditorViewModel) {
             Box(modifier = Modifier.fillMaxWidth(0.3f).fillMaxHeight(0.2f)
                 .clip(RoundedCornerShape(50)).background(Color(0x0F6496FF)))
         }
-        // 分辨率标签
         val resText = if (vm.canvasRatio == "自定义") "${vm.customWidth}×${vm.customHeight}"
         else when(vm.canvasRatio) {
             "16:9" -> "1920×1080"; "9:16" -> "1080×1920"; "1:1" -> "1080×1080"
@@ -134,16 +145,24 @@ private fun PreviewCanvas(vm: EditorViewModel) {
             modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
                 .clip(RoundedCornerShape(3.dp)).background(Color.Black.copy(alpha = 0.55f))
                 .padding(5.dp, 2.dp))
-        // 帧率
         Text("30fps", fontSize = 7.sp, color = EC.T3, fontFamily = FontFamily.Monospace,
             modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)
                 .clip(RoundedCornerShape(3.dp)).background(Color.Black.copy(alpha = 0.55f))
                 .padding(5.dp, 2.dp))
+        if (previewScale != 1f) {
+            Text("${(previewScale * 100).toInt()}%", fontSize = 7.sp, color = EC.Gold,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
+                    .clip(RoundedCornerShape(3.dp)).background(Color.Black.copy(alpha = 0.55f))
+                    .padding(5.dp, 2.dp))
+        }
     }
 }
 
 @Composable
 private fun PlaybackBar(vm: EditorViewModel) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val playerManager = rememberVideoPlayer(context, vm)
     Row(modifier = Modifier.fillMaxWidth().height(44.dp).background(EC.Surf)
         .border(1.dp, EC.Line),
         horizontalArrangement = Arrangement.Center,
@@ -158,9 +177,9 @@ private fun PlaybackBar(vm: EditorViewModel) {
         Box(modifier = Modifier.size(34.dp).clip(RoundedCornerShape(17.dp))
             .background(Brush.linearGradient(listOf(EC.Acc, EC.AccL)))
             .clickable { if (playerManager != null) {
-                            playerManager?.togglePlay()
-                            vm.playerIsPlaying = playerManager?.isPlaying ?: false
-                        } else { vm.isPlaying = !vm.isPlaying } }, contentAlignment = Alignment.Center) {
+                playerManager?.togglePlay()
+                vm.playerIsPlaying = playerManager?.isPlaying ?: false
+            } else { vm.isPlaying = !vm.isPlaying } }, contentAlignment = Alignment.Center) {
             Text(if (vm.isPlaying) "⏸" else "▶", fontSize = 14.sp, color = Color.White)
         }
         Spacer(modifier = Modifier.width(10.dp))
@@ -233,7 +252,6 @@ private fun ToolbarBtn(label: String, active: Boolean = false, onClick: () -> Un
     }
 }
 
-// ===== 面板系统 =====
 @Composable
 private fun PanelOverlay(vm: EditorViewModel) {
     if (vm.activePanel == null) return
@@ -247,23 +265,12 @@ private fun PanelOverlay(vm: EditorViewModel) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
                 Text(when (vm.activePanel) {
-                    "color" -> "调色 · AE级"
-                    "speed" -> "变速"
-                    "text" -> "文字编辑"
-                    "fx" -> "效果"
-                    "blend" -> "混合模式"
-                    "audio" -> "音频"
-                    "export" -> "导出"
-                    "transitions" -> "转场"
-                    "tracking" -> "运动追踪"
-                    "stabilizer" -> "视频稳定器"
-                    "pip" -> "画中画"
-                    "chroma" -> "绿幕抠像"
-                    "motionblur" -> "动态模糊"
-                    "particles" -> "粒子效果"
-                    "lens" -> "镜头效果"
-                    "film" -> "胶片颗粒"
-                    "template" -> "项目模板"
+                    "color" -> "调色 · AE级"; "speed" -> "变速"; "text" -> "文字编辑"
+                    "fx" -> "效果"; "blend" -> "混合模式"; "audio" -> "音频"
+                    "export" -> "导出"; "transitions" -> "转场"; "tracking" -> "运动追踪"
+                    "stabilizer" -> "视频稳定器"; "pip" -> "画中画"; "chroma" -> "绿幕抠像"
+                    "motionblur" -> "动态模糊"; "particles" -> "粒子效果"
+                    "lens" -> "镜头效果"; "film" -> "胶片颗粒"; "template" -> "项目模板"
                     else -> "面板"
                 }, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = EC.T1)
                 Box(modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp))
