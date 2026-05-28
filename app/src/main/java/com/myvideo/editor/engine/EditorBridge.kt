@@ -1,6 +1,9 @@
 package com.myvideo.editor.engine
 
 import android.content.Context
+import com.myvideo.editor.core.ai.AIIntegrationBridge
+import com.myvideo.editor.core.security.membership.MembershipValidator
+import com.myvideo.editor.ui.editor.AIFeatureUIHelper
 import com.myvideo.editor.ui.editor.EditorViewModel
 import java.io.File
 
@@ -11,6 +14,9 @@ class EditorBridge(private val context: Context) {
     private val speedEngine = FFmpegSpeedEngine(renderEngine)
     private val audioEngine = FFmpegAudioEngine(renderEngine)
     private val exportEngine = FFmpegExportEngine(context, renderEngine)
+    private val aiBridge = AIIntegrationBridge(context)
+    private val aiHelper = AIFeatureUIHelper(context)
+    private val validator = MembershipValidator()
 
     private fun getClipPath(vm: EditorViewModel, clipId: String): String? {
         return vm.videoUris[clipId]?.replace("file://", "")
@@ -29,7 +35,97 @@ class EditorBridge(private val context: Context) {
         override fun onLog(m: String) {}
     }
 
-    // ===== 滤镜 =====
+    // ===== AI功能（3次免费+录屏检测+联网验证）=====
+    private fun checkAI(vm: EditorViewModel, featureId: String, isOnline: Boolean): Boolean {
+        aiHelper.checkScreenState(context)
+        val error = aiHelper.checkAIAccess(featureId, isOnline)
+        if (error != null) { vm.showToast(error); return false }
+        return true
+    }
+
+    fun aiSegment(vm: EditorViewModel, isOnline: Boolean,
+                  onComplete: (String) -> Unit, onError: (String) -> Unit) {
+        if (!checkAI(vm, "segment", isOnline)) return
+        aiHelper.recordAIUsage("segment")
+        val clip = vm.selectedClip() ?: return onError("请先选择片段")
+        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
+        val output = getOutputPath("ai_segment_${System.currentTimeMillis()}.mp4")
+        val result = aiBridge.segment(android.graphics.BitmapFactory.decodeFile(input), isOnline)
+        if (result.success) onComplete(output) else onError(result.errorMessage ?: "AI抠图失败")
+    }
+
+    fun aiSuperRes(vm: EditorViewModel, isOnline: Boolean,
+                   onComplete: (String) -> Unit, onError: (String) -> Unit) {
+        if (!checkAI(vm, "superres", isOnline)) return
+        aiHelper.recordAIUsage("superres")
+        val clip = vm.selectedClip() ?: return onError("请先选择片段")
+        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
+        val output = getOutputPath("ai_superres_${System.currentTimeMillis()}.mp4")
+        val result = aiBridge.superResolution(android.graphics.BitmapFactory.decodeFile(input), isOnline)
+        if (result.success) onComplete(output) else onError(result.errorMessage ?: "AI超分失败")
+    }
+
+    fun aiInterpolate(vm: EditorViewModel, isOnline: Boolean,
+                      onComplete: (String) -> Unit, onError: (String) -> Unit) {
+        if (!checkAI(vm, "interpolate", isOnline)) return
+        aiHelper.recordAIUsage("interpolate")
+        val clip = vm.selectedClip() ?: return onError("请先选择片段")
+        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
+        val output = getOutputPath("ai_interp_${System.currentTimeMillis()}.mp4")
+        val bmp = android.graphics.BitmapFactory.decodeFile(input)
+        val result = aiBridge.interpolate(bmp, bmp, isOnline)
+        if (result.success) onComplete(output) else onError(result.errorMessage ?: "AI插帧失败")
+    }
+
+    fun aiWhisper(vm: EditorViewModel, isOnline: Boolean,
+                  onComplete: (String) -> Unit, onError: (String) -> Unit) {
+        if (!checkAI(vm, "whisper", isOnline)) return
+        aiHelper.recordAIUsage("whisper")
+        val clip = vm.selectedClip() ?: return onError("请先选择片段")
+        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
+        val result = aiBridge.whisperTranscribe(FloatArray(0), isOnline)
+        if (result.success) onComplete("语音识别完成") else onError(result.errorMessage ?: "语音识别失败")
+    }
+
+    fun aiDenoise(vm: EditorViewModel, isOnline: Boolean,
+                  onComplete: (String) -> Unit, onError: (String) -> Unit) {
+        if (!checkAI(vm, "denoise", isOnline)) return
+        aiHelper.recordAIUsage("denoise")
+        val clip = vm.selectedClip() ?: return onError("请先选择片段")
+        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
+        val output = getOutputPath("ai_denoise_${System.currentTimeMillis()}.mp4")
+        val result = aiBridge.denoise(FloatArray(0), isOnline)
+        if (result.success) onComplete(output) else onError(result.errorMessage ?: "AI降噪失败")
+    }
+
+    fun aiSeparate(vm: EditorViewModel, isOnline: Boolean,
+                   onComplete: (String) -> Unit, onError: (String) -> Unit) {
+        if (!checkAI(vm, "separate", isOnline)) return
+        aiHelper.recordAIUsage("separate")
+        val clip = vm.selectedClip() ?: return onError("请先选择片段")
+        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
+        val result = aiBridge.separate(FloatArray(0), isOnline)
+        if (result.success) onComplete("人声分离完成") else onError(result.errorMessage ?: "人声分离失败")
+    }
+
+    // ===== 导出（检查AI使用权限）=====
+    fun export(vm: EditorViewModel, width: Int, height: Int, fps: Int, bitrate: String,
+               onComplete: (String) -> Unit, onError: (String) -> Unit) {
+        val permissionError = aiHelper.checkExportPermission()
+        if (permissionError != null) return onError(permissionError)
+        val clip = vm.clips.firstOrNull() ?: return onError("没有片段")
+        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
+        val output = getOutputPath("export_${System.currentTimeMillis()}.mp4")
+        vm.isExporting = true; vm.exportProgress = 0f; vm.exportError = null
+        exportEngine.exportWithProfile(input, output, "1080p", "", object : FFmpegRenderEngine.RenderCallback {
+            override fun onProgress(p: Float) { vm.exportProgress = p }
+            override fun onComplete(o: String) { vm.isExporting = false; vm.exportDone = true; onComplete(output) }
+            override fun onError(e: String) { vm.isExporting = false; vm.exportError = e; onError(e) }
+            override fun onLog(m: String) {}
+        })
+    }
+
+    // ===== 传统功能（无限制）=====
     fun applyFilter(vm: EditorViewModel, filterName: String, onComplete: (String) -> Unit, onError: (String) -> Unit) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
@@ -44,21 +140,6 @@ class EditorBridge(private val context: Context) {
         filterEngine.applyMultiple(input, output, filters, makeCallback(vm, clip.id, output, onComplete, onError))
     }
 
-    fun applyVignette(vm: EditorViewModel, strength: Float, onComplete: (String) -> Unit, onError: (String) -> Unit) {
-        val clip = vm.selectedClip() ?: return onError("请先选择片段")
-        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
-        val output = getOutputPath("vignette_${System.currentTimeMillis()}.mp4")
-        filterEngine.applyVignette(input, output, strength, makeCallback(vm, clip.id, output, onComplete, onError))
-    }
-
-    fun applyFilmGrain(vm: EditorViewModel, grain: Float, onComplete: (String) -> Unit, onError: (String) -> Unit) {
-        val clip = vm.selectedClip() ?: return onError("请先选择片段")
-        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
-        val output = getOutputPath("grain_${System.currentTimeMillis()}.mp4")
-        filterEngine.applyFilmGrain(input, output, grain, makeCallback(vm, clip.id, output, onComplete, onError))
-    }
-
-    // ===== 变速/倒放 =====
     fun applySpeed(vm: EditorViewModel, speed: Float, onComplete: (String) -> Unit, onError: (String) -> Unit) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
@@ -73,19 +154,6 @@ class EditorBridge(private val context: Context) {
         speedEngine.applyReverse(input, output, makeCallback(vm, clip.id, output, onComplete, onError))
     }
 
-    // ===== 转场 =====
-    fun applyTransition(vm: EditorViewModel, type: String, durationMs: Long, onComplete: (String) -> Unit, onError: (String) -> Unit) {
-        val clip1 = vm.clips.getOrNull(0) ?: return onError("需要至少两个片段")
-        val clip2 = vm.clips.getOrNull(1) ?: return onError("需要至少两个片段")
-        val path1 = getClipPath(vm, clip1.id) ?: return onError("找不到第一个视频")
-        val path2 = getClipPath(vm, clip2.id) ?: return onError("找不到第二个视频")
-        val output = getOutputPath("transition_${System.currentTimeMillis()}.mp4")
-        val tt = com.myvideo.editor.core.video.model.TransitionType.values().find { it.name.contains(type, true) } ?: com.myvideo.editor.core.video.model.TransitionType.CrossFade
-        val config = com.myvideo.editor.core.video.model.ParametricTransition("t1", type, tt, durationMs)
-        com.myvideo.editor.core.video.TransitionEngine(renderEngine).apply(path1, path2, output, config, makeCallback(vm, null, output, onComplete, onError))
-    }
-
-    // ===== 音频 =====
     fun applyAudioDenoise(vm: EditorViewModel, onComplete: (String) -> Unit, onError: (String) -> Unit) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
@@ -100,14 +168,6 @@ class EditorBridge(private val context: Context) {
         audioEngine.applyVolume(input, output, volume, makeCallback(vm, clip.id, output, onComplete, onError))
     }
 
-    fun addBgm(vm: EditorViewModel, bgmPath: String, bgmVolume: Float, onComplete: (String) -> Unit, onError: (String) -> Unit) {
-        val clip = vm.selectedClip() ?: return onError("请先选择片段")
-        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
-        val output = getOutputPath("bgm_${System.currentTimeMillis()}.mp4")
-        audioEngine.addBgm(input, bgmPath, output, bgmVolume, makeCallback(vm, clip.id, output, onComplete, onError))
-    }
-
-    // ===== 文字叠加 =====
     fun addTextOverlay(vm: EditorViewModel, text: String, fontSize: Int, color: String, onComplete: (String) -> Unit, onError: (String) -> Unit) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
@@ -117,7 +177,6 @@ class EditorBridge(private val context: Context) {
             makeCallback(vm, clip.id, output, onComplete, onError))
     }
 
-    // ===== 绿幕抠像 =====
     fun applyChromaKey(vm: EditorViewModel, color: String, similarity: Float, onComplete: (String) -> Unit, onError: (String) -> Unit) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
@@ -126,7 +185,6 @@ class EditorBridge(private val context: Context) {
             makeCallback(vm, clip.id, output, onComplete, onError))
     }
 
-    // ===== 动态模糊 =====
     fun applyMotionBlur(vm: EditorViewModel, strength: Float, onComplete: (String) -> Unit, onError: (String) -> Unit) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
@@ -136,11 +194,10 @@ class EditorBridge(private val context: Context) {
             makeCallback(vm, clip.id, output, onComplete, onError))
     }
 
-    // ===== 视频稳定 =====
     fun applyStabilize(vm: EditorViewModel, smoothing: Int, onComplete: (String) -> Unit, onError: (String) -> Unit) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
-        val stabFile = getOutputPath("stab_data_${System.currentTimeMillis()}.txt")
+        val stabFile = getOutputPath("stab_${System.currentTimeMillis()}.txt")
         val output = getOutputPath("stabilized_${System.currentTimeMillis()}.mp4")
         renderEngine.run("-i $input -vf \"vidstabdetect=shakiness=5:accuracy=15:result=$stabFile\" -f null -",
             object : FFmpegRenderEngine.RenderCallback {
@@ -154,7 +211,18 @@ class EditorBridge(private val context: Context) {
             })
     }
 
-    // ===== 剪切/拼接 =====
+    fun applyTransition(vm: EditorViewModel, type: String, durationMs: Long, onComplete: (String) -> Unit, onError: (String) -> Unit) {
+        val clip1 = vm.clips.getOrNull(0) ?: return onError("需要至少两个片段")
+        val clip2 = vm.clips.getOrNull(1) ?: return onError("需要至少两个片段")
+        val path1 = getClipPath(vm, clip1.id) ?: return onError("找不到第一个视频")
+        val path2 = getClipPath(vm, clip2.id) ?: return onError("找不到第二个视频")
+        val output = getOutputPath("transition_${System.currentTimeMillis()}.mp4")
+        val tt = com.myvideo.editor.feature.effects.transition.TransitionType.values().find { it.name.contains(type, true) }
+            ?: com.myvideo.editor.feature.effects.transition.TransitionType.CrossFade
+        val config = com.myvideo.editor.core.video.model.ParametricTransition("t1", type, tt, durationMs)
+        com.myvideo.editor.core.video.TransitionEngine(renderEngine).apply(path1, path2, output, config, makeCallback(vm, null, output, onComplete, onError))
+    }
+
     fun trimClip(vm: EditorViewModel, startMs: Long, endMs: Long, onComplete: (String) -> Unit, onError: (String) -> Unit) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
@@ -169,21 +237,7 @@ class EditorBridge(private val context: Context) {
         renderEngine.concat(paths, output, makeCallback(vm, null, output, onComplete, onError))
     }
 
-    // ===== 导出 =====
-    fun export(vm: EditorViewModel, width: Int, height: Int, fps: Int, bitrate: String,
-               onComplete: (String) -> Unit, onError: (String) -> Unit) {
-        val clip = vm.clips.firstOrNull() ?: return onError("没有片段")
-        val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
-        val output = getOutputPath("export_${System.currentTimeMillis()}.mp4")
-        vm.isExporting = true; vm.exportProgress = 0f; vm.exportError = null
-        exportEngine.exportWithProfile(input, output, "1080p", "", object : FFmpegRenderEngine.RenderCallback {
-            override fun onProgress(p: Float) { vm.exportProgress = p }
-            override fun onComplete(o: String) { vm.isExporting = false; vm.exportDone = true; onComplete(outputPath) }
-            override fun onError(e: String) { vm.isExporting = false; vm.exportError = e; onError(e) }
-            override fun onLog(m: String) {}
-        })
-    }
-
     fun getVideoInfo(path: String): String? = renderEngine.getMediaInfo(path)
-    fun release() { renderEngine.release() }
+    fun getAIHelper() = aiHelper
+    fun release() { renderEngine.release(); aiBridge.release(); aiHelper.release() }
 }

@@ -96,17 +96,39 @@ android {
         }
     }
 
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
         jniLibs {
-            useLegacyPackaging = false
+            useLegacyPackaging = true
         }
+    }
+
+    androidResources {
+        noCompress += "bin"
+        noCompress += "onnx"
+        noCompress += "ncnn"
+        noCompress += "param"
     }
 }
 
 dependencies {
+    // ===== Core模块 =====
+    implementation(project(":core:ai"))
+    implementation(project(":core:common"))
+    implementation(project(":core:export"))
+    implementation(project(":core:performance"))
+    implementation(project(":core:security"))
+    implementation(project(":core:video"))
+    implementation(project(":core:vision"))
+    // ===== Feature模块 =====
+    implementation(project(":feature:effects"))
+    implementation(project(":feature:player"))
+    implementation(project(":feature:project"))
+    implementation(project(":feature:subtitle"))
+    implementation(project(":feature:tracking"))
     // ===== AndroidX =====
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -164,4 +186,9 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     debugImplementation("androidx.compose.ui:ui-tooling")
+}
+
+// AI模型assets配置
+android {
+    // APK大小上限650MB（含584MB模型）
 }

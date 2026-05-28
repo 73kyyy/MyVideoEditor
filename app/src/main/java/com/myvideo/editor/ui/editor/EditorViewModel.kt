@@ -110,8 +110,8 @@ class EditorViewModel {
     var trackPanelCollapsed by mutableStateOf(false)
 
     // 免费计数
-    var freeUsed by mutableStateOf(3)
-    val freeMax = 5
+    var freeUsed by mutableStateOf(0)
+    val freeMax = 3
 
     // 撤销栈
     val undoStack = mutableListOf<String>()

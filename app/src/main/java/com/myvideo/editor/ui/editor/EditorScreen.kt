@@ -11,18 +11,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.myvideo.editor.ui.editor.panels.*
 import com.myvideo.editor.engine.VideoPlayerManager
 import com.myvideo.editor.engine.rememberVideoPlayer
+import com.myvideo.editor.core.security.membership.MembershipValidator
 import android.net.Uri
 
 private object EC {
@@ -38,12 +42,40 @@ private object EC {
 
 @Composable
 fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val playerManager = rememberVideoPlayer(context, vm)
+    val aiHelper = remember { AIFeatureUIHelper(context) }
+    val validator = remember { MembershipValidator() }
+    val isOnline = remember { mutableStateOf(checkOnline(context)) }
+    var showRecordWarning by remember { mutableStateOf(false) }
+    var showMembershipBanner by remember { mutableStateOf(!validator.isMember()) }
+
+    // 定时检查录屏状态
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(2000)
+            val recording = aiHelper.checkScreenState(context)
+            showRecordWarning = aiHelper.shouldBlurBackground()
+            isOnline.value = checkOnline(context)
+            showMembershipBanner = !validator.isMember()
+        }
+    }
+
     if (vm.showToast) { kotlinx.coroutines.delay(2000); vm.showToast = false }
 
     Box(modifier = Modifier.fillMaxSize().background(EC.Bg)) {
         Column(modifier = Modifier.fillMaxSize()) {
+            // 会员横幅
+            if (showMembershipBanner) {
+                MembershipBanner(aiHelper, isOnline.value)
+            }
+            // AI次数显示
+            if (!validator.isMember()) {
+                Box(modifier = Modifier.fillMaxWidth().height(28.dp).background(Color(0xFF1A1A1A))
+                    .padding(horizontal = 12.dp), contentAlignment = Alignment.CenterStart) {
+                    Text(aiHelper.getQuotaText(isOnline.value), fontSize = 9.sp, color = EC.Gold)
+                }
+            }
             Box(modifier = Modifier.fillMaxWidth().height(vm.previewHeightPx.dp).background(Color.Black)) {
                 PreviewCanvas(vm)
             }
@@ -63,6 +95,18 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
                 .background(Brush.linearGradient(listOf(EC.Acc, EC.AccL)))
                 .clickable { vm.showFxPopup = !vm.showFxPopup }, contentAlignment = Alignment.Center) {
                 Text("+", fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+        // 录屏虚化遮罩
+        if (showRecordWarning) {
+            Box(modifier = Modifier.fillMaxSize().background(Color(0xE6000000)).blur(20.dp))
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("⚠️", fontSize = 48.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(aiHelper.getScreenRecordWarning(), fontSize = 14.sp, color = Color.White,
+                        textAlign = TextAlign.Center, lineHeight = 22.sp)
+                }
             }
         }
         if (vm.showToast) {
@@ -88,6 +132,32 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
             }
         }
         PanelOverlay(vm)
+    }
+}
+
+private fun checkOnline(context: android.content.Context): Boolean {
+    val cm = context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+    val network = cm.activeNetwork ?: return false
+    val caps = cm.getNetworkCapabilities(network) ?: return false
+    return caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+}
+
+@Composable
+private fun MembershipBanner(aiHelper: AIFeatureUIHelper, isOnline: Boolean) {
+    Box(modifier = Modifier.fillMaxWidth().background(
+        Brush.linearGradient(listOf(Color(0xFFE8A820), Color(0xFFD4942A)))
+    ).padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("👑", fontSize = 14.sp)
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("开通会员 · 解锁全部AI功能", fontSize = 10.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                Text("¥29/月 · ¥76/季 · ¥228/年", fontSize = 8.sp, color = Color.White.copy(alpha = 0.8f))
+            }
+            if (!isOnline) {
+                Text("📶 离线", fontSize = 9.sp, color = Color.White.copy(alpha = 0.7f))
+            }
+        }
     }
 }
 
@@ -121,12 +191,10 @@ private fun PreviewCanvas(vm: EditorViewModel) {
                 }
             }
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onDoubleTap = {
-                        previewScale = 1f; previewRotation = 0f
-                        previewOffsetX = 0f; previewOffsetY = 0f
-                    }
-                )
+                detectTapGestures(onDoubleTap = {
+                    previewScale = 1f; previewRotation = 0f
+                    previewOffsetX = 0f; previewOffsetY = 0f
+                })
             },
             contentAlignment = Alignment.Center) {
             Box(modifier = Modifier.fillMaxWidth(0.3f).fillMaxHeight(0.3f)
@@ -161,15 +229,14 @@ private fun PreviewCanvas(vm: EditorViewModel) {
 
 @Composable
 private fun PlaybackBar(vm: EditorViewModel) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val playerManager = rememberVideoPlayer(context, vm)
     Row(modifier = Modifier.fillMaxWidth().height(44.dp).background(EC.Surf)
         .border(1.dp, EC.Line),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically) {
         Text(vm.currentTime, fontSize = 9.sp, color = EC.T2, fontFamily = FontFamily.Monospace,
-            modifier = Modifier.width(48.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.End)
+            modifier = Modifier.width(48.dp), textAlign = TextAlign.End)
         Spacer(modifier = Modifier.width(10.dp))
         PlaybackBtn("⏮") { playerManager?.stepBackward() ?: vm.stepBackward() }
         PlaybackBtn("◀◀") { playerManager?.stepBackward() ?: vm.stepBackward() }
@@ -177,8 +244,7 @@ private fun PlaybackBar(vm: EditorViewModel) {
         Box(modifier = Modifier.size(34.dp).clip(RoundedCornerShape(17.dp))
             .background(Brush.linearGradient(listOf(EC.Acc, EC.AccL)))
             .clickable { if (playerManager != null) {
-                playerManager?.togglePlay()
-                vm.playerIsPlaying = playerManager?.isPlaying ?: false
+                playerManager?.togglePlay(); vm.playerIsPlaying = playerManager?.isPlaying ?: false
             } else { vm.isPlaying = !vm.isPlaying } }, contentAlignment = Alignment.Center) {
             Text(if (vm.isPlaying) "⏸" else "▶", fontSize = 14.sp, color = Color.White)
         }
@@ -208,12 +274,12 @@ private fun CtxItem(label: String, danger: Boolean = false, onClick: () -> Unit)
     }
 }
 
-private fun EditorViewModel.showToast(msg: String) {
-    toastMessage = msg; showToast = true
-}
 
 @Composable
 private fun EditorToolbar(vm: EditorViewModel) {
+    val context = LocalContext.current
+    val aiHelper = remember { AIFeatureUIHelper(context) }
+    val isOnline = checkOnline(context)
     Row(modifier = Modifier.fillMaxWidth().height(40.dp).background(EC.Surf)
         .border(1.dp, EC.Line).padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically) {
@@ -232,14 +298,27 @@ private fun EditorToolbar(vm: EditorViewModel) {
         ToolbarBtn("文字") { vm.activePanel = "text" }
         ToolbarBtn("音频") { vm.activePanel = "audio" }
         Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
+        ToolbarBtn("AI抠图") { aiToolbarClick(vm, aiHelper, "segment", isOnline) }
+        ToolbarBtn("AI超分") { aiToolbarClick(vm, aiHelper, "superres", isOnline) }
+        ToolbarBtn("AI插帧") { aiToolbarClick(vm, aiHelper, "interpolate", isOnline) }
+        ToolbarBtn("AI语音") { aiToolbarClick(vm, aiHelper, "whisper", isOnline) }
+        ToolbarBtn("AI降噪") { aiToolbarClick(vm, aiHelper, "denoise", isOnline) }
+        ToolbarBtn("AI分离") { aiToolbarClick(vm, aiHelper, "separate", isOnline) }
+        Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
         ToolbarBtn("混合") { vm.activePanel = "blend" }
         ToolbarBtn("导出") { vm.activePanel = "export" }
         ToolbarBtn("转场") { vm.activePanel = "transitions" }
-        Spacer(modifier = Modifier.weight(1f))
-        Text("免费 ", fontSize = 9.sp, color = EC.T3, fontWeight = FontWeight.Medium)
-        Text("${vm.freeUsed}", fontSize = 9.sp, color = EC.Gold, fontWeight = FontWeight.Bold)
-        Text("/${vm.freeMax}", fontSize = 9.sp, color = EC.T3, fontWeight = FontWeight.Medium)
     }
+}
+
+private fun aiToolbarClick(vm: EditorViewModel, aiHelper: AIFeatureUIHelper, featureId: String, isOnline: Boolean) {
+    val error = aiHelper.checkAIAccess(featureId, isOnline)
+    if (error != null) {
+        vm.showToast(error)
+        return
+    }
+    aiHelper.recordAIUsage(featureId)
+    vm.showToast("${featureId} AI功能已调用")
 }
 
 @Composable
