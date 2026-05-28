@@ -40,7 +40,7 @@ android {
             keyAlias = "nexclip"
             keyPassword = System.getenv("KEY_PASSWORD") ?: ""
         }
-        create("debug") {
+        getByName("debug") {
             storeFile = file("../keystore/debug.jks")
             storePassword = "android"
             keyAlias = "androiddebugkey"
