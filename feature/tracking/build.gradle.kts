@@ -4,6 +4,7 @@ plugins {
 }
 
 android {
+    ndkVersion = "26.1.10909125"
     namespace = "com.myvideo.editor.feature.tracking"
     compileSdk = 34
     defaultConfig { minSdk = 26; targetSdk = 34; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }

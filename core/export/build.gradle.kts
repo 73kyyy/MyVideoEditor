@@ -4,6 +4,7 @@ plugins {
 }
 
 android {
+    ndkVersion = "26.1.10909125"
     namespace = "com.myvideo.editor.core.export"
     compileSdk = 34
 
