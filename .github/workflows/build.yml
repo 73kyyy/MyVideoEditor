@@ -287,13 +287,13 @@ jobs:
         run: |
           export KEYSTORE_PASSWORD=nexclip123
           export KEY_PASSWORD=nexclip123
-          ./gradlew assemble${{ matrix.flavor }}Debug --stacktrace --no-daemon 2>&1 | tail -300
+          ./gradlew assemble${{ matrix.flavor }}Debug --stacktrace --no-daemon
       - name: Build Release APK
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           export KEYSTORE_PASSWORD=nexclip123
           export KEY_PASSWORD=nexclip123
-          ./gradlew assemble${{ matrix.flavor }}Release --stacktrace --no-daemon 2>&1 | tail -300
+          ./gradlew assemble${{ matrix.flavor }}Release --stacktrace --no-daemon
       - name: Check APK exists
         run: |
           find app/build/outputs/apk -name "*.apk" -type f 2>/dev/null | while read apk; do
