@@ -5,6 +5,7 @@ plugins {
 }
 
 android {
+    ndkVersion = "26.1.10909125"
     buildFeatures {
         buildConfig = true
     }
@@ -193,5 +194,4 @@ dependencies {
 
 // AI模型assets配置
 android {
-    // APK大小上限650MB（含584MB模型）
 }
