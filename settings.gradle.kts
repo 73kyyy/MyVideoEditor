@@ -6,7 +6,6 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
-        maven("https://maven.arthenica.onl/repository/maven-releases/")
     }
 }
 
@@ -15,7 +14,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven("https://maven.arthenica.onl/repository/maven-releases/")
     }
 }
 

@@ -34,6 +34,6 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("com.arthenica:ffmpeg-kit-full:6.0-2")
+    implementation("com.arthenica:ffmpeg-kit-full:4.5.1")
     testImplementation("junit:junit:4.13.2")
 }
