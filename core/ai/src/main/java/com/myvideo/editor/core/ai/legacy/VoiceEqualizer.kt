@@ -25,7 +25,7 @@ class VoiceEqualizer {
     private fun applyBand(data: FloatArray, band: Band, sampleRate: Int): FloatArray {
         val omega = 2f * Math.PI.toFloat() * band.freqHz / sampleRate
         val alpha = kotlin.math.sin(omega) / (2f * band.q)
-        val gain = 10f.pow(band.gain / 20f)
+        val gain = kotlin.math.pow(10.0, (band.gain / 20f).toDouble()).toFloat()
         val a0 = 1f + alpha / gain
         val b0 = (1f + alpha * gain) / a0
         val b1 = (-2f * kotlin.math.cos(omega)) / a0
@@ -41,5 +41,4 @@ class VoiceEqualizer {
         return result
     }
 
-    private fun Float.pow(n: Float): Float = kotlin.math.pow(this.toDouble(), n.toDouble()).toFloat()
 }

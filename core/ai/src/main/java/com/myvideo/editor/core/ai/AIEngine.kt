@@ -22,15 +22,11 @@ class AIEngine(private val context: Context) {
     )
 
     data class ProcessingConfig(
-        val chunkSize: Int = deviceInfo.tier.chunkSize,
-        val maxThreads: Int = deviceInfo.tier.maxThreads,
-        val gcInterval: Int = deviceInfo.tier.gcInterval,
-        val maxMemoryMb: Int = getMaxMemoryMb(),
-        val timeoutMs: Long = when (deviceInfo.tier) {
-            DeviceTierDetector.Tier.T1 -> 300_000L
-            DeviceTierDetector.Tier.T2 -> 180_000L
-            DeviceTierDetector.Tier.T3 -> 60_000L
-        }
+        val chunkSize: Int,
+        val maxThreads: Int,
+        val gcInterval: Int,
+        val maxMemoryMb: Int,
+        val timeoutMs: Long
     )
 
     private fun getMaxMemoryMb(): Int {
@@ -46,7 +42,21 @@ class AIEngine(private val context: Context) {
     }
 
     fun getDeviceInfo() = deviceInfo
-    fun getConfig() = ProcessingConfig()
+    fun getConfig(): ProcessingConfig {
+        val tier = deviceInfo.tier
+        return ProcessingConfig(
+            chunkSize = tier.chunkSize,
+            maxThreads = tier.maxThreads,
+            gcInterval = tier.gcInterval,
+            maxMemoryMb = getMaxMemoryMb(),
+            timeoutMs = when (tier) {
+                DeviceTierDetector.Tier.T1 -> 300_000L
+                DeviceTierDetector.Tier.T2 -> 180_000L
+                DeviceTierDetector.Tier.T3 -> 60_000L
+                else -> 60_000L
+            }
+        )
+    }
     fun isProcessing() = isRunning.get()
 
     fun processImageChunked(input: Bitmap, modelId: String, processChunk: (Bitmap) -> Bitmap?): InferenceResult {

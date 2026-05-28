@@ -45,6 +45,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:security"))
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 

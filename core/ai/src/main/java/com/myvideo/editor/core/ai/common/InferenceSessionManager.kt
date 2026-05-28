@@ -31,7 +31,7 @@ class InferenceSessionManager {
             val result = session.run(mapOf(inputName to tensor))
             val output = result[0].value
             tensor.close(); result.close()
-            when (output) { is FloatArray -> output; is Array<*> -> (output as Array<FloatArray>).flatten().toFloatArray(); else -> null }
+            when (output) { is FloatArray -> output; is Array<*> -> { val arr = output as Array<FloatArray>; arr.flatMap { it.toList() }.toFloatArray() }; else -> null }
         } catch (ex: Exception) { null }
     }
 

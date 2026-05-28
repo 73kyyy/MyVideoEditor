@@ -18,7 +18,7 @@ class AIIntegrationBridge(private val context: Context) {
     private val validator = MembershipValidator()
     private val featureGate = FeatureGate(validator)
 
-    enum class AIFeature(val id: String, val name: String, val modelId: String) {
+    enum class AIFeature(val id: String, val displayName: String, val modelId: String) {
         SEGMENT("segment", "智能抠图", "sam2_base"),
         SUPER_RES("superres", "超分辨率", "esrgan_x4"),
         INTERPOLATE("interpolate", "视频插帧", "rife_v4"),
@@ -45,7 +45,7 @@ class AIIntegrationBridge(private val context: Context) {
             return AIResult(false, errorMessage = "请连接网络使用", requiresNetwork = true)
         }
         if (validator.isFree()) {
-            return AIResult(false, errorMessage = "开通会员解锁${feature.name}", requiresMembership = true)
+            return AIResult(false, errorMessage = "开通会员解锁${feature.displayName}", requiresMembership = true)
         }
         if (!registry.isModelInstalled(feature.modelId)) {
             return AIResult(false, errorMessage = "模型未安装")

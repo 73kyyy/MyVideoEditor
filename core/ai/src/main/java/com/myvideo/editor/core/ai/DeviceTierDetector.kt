@@ -39,7 +39,7 @@ class DeviceTierDetector(private val context: Context) {
             score >= 50 -> Tier.T2
             else -> Tier.T1
         }
-        Log.d("DeviceTier", "RAM:${ramMb}MB CPU:${cpuCores}核 ${cpuFreq}MHz GPU:$gpuRenderer SoC:$socModel NPU:$hasNpu → ${tier.label}($score分)")
+        Log.d("DeviceTier", "RAM:${ramMb}MB CPU:${cpuCores}核 ${cpuFreq}MHz GPU:$gpuRenderer SoC:$socModel NPU:$hasNpu → ${tier.label}(${score}分)")
         return DeviceInfo(tier, ramMb, cpuCores, cpuFreq, gpuRenderer, sdkInt, socModel, hasNpu, score)
     }
 
