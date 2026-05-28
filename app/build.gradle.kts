@@ -5,6 +5,9 @@ plugins {
 }
 
 android {
+    buildFeatures {
+        buildConfig = true
+    }
     namespace = "com.myvideo.editor"
     compileSdk = 34
 
