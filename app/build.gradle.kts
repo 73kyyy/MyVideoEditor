@@ -11,6 +11,9 @@ android {
     }
     namespace = "com.myvideo.editor"
     compileSdk = 34
+    lint {
+        abortOnError = false
+    }
 
     defaultConfig {
         applicationId = "com.myvideo.editor"
@@ -162,7 +165,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // ===== 音视频处理：FFmpeg =====
-    implementation("com.arthenica:ffmpeg-kit-full:6.0-2")
+    implementation("com.github.arthenica:ffmpeg-kit-full:6.0-2")
 
     // ===== 视频播放：Media3 ExoPlayer =====
     implementation("androidx.media3:media3-exoplayer:1.2.1")

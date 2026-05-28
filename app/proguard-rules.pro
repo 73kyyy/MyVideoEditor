@@ -84,3 +84,8 @@
     public static void err.println(...);
 }
 -dontwarn okhttp3.logging.**
+
+# ffmpeg-kit 防混淆
+-keep class com.arthenica.** { *; }
+-keep class org.ffmpeg.** { *; }
+-dontwarn com.arthenica.**
