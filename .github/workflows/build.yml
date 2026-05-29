@@ -57,12 +57,6 @@ jobs:
           path: app/src/main/cpp/third_party
           key: tp-v3-${{ runner.os }}
           restore-keys: tp-v3-${{ runner.os }}-
-      - name: Cache ffmpeg-kit
-        uses: actions/cache@v4
-        with:
-          path: app/libs
-          key: ffmpeg-kit-v1-${{ runner.os }}
-          restore-keys: ffmpeg-kit-v1-${{ runner.os }}
       - name: Link security Kotlin files
         run: |
           mkdir -p app/src/main/java/com/myvideo/editor/security
@@ -74,25 +68,6 @@ jobs:
               fi
             done
           fi
-      - name: Download ffmpeg-kit
-        run: |
-          mkdir -p app/libs
-          if [ -f "app/libs/ffmpeg-kit-full-6.0-2.aar" ] && [ $(stat -c%s app/libs/ffmpeg-kit-full-6.0-2.aar 2>/dev/null || echo 0) -gt 100000 ]; then
-            echo "ffmpeg-kit已存在，跳过"
-            exit 0
-          fi
-          D=0
-          for U in \
-            "https://maven.arthenica.onl/repository/maven-releases/com/arthenica/ffmpeg-kit-full/6.0-2/ffmpeg-kit-full-6.0-2.aar" \
-            "https://repo1.maven.org/maven2/com/arthenica/ffmpeg-kit-full/6.0-2/ffmpeg-kit-full-6.0-2.aar"; do
-            echo "尝试: $U"
-            if curl -L -f -o app/libs/ffmpeg-kit-full-6.0-2.aar "$U" --connect-timeout 15 --max-time 300 2>/dev/null; then
-              SIZE=$(stat -c%s app/libs/ffmpeg-kit-full-6.0-2.aar 2>/dev/null || echo 0)
-              if [ "$SIZE" -gt 100000 ]; then echo "下载成功: ${SIZE} bytes"; D=1; break; fi
-            fi
-            rm -f app/libs/ffmpeg-kit-full-6.0-2.aar
-          done
-          if [ "$D" -eq 0 ]; then echo "ERROR: 下载失败"; exit 1; fi
       - name: Build OpenSSL for Android
         run: |
           if [ -d "app/src/main/cpp/openssl/arm64-v8a" ]; then
