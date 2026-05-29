@@ -16,7 +16,7 @@ class PlayerViewModel {
     fun toggle() { isPlaying = !isPlaying }
     fun seekTo(ms: Long) { currentPositionMs = ms.coerceIn(0, durationMs) }
     fun setDuration(ms: Long) { durationMs = ms }
-    fun setVolume(v: Float) { volume = v.coerceIn(0f, 1f) }
-    fun setSpeed(s: Float) { playbackSpeed = s.coerceIn(0.25f, 4f) }
+    fun applyVolume(v: Float) { volume = v.coerceIn(0f, 1f) }
+    fun applySpeed(s: Float) { playbackSpeed = s.coerceIn(0.25f, 4f) }
     fun updatePosition(ms: Long) { currentPositionMs = ms }
 }
