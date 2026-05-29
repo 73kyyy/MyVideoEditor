@@ -23,22 +23,22 @@ class VoiceEqualizer {
     fun getBands(): List<Band> = bands.toList()
 
     private fun applyBand(data: FloatArray, band: Band, sampleRate: Int): FloatArray {
-        val omega = 2f * Math.PI.toFloat() * band.freqHz / sampleRate
-        val alpha = kotlin.math.sin(omega) / (2f * band.q)
-        val gain = kotlin.math.pow(10.0, (band.gain / 20f).toDouble()).toFloat()
-        val a0 = 1f + alpha / gain
-        val b0 = (1f + alpha * gain) / a0
-        val b1 = (-2f * kotlin.math.cos(omega)) / a0
-        val b2 = (1f - alpha * gain) / a0
+        val sr = sampleRate.toDouble()
+        val omega = 2.0 * Math.PI * band.freqHz.toDouble() / sr
+        val alpha = (kotlin.math.sin(omega) / (2.0 * band.q.toDouble())).toFloat()
+        val g = kotlin.math.pow(10.0, band.gain.toDouble() / 20.0).toFloat()
+        val a0 = 1f + alpha / g
+        val b0 = (1f + alpha * g) / a0
+        val b1 = (-2f * kotlin.math.cos(omega).toFloat()) / a0
+        val b2 = (1f - alpha * g) / a0
         val a1 = b1
-        val a2 = (1f - alpha / gain) / a0
+        val a2 = (1f - alpha / g) / a0
         val result = FloatArray(data.size)
         var x1 = 0f; var x2 = 0f; var y1 = 0f; var y2 = 0f
         for (i in data.indices) {
-            result[i] = b0*data[i]+b1*x1+b2*x2-a1*y1-a2*y2
+            result[i] = b0 * data[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
             x2 = x1; x1 = data[i]; y2 = y1; y1 = result[i]
         }
         return result
     }
-
 }
