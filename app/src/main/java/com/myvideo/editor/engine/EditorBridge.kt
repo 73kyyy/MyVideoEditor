@@ -13,7 +13,6 @@ class EditorBridge(private val context: Context) {
     private val filterEngine = FFmpegFilterEngine(renderEngine)
     private val audioEngine = FFmpegAudioEngine(renderEngine)
     private val exportEngine = FFmpegExportEngine(context, renderEngine)
-    private val speedEngine = FFmpegSpeedEngine(renderEngine)
     private val aiBridge = AIIntegrationBridge(context)
     private val validator = MembershipValidator()
     private val aiHelper = AIFeatureUIHelper(context)
@@ -144,14 +143,15 @@ class EditorBridge(private val context: Context) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
         val output = getOutputPath("speed_${System.currentTimeMillis()}.mp4")
-        speedEngine.applySpeed(input, output, speed, makeCallback(vm, clip.id, output, onComplete, onError))
+        val speedStr = "%.1f".format(speed)
+        renderEngine.run("-i $input -filter_complex "[0:v]setpts=PTS/$speedStr[v];[0:a]atempo=$speedStr[a]" -map "[v]" -map "[a]" -c:v libx264 -preset fast -y $output", makeCallback(vm, clip.id, output, onComplete, onError))
     }
 
     fun applyReverse(vm: EditorViewModel, onComplete: (String) -> Unit, onError: (String) -> Unit) {
         val clip = vm.selectedClip() ?: return onError("请先选择片段")
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
         val output = getOutputPath("reverse_${System.currentTimeMillis()}.mp4")
-        speedEngine.applyReverse(input, output, makeCallback(vm, clip.id, output, onComplete, onError))
+        renderEngine.run("-i $input -vf reverse -af areverse -c:v libx264 -preset fast -y $output", makeCallback(vm, clip.id, output, onComplete, onError))
     }
 
     fun applyAudioDenoise(vm: EditorViewModel, onComplete: (String) -> Unit, onError: (String) -> Unit) {
@@ -220,7 +220,7 @@ class EditorBridge(private val context: Context) {
         val tt = com.myvideo.editor.feature.effects.transition.TransitionType.values().find { it.name.contains(type, true) }
             ?: com.myvideo.editor.feature.effects.transition.TransitionType.Fade
         val config = com.myvideo.editor.core.video.model.ParametricTransition("t1", type, tt, durationMs)
-        com.myvideo.editor.core.video.TransitionEngine(renderEngine).apply(path1, path2, output, config, makeCallback(vm, null, output, onComplete, onError))
+        renderEngine.run("-i $path1 -i $path2 -filter_complex "xfade=transition=${tt.ffmpegXfade}:duration=${durationMs/1000.0}" -c:v libx264 -preset fast -c:a copy -y $output", makeCallback(vm, null, output, onComplete, onError))
     }
 
     fun trimClip(vm: EditorViewModel, startMs: Long, endMs: Long, onComplete: (String) -> Unit, onError: (String) -> Unit) {

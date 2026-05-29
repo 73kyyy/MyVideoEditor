@@ -30,7 +30,6 @@ object UIProtector {
         try { System.loadLibrary("nexclip_native") } catch (e: Exception) { }
     }
 
-    }
 
     // 编号49：Deep Link白名单
     private val DEEP_LINK_SCHEMES = setOf("nexclip", "https")

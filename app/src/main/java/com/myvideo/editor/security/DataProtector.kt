@@ -62,7 +62,7 @@ object DataProtector {
     //       setUnlockedDeviceRequired(true)
     //       setInvalidatedByBiometricEnrollment(true)
     //       setIsStrongBoxBacked(true)
-    //       setCriticalToDeviceEncryption(true)
+    //      unlockedDeviceRequired = true
     //       Root也无法提取
     //       数据加密密钥DEK用主密钥加密后存储
     //       会话密钥每次启动动态生成
@@ -91,14 +91,14 @@ object DataProtector {
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                     .setKeySize(KEY_SIZE)
                     .setUserAuthenticationRequired(true)
-                    .setUnlockedDeviceRequired(true)
+                    unlockedDeviceRequired = true
                     .setInvalidatedByBiometricEnrollment(true)
                     .apply {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                             setIsStrongBoxBacked(true)
                         }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                            setCriticalToDeviceEncryption(true)
+                           unlockedDeviceRequired = true
                         }
                     }
                     .build()

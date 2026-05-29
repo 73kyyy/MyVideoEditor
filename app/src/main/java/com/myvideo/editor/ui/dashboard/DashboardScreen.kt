@@ -143,7 +143,7 @@ fun DashboardScreen(
                     Text(if (searchQuery.isEmpty()) "还没有项目，点击上方按钮新建" else "没有找到匹配的项目", color = DC.T4, fontSize = 12.sp)
                 }
             } else {
-                LazyColumn(contentPadding = PaddingValues(horizontal = 20.dp, bottom = 80.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 80.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     items(filtered) { p ->
                         ProjectListItem(p, { onOpenProject(p.id) }, { o -> ctxTarget = p; ctxPos = o; showCtx = true })
                     }
