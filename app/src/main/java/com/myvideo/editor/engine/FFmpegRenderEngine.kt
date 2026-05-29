@@ -3,6 +3,7 @@ package com.myvideo.editor.engine
 import android.content.Context
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.FFmpegKitConfig
+import com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback
 import com.arthenica.ffmpegkit.FFprobeKit
 import com.arthenica.ffmpegkit.ReturnCode
 import java.io.File
@@ -20,7 +21,7 @@ class FFmpegRenderEngine(private val context: Context) {
         Thread {
             try {
                 callback.onLog("ffmpeg $command")
-                FFmpegKit.executeAsync(command) { session ->
+                val cb = FFmpegSessionCompleteCallback { session ->
                     if (ReturnCode.isSuccess(session.returnCode)) {
                         callback.onProgress(100f)
                         val out = Regex("-y\\s+(.+)").find(command)?.groupValues?.get(1) ?: ""
@@ -28,9 +29,8 @@ class FFmpegRenderEngine(private val context: Context) {
                     } else {
                         callback.onError("FFmpeg错误: ${session.failStackTrace}")
                     }
-                } { stats ->
-                    callback.onProgress((stats.time.toFloat() / 1000).coerceIn(0f, 100f))
                 }
+                FFmpegKit.executeAsync(command, cb)
             } catch (e: Exception) {
                 callback.onError("执行失败: ${e.message}")
             }
