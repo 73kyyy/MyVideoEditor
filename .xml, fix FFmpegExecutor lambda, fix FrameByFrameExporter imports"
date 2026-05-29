@@ -1,0 +1,94 @@
+[1mdiff --git a/core/video/src/main/java/com/myvideo/editor/core/video/FFmpegExecutor.kt b/core/video/src/main/java/com/myvideo/editor/core/video/FFmpegExecutor.kt[m
+[1mindex 58afda0..27adcce 100644[m
+[1m--- a/core/video/src/main/java/com/myvideo/editor/core/video/FFmpegExecutor.kt[m
+[1m+++ b/core/video/src/main/java/com/myvideo/editor/core/video/FFmpegExecutor.kt[m
+[36m@@ -16,14 +16,14 @@[m [mclass FFmpegExecutor {[m
+     fun execute(command: String, callback: Callback) {[m
+         Thread {[m
+             try {[m
+[31m-                FFmpegKit.executeAsync(command) { session ->[m
+[32m+[m[32m                FFmpegKit.executeAsync(command, { session ->[m
+                     if (ReturnCode.isSuccess(session.returnCode)) {[m
+                         val out = Regex("-y\\s+(.+)").find(command)?.groupValues?.get(1) ?: ""[m
+                         callback.onComplete(out)[m
+                     } else {[m
+                         callback.onError(session.failStackTrace ?: "未知错误")[m
+                     }[m
+[31m-                } { stats -> callback.onProgress((stats.time.toFloat() / 1000).coerceIn(0f, 100f)) }[m
+[32m+[m[32m                }, { stats -> callback.onProgress((stats.time.toFloat() / 1000).coerceIn(0f, 100f)) })[m
+             } catch (e: Exception) { callback.onError(e.message ?: "执行失败") }[m
+         }.start()[m
+     }[m
+[1mdiff --git a/core/video/src/main/java/com/myvideo/editor/core/video/FrameByFrameExporter.kt b/core/video/src/main/java/com/myvideo/editor/core/video/FrameByFrameExporter.kt[m
+[1mindex 26879ab..98b857c 100644[m
+[1m--- a/core/video/src/main/java/com/myvideo/editor/core/video/FrameByFrameExporter.kt[m
+[1m+++ b/core/video/src/main/java/com/myvideo/editor/core/video/FrameByFrameExporter.kt[m
+[36m@@ -1,10 +1,9 @@[m
+ package com.myvideo.editor.core.video[m
+ [m
+ import android.graphics.Bitmap[m
+[31m-import android.media.MediaCodec[m
+[31m-import android.media.MediaFormat[m
+ import android.media.MediaMetadataRetriever[m
+[31m-import java.io.File[m
+[32m+[m[32mimport android.view.Surface[m
+[32m+[m[32mimport com.myvideo.editor.core.video.codec.HardwareVideoEncoder[m
+ [m
+ class FrameByFrameExporter(private val encoder: HardwareVideoEncoder) {[m
+ [m
+[36m@@ -19,20 +18,22 @@[m [mclass FrameByFrameExporter(private val encoder: HardwareVideoEncoder) {[m
+     fun exportFromBitmaps(frames: List<Bitmap>, config: ExportConfig, callback: Callback) {[m
+         Thread {[m
+             try {[m
+[31m-                encoder.init(config.outputPath)[m
+[31m-                val surface = encoder.init(config.outputPath) ?: throw Exception("编码器初始化失败")[m
+[31m-                val canvas = surface.lockCanvas(null)[m
+[32m+[m[32m                val surface: Surface = encoder.init(config.outputPath)[m
+[32m+[m[32m                    ?: throw Exception("编码器初始化失败")[m
+                 frames.forEachIndexed { i, bitmap ->[m
+[32m+[m[32m                    val canvas = surface.lockCanvas(null)[m
+                     canvas.drawBitmap(bitmap, 0f, 0f, null)[m
+                     surface.unlockCanvasAndPost(canvas)[m
+                     encoder.drainEncoder(false)[m
+                     callback.onFrameExported(i, frames.size)[m
+[31m-                    if (i < frames.size - 1) { val s = surface.lockCanvas(null); s.drawColor(0xFF000000.toInt()); surface.unlockCanvasAndPost(s) }[m
+                 }[m
+                 encoder.drainEncoder(true)[m
+                 encoder.release()[m
+                 callback.onComplete(config.outputPath)[m
+[31m-            } catch (e: Exception) { callback.onError(e.message ?: "导出失败"); encoder.release() }[m
+[32m+[m[32m            } catch (e: Exception) {[m
+[32m+[m[32m                callback.onError(e.message ?: "导出失败")[m
+[32m+[m[32m                encoder.release()[m
+[32m+[m[32m            }[m
+         }.start()[m
+     }[m
+ [m
+[36m@@ -40,17 +41,23 @@[m [mclass FrameByFrameExporter(private val encoder: HardwareVideoEncoder) {[m
+         val retriever = MediaMetadataRetriever()[m
+         try {[m
+             retriever.setDataSource(inputPath)[m
+[31m-            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L[m
+[32m+[m[32m            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)[m
+[32m+[m[32m                ?.toLongOrNull() ?: 0L[m
+             val interval = 1000L / config.fps[m
+             val frames = mutableListOf<Bitmap>()[m
+             var t = 0L[m
+             while (t < duration) {[m
+[31m-                val frame = retriever.getFrameAtTime(t * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)[m
+[32m+[m[32m                val frame = retriever.getFrameAtTime([m
+[32m+[m[32m                    t * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC[m
+[32m+[m[32m                )[m
+                 if (frame != null) frames.add(frame)[m
+                 t += interval[m
+             }[m
+             exportFromBitmaps(frames, config, callback)[m
+[31m-        } catch (e: Exception) { callback.onError(e.message ?: "读取视频失败") }[m
+[31m-        finally { retriever.release() }[m
+[32m+[m[32m        } catch (e: Exception) {[m
+[32m+[m[32m            callback.onError(e.message ?: "读取视频失败")[m
+[32m+[m[32m        } finally {[m
+[32m+[m[32m            retriever.release()[m
+[32m+[m[32m        }[m
+     }[m
+ }[m

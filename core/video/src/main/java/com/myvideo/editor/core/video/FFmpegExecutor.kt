@@ -16,14 +16,14 @@ class FFmpegExecutor {
     fun execute(command: String, callback: Callback) {
         Thread {
             try {
-                FFmpegKit.executeAsync(command) { session ->
+                FFmpegKit.executeAsync(command, { session ->
                     if (ReturnCode.isSuccess(session.returnCode)) {
                         val out = Regex("-y\\s+(.+)").find(command)?.groupValues?.get(1) ?: ""
                         callback.onComplete(out)
                     } else {
                         callback.onError(session.failStackTrace ?: "未知错误")
                     }
-                } { stats -> callback.onProgress((stats.time.toFloat() / 1000).coerceIn(0f, 100f)) }
+                }, { stats -> callback.onProgress((stats.time.toFloat() / 1000).coerceIn(0f, 100f)) })
             } catch (e: Exception) { callback.onError(e.message ?: "执行失败") }
         }.start()
     }
