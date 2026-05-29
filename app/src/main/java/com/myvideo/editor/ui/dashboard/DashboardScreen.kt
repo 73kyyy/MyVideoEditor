@@ -42,11 +42,6 @@ data class ProjectItem(
     val thumbnailColors: List<Color>, val isDraft: Boolean = false
 )
 
-data class DraftItem(
-    val id: String, val name: String, val duration: String,
-    val lastSaved: String, val thumbnailColors: List<Color>
-)
-
 private object DC {
     val Bg = Color(0xFF1E1E1E); val Surf = Color(0xFF282828)
     val Card = Color(0xFF2C2C2C); val CardH = Color(0xFF323232)

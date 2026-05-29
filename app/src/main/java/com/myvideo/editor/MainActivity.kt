@@ -19,8 +19,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // UIProtector：防截屏+防录屏+防最近任务泄露
-        UIProtector.enableScreenProtection(this)
-        UIProtector.protectAgainstTapjacking(this)
+        try { UIProtector.enableScreenProtection(this) } catch(e: Exception) { }
+        try { UIProtector.protectAgainstTapjacking(this) } catch(e: Exception) { }
 
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        UIProtector.enableScreenProtection(this)
+        try { UIProtector.enableScreenProtection(this) } catch(e: Exception) { }
     }
 
     override fun onPause() {

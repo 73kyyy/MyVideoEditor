@@ -201,7 +201,7 @@ object SelfBuildProtector {
 
                 val count = classLoadLog.size
                 if (count > CLASS_LOAD_THRESHOLD) {
-                    return Pair(true, "类加载频率异常: $count.toString() + "次"/分钟 (阈值$CLASS_LOAD_THRESHOLD)")
+                    return Pair(true, "类加载频率异常: ${count}次/分钟 (阈值$CLASS_LOAD_THRESHOLD)")
                 }
             }
             Pair(false, "正常")

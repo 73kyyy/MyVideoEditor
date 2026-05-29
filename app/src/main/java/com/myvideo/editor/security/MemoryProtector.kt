@@ -108,7 +108,7 @@ object MemoryProtector {
                 append("Java层: ${if (javaResult.passed) "通过" else "异常"}")
                 append(" | C层: ${if (nativeResult == 0) "通过" else "异常"}")
                 if (!passed) {
-                    append(" | ${javaResult.message}")
+                    append(" | ${javaResult.toString()}")
                     reportAnomaly(context, "编号40: $message")
                 }
             }

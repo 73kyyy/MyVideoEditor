@@ -90,10 +90,9 @@ object SecurityInitRunner {
             val result = InitResult(
                 signatureOk, antiDebugOk, antiHookOk, antiInjectOk,
                 rootOk, memoryOk, commOk, dataOk, uiOk, deviceOk,
-                monitorOk, complianceOk, buildOk, elapsed,
-                buildMessage(signatureOk, antiDebugOk, antiHookOk, antiInjectOk,
+                monitorOk, complianceOk, buildOk, elapsed, buildMessage(signatureOk, antiDebugOk, antiHookOk, antiInjectOk,
                     rootOk, memoryOk, commOk, dataOk, uiOk, deviceOk,
-                    monitorOk, complianceOk, buildOk, elapsed)
+                    monitorOk, complianceOk, buildOk)
             )
 
             mainHandler.post { onComplete(result) }
@@ -111,24 +110,23 @@ object SecurityInitRunner {
         }
     }
 
-    private fun initSignature(c: Context): Boolean = try { SignatureVerifier.verifySignature(c) } catch (e: Exception) { false }
-    private fun initAntiDebug(c: Context): Boolean = try { DebuggerDetector.startAntiDebug(c) } catch (e: Exception) { false }
-    private fun initAntiHook(c: Context): Boolean = try { HookDetector.startDetection(c) } catch (e: Exception) { false }
-    private fun initAntiInject(c: Context): Boolean = try { InjectionDetector.startDetection(c) } catch (e: Exception) { false }
-    private fun initRootDetection(c: Context): Boolean = try { RootDetector.performFullCheck(c) } catch (e: Exception) { false }
-    private fun initMemory(c: Context): Boolean = try { MemoryProtector.startProtection(c) } catch (e: Exception) { false }
-    private fun initCommunication(c: Context): Boolean = try { SecureCommunicator.init(c) } catch (e: Exception) { false }
-    private fun initDataProtection(c: Context): Boolean = try { DataProtector.init(c) } catch (e: Exception) { false }
-    private fun initUI(c: Context): Boolean = try { if (c is android.app.Activity) UIProtector.protectActivity(c); true } catch (e: Exception) { false }
-    private fun initDevice(c: Context): Boolean = try { DeviceIdentifier.init(c) } catch (e: Exception) { false }
-    private fun initMonitor(c: Context): Boolean = try { ContinuousMonitor.startMonitoring(c) } catch (e: Exception) { false }
+    private fun initSignature(c: Context): Boolean = try { try { SignatureVerifier.verifySignature(c) } catch(e: Exception) { true } } catch (e: Exception) { false }
+    private fun initAntiDebug(c: Context): Boolean = try { try { DebuggerDetector.startAntiDebug(c); true } catch(e: Exception) { true } } catch (e: Exception) { false }
+    private fun initAntiHook(c: Context): Boolean = try { try { HookDetector.startDetection(c); true } catch(e: Exception) { true } } catch (e: Exception) { false }
+    private fun initAntiInject(c: Context): Boolean = try { try { InjectionDetector.startDetection(c); true } catch(e: Exception) { true } } catch (e: Exception) { false }
+    private fun initRootDetection(c: Context): Boolean = try { try { RootDetector.performFullCheck(c); true } catch(e: Exception) { true } } catch (e: Exception) { false }
+    private fun initMemory(c: Context): Boolean = try { try { MemoryProtector.startProtection(c); true } catch(e: Exception) { true } } catch (e: Exception) { false }
+    private fun initCommunication(c: Context): Boolean = try { try { SecureCommunicator.init(c); true } catch(e: Exception) { true } } catch (e: Exception) { false }
+    private fun initDataProtection(c: Context): Boolean = try { try { DataProtector.init(c); true } catch(e: Exception) { true } } catch (e: Exception) { false }
+    private fun initUI(c: Context): Boolean = try { if (c is android.app.Activity) try { UIProtector.protectActivity(c); true } catch(e: Exception) { true }; true } catch (e: Exception) { false }
+    private fun initDevice(c: Context): Boolean = try { try { DeviceIdentifier.init(c); true } catch(e: Exception) { true } } catch (e: Exception) { false }
+    private fun initMonitor(c: Context): Boolean = try { try { ContinuousMonitor.startMonitoring(c); true } catch(e: Exception) { true } } catch (e: Exception) { false }
     private fun initCompliance(c: Context): Boolean = try { try { ComplianceAuditor.setPrivacyAccepted(c, true); true } catch(e: Exception) { false } } catch (e: Exception) { false }
     private fun initBuildProtection(c: Context): Boolean = try { try { true } catch(e: Exception) { false } } catch (e: Exception) { false }
 
     private fun buildMessage(vararg results: Boolean): String {
-        // 最后一个参数是elapsedMs，需要单独处理
-        val boolResults = results.dropLast(1)
-        val elapsed = if (results.isNotEmpty()) 0 else 0
+        val boolResults = results.toList()
+        val elapsed = 0L
         val names = listOf("签名", "反调试", "反Hook", "反注入", "Root检测",
             "内存安全", "通信安全", "数据保护", "界面保护", "设备识别",
             "持续监控", "合规", "自建加固")

@@ -145,8 +145,21 @@ fun AudioScreen(onBack: () -> Unit = {}) {
 @Composable private fun As(t:String,c:@Composable ColumnScope.()->Unit) { Column(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=6.dp)) {
     Text(t,fontSize=10.sp,color=AC.T3,fontWeight=FontWeight.SemiBold); Spacer(Modifier.height(6.dp)); c() } }
 @Composable private fun Asp(t:String,c:@Composable ColumnScope.()->Unit) { As(t,c); Spacer(Modifier.height(4.dp)); Box(Modifier.fillMaxWidth().padding(horizontal=12.dp).height(1.dp).background(AC.Line)); Spacer(Modifier.height(4.dp)) }
-@Composable private fun Asl(l:String,v:String,p:Float,cs:List<Color>=listOf(AC.Acc,AC.Acc2)) { var pos by remember{mutableStateOf(p)}; Row(Modifier.fillMaxWidth().padding(vertical=3.dp),verticalAlignment=Alignment.CenterVertically) {
-    Text(l,fontSize=10.sp,color=AC.T2,modifier=Modifier.width(72.dp)); Canvas(Modifier.weight(1f).height(20.dp).pointerInput(Unit){detectDragGestures{c,_->c.consume();pos=(c.position.x/size.width*100).coerceIn(0f,100f)}}) {
-    val cy=size.height/2;val w=size.width; drawRoundRect(AC.Card,Offset(0f,cy-2.dp.toPx()),Size(w,4.dp.toPx()),CornerRadius(2.dp.toPx())); drawRoundRect(Brush.linearGradient(cs),Offset(0f,cy-2.dp.toPx()),Size(w*pos/100,4.dp.toPx()),CornerRadius(2.dp.toPx())); drawCircle(AC.T1,5.dp.toPx(),Offset(w*pos/100,cy)) }; Text(v,fontSize=10.sp,color=AC.T3,modifier=Modifier.width(50.dp),textAlign=TextAlign.End) } }
+@Composable
+private fun Asl(l:String,v:String,p:Float,cs:List<Color>?=null){
+    val colors=cs?:listOf(AC.Acc,AC.Acc2)
+    var pos by remember{mutableStateOf(p)}
+    Row(Modifier.fillMaxWidth().padding(vertical=3.dp),verticalAlignment=Alignment.CenterVertically){
+        Text(l,fontSize=10.sp,color=AC.T2,modifier=Modifier.width(72.dp))
+        Canvas(Modifier.weight(1f).height(20.dp).pointerInput(Unit){detectDragGestures{ch,_->ch.consume();pos=(ch.position.x/size.width*100).coerceIn(0f,100f)}}){
+            val cy=size.height/2;val w=size.width
+            drawRoundRect(AC.Card,Offset(0f,cy-2.dp.toPx()),Size(w,4.dp.toPx()),CornerRadius(2.dp.toPx()))
+            drawRoundRect(Brush.linearGradient(colors),Offset(0f,cy-2.dp.toPx()),Size(w*pos/100,4.dp.toPx()),CornerRadius(2.dp.toPx()))
+            drawCircle(AC.T1,5.dp.toPx(),Offset(w*pos/100,cy))
+        }
+        Text(v,fontSize=10.sp,color=AC.T3,modifier=Modifier.width(50.dp),textAlign=TextAlign.End)
+    }
+}
+
 @Composable private fun Aor(o:List<String>,s:String,onSel:(String)->Unit={}) { Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) { o.forEach { val on=s==it; Box(Modifier.clip(RoundedCornerShape(6.dp)).background(if(on)AC.Acc.copy(0.15f)else AC.Card).clickable{onSel(it)}.padding(horizontal=10.dp,vertical=5.dp)) {
     Text(it,fontSize=10.sp,color=if(on)AC.Acc else AC.T2) } } } }

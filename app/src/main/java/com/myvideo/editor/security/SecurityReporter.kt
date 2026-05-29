@@ -28,8 +28,8 @@ object SecurityReporter {
     fun report(context: Context, category: String, message: String, severity: String = "WARN") {
         try {
             val event = SecurityEvent(
-                category = ComplianceAuditor.sanitizeLogData(category),
-                message = ComplianceAuditor.sanitizeLogData(message),
+                category = category.take(200),
+                message = message.take(500),
                 severity = severity
             )
             eventQueue.add(event)

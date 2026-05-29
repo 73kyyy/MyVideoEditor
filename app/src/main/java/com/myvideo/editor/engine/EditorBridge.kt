@@ -3,6 +3,7 @@ package com.myvideo.editor.engine
 import android.content.Context
 import com.myvideo.editor.core.ai.AIIntegrationBridge
 import com.myvideo.editor.core.security.membership.MembershipValidator
+import com.myvideo.editor.ui.editor.AIFeatureUIHelper
 import com.myvideo.editor.ui.editor.EditorViewModel
 import java.io.File
 
@@ -12,8 +13,10 @@ class EditorBridge(private val context: Context) {
     private val filterEngine = FFmpegFilterEngine(renderEngine)
     private val audioEngine = FFmpegAudioEngine(renderEngine)
     private val exportEngine = FFmpegExportEngine(context, renderEngine)
+    private val speedEngine = FFmpegSpeedEngine(renderEngine)
     private val aiBridge = AIIntegrationBridge(context)
     private val validator = MembershipValidator()
+    private val aiHelper = AIFeatureUIHelper(context)
 
     private fun getClipPath(vm: EditorViewModel, clipId: String): String? {
         return vm.videoUris[clipId]?.replace("file://", "")
@@ -114,7 +117,7 @@ class EditorBridge(private val context: Context) {
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
         val output = getOutputPath("export_${System.currentTimeMillis()}.mp4")
         vm.isExporting = true; vm.exportProgress = 0f; vm.exportError = null
-        exportEngine.exportWithProfile(input, output, "1080p", "", object : FFmpegRenderEngine.RenderCallback {
+        renderEngine.run("-i $input -c:v libx264 -preset fast -c:a copy -y $output", object : FFmpegRenderEngine.RenderCallback {
             override fun onProgress(p: Float) { vm.exportProgress = p }
             override fun onComplete(o: String) { vm.isExporting = false; vm.exportDone = true; onComplete(output) }
             override fun onError(e: String) { vm.isExporting = false; vm.exportError = e; onError(e) }
@@ -215,7 +218,7 @@ class EditorBridge(private val context: Context) {
         val path2 = getClipPath(vm, clip2.id) ?: return onError("找不到第二个视频")
         val output = getOutputPath("transition_${System.currentTimeMillis()}.mp4")
         val tt = com.myvideo.editor.feature.effects.transition.TransitionType.values().find { it.name.contains(type, true) }
-            ?: com.myvideo.editor.feature.effects.transition.TransitionType.CrossFade
+            ?: com.myvideo.editor.feature.effects.transition.TransitionType.Fade
         val config = com.myvideo.editor.core.video.model.ParametricTransition("t1", type, tt, durationMs)
         com.myvideo.editor.core.video.TransitionEngine(renderEngine).apply(path1, path2, output, config, makeCallback(vm, null, output, onComplete, onError))
     }
