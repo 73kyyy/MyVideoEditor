@@ -3,7 +3,6 @@ package com.myvideo.editor.engine
 import android.content.Context
 import com.myvideo.editor.core.ai.AIIntegrationBridge
 import com.myvideo.editor.core.security.membership.MembershipValidator
-import com.myvideo.editor.ui.editor.AIFeatureUIHelper
 import com.myvideo.editor.ui.editor.EditorViewModel
 import java.io.File
 
@@ -11,11 +10,9 @@ class EditorBridge(private val context: Context) {
 
     private val renderEngine = FFmpegRenderEngine(context)
     private val filterEngine = FFmpegFilterEngine(renderEngine)
-    private val speedEngine = FFmpegSpeedEngine(renderEngine)
     private val audioEngine = FFmpegAudioEngine(renderEngine)
     private val exportEngine = FFmpegExportEngine(context, renderEngine)
     private val aiBridge = AIIntegrationBridge(context)
-    private val aiHelper = AIFeatureUIHelper(context)
     private val validator = MembershipValidator()
 
     private fun getClipPath(vm: EditorViewModel, clipId: String): String? {

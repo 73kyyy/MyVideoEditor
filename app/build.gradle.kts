@@ -182,7 +182,6 @@ dependencies {
 
     // ===== AI推理：PyTorch Mobile =====
     implementation("org.pytorch:pytorch_android:2.1.0")
-    implementation("org.pytorch:pytorch_android_torchvision:2.1.0")
 
     // ===== AI框架：MediaPipe =====
     implementation("com.google.mediapipe:tasks-vision:0.10.8")

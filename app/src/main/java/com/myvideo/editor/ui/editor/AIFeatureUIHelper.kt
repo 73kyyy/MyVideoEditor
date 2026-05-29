@@ -72,7 +72,7 @@ class AIFeatureUIHelper(private val context: Context) {
 
     fun getExportBlockMessage(): String {
         val count = aiUsedInProject.size
-        return "当前项目使用了$count个AI功能\n开通会员即可导出无水印视频\n¥29/月 · ¥76/季 · ¥228/年"
+        return "当前项目使用了$"${count}个AI功能"\n开通会员即可导出无水印视频\n¥29/月 · ¥76/季 · ¥228/年"
     }
 
     fun shouldAddWatermark(): Boolean = !validator.isMember() && hasAIInProject()

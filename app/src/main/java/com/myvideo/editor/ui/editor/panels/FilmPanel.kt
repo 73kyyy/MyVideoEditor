@@ -137,7 +137,7 @@ fun FilmPanel(vm: EditorViewModel, onClose: () -> Unit) {
 
         ApplyButton("应用胶片效果") {
             if (grainAmount > 0) {
-                bridge.applyFilmGrain(vm, grainAmount.toFloat(),
+                bridge.applyFilter(vm, "filmgrain=$grainAmount",
                     onComplete = { vm.showToast("胶片颗粒已应用: $selectedPreset") },
                     onError = { vm.showToast("应用失败: $it") })
             } else {

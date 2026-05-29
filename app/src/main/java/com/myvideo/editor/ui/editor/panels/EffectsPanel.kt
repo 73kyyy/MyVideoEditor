@@ -53,7 +53,7 @@ fun EffectsPanel(vm: EditorViewModel, onClose: () -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                 row.forEach { (name, _) ->
                     val sel = selectedPreset == name
-                    Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp))
+                    Box(modifier = Modifier.clip(RoundedCornerShape(8.dp))
                         .background(if (sel) CG.AccS else CG.Card)
                         .then(if (sel) Modifier.border(1.5.dp, CG.Acc, RoundedCornerShape(8.dp)) else Modifier)
                         .clickable { selectedPreset = if (sel) null else name }
@@ -187,7 +187,7 @@ fun EffectsPanel(vm: EditorViewModel, onClose: () -> Unit) {
 
 @Composable
 private fun EffectChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp))
+    Box(modifier = Modifier.clip(RoundedCornerShape(8.dp))
         .background(if (selected) CG.AccS else CG.Card)
         .then(if (selected) Modifier.border(1.5.dp, CG.Acc, RoundedCornerShape(8.dp)) else Modifier)
         .clickable { onClick() }

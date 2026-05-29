@@ -322,7 +322,7 @@ object UIProtector {
             settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
 
             // release禁用WebView调试
-            if (!context.applicationInfo.flags.and(android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            if (context.applicationInfo.flags.and(android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) == 0) {
                 WebView.setWebContentsDebuggingEnabled(false)
             }
 

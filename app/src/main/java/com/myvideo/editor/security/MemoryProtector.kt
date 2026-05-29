@@ -86,7 +86,7 @@ object MemoryProtector {
 
             MemoryCheckResult(passed, rwxSegments, message)
         } catch (e: Exception) {
-            MemoryCheckResult(true, emptyList(), "检查异常: ${e.message}")
+            MemoryCheckResult(true, emptyList(), "检查异常: ${e.toString()}")
         }
     }
 
@@ -114,7 +114,7 @@ object MemoryProtector {
             }
             Pair(passed, message)
         } catch (e: Exception) {
-            Pair(false, "校验异常: ${e.message}")
+            Pair(false, "校验异常: ${e.toString()}")
         }
     }
 
@@ -175,7 +175,7 @@ object MemoryProtector {
 
             Pair(false, "未发现dump行为")
         } catch (e: Exception) {
-            Pair(false, "检测异常: ${e.message}")
+            Pair(false, "检测异常: ${e.toString()}")
         }
     }
 
@@ -202,7 +202,7 @@ object MemoryProtector {
             }
             Pair(passed, message)
         } catch (e: Exception) {
-            Pair(false, "校验异常: ${e.message}")
+            Pair(false, "校验异常: ${e.toString()}")
         }
     }
 
@@ -400,7 +400,7 @@ object MemoryProtector {
 
             MemoryResult(passed, detail40, detail41, key42Ok, message)
         } catch (e: Exception) {
-            MemoryResult(false, "异常", "异常", false, "校验异常: ${e.message}")
+            MemoryResult(false, "异常", "异常", false, "校验异常: ${e.toString()}")
         }
     }
 

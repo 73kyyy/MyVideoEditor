@@ -29,10 +29,10 @@ class MyApplication : Application() {
     override fun onTerminate() {
         super.onTerminate()
         try {
-            com.myvideo.editor.security.SelfBuildProtector.cleanup()
-            com.myvideo.editor.security.ContinuousMonitor.cleanup()
-            com.myvideo.editor.security.ComplianceAuditor.cleanup()
-            com.myvideo.editor.security.SecurityReporter.clearEvents()
+            Unit
+            Unit
+            Unit
+            Unit
         } catch (e: Exception) { }
     }
 }

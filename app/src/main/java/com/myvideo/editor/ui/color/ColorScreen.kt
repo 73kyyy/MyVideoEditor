@@ -26,6 +26,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlin.math.*
 
 private object CC {
     val Bg=Color(0xFF0A0A0A); val Surf=Color(0xFF111111); val Card=Color(0xFF181818)
@@ -33,6 +37,7 @@ private object CC {
     val Green=Color(0xFF6EC850); val Red=Color(0xFFE84848)
     val T1=Color(0xFFF0ECE4); val T2=Color(0xFFB0ACA4); val T3=Color(0xFF6A6660)
     val Line=Color(0xFF222222)
+    val Line2=Color(0xFF2A2A2A)
 }
 
 @Composable
@@ -219,7 +224,6 @@ private fun CurveCanvas() {
         }
     }
 }
-private val CC.Line2 get() = Color(0xFF2A2A2A)
 
 // ===== 色相页 =====
 @Composable
@@ -460,3 +464,14 @@ private fun EqBars() {
         }
     }
 }
+
+@Composable
+private fun Sec(title:String,content:@Composable ColumnScope.()->Unit){Column(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=6.dp)){Text(title,fontSize=10.sp,color=CC.T3,fontWeight=FontWeight.SemiBold);Spacer(Modifier.height(6.dp));content()}}
+@Composable
+private fun Sep(){Spacer(Modifier.height(4.dp));Box(Modifier.fillMaxWidth().padding(horizontal=12.dp).height(1.dp).background(CC.Line));Spacer(Modifier.height(4.dp))}
+@Composable
+private fun CcSlider(label:String,value:String,position:Float,colors:List<Color>=listOf(CC.Acc,CC.Acc2)){var pos by remember{mutableStateOf(position)};Row(Modifier.fillMaxWidth().padding(vertical=3.dp),verticalAlignment=Alignment.CenterVertically){Text(label,fontSize=10.sp,color=CC.T2,modifier=Modifier.width(72.dp));Canvas(Modifier.weight(1f).height(20.dp).pointerInput(Unit){detectDragGestures{c,_->c.consume();pos=(c.position.x/size.width*100).coerceIn(0f,100f)}}){val cy=size.height/2;val w=size.width;drawRoundRect(CC.Card,Offset(0f,cy-2.dp.toPx()),Size(w,4.dp.toPx()),CornerRadius(2.dp.toPx()));drawRoundRect(Brush.linearGradient(colors),Offset(0f,cy-2.dp.toPx()),Size(w*pos/100,4.dp.toPx()),CornerRadius(2.dp.toPx()));drawCircle(CC.T1,5.dp.toPx(),Offset(w*pos/100,cy))};Text(value,fontSize=10.sp,color=CC.T3,modifier=Modifier.width(50.dp),textAlign=TextAlign.End)}}
+@Composable
+private fun OptRow(options:List<String>,selected:String,onSelect:(String)->Unit){Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){options.forEach{opt->val on=selected==opt;Box(Modifier.clip(RoundedCornerShape(6.dp)).background(if(on)CC.Acc.copy(0.15f)else CC.Card).clickable{onSelect(opt)}.padding(horizontal=10.dp,vertical=5.dp)){Text(opt,fontSize=10.sp,color=if(on)CC.Acc else CC.T2)}}}}
+@Composable
+private fun ColorWheel(label:String){Column(horizontalAlignment=Alignment.CenterHorizontally){Box(Modifier.size(60.dp),contentAlignment=Alignment.Center){Canvas(Modifier.fillMaxSize()){val c=Offset(size.width/2,size.height/2);val r=size.width/2-4.dp.toPx();for(a in 0 until 360 step 5){val rad=Math.toRadians(a.toDouble());drawLine(Color.hsl(a.toFloat(),0.6f,0.5f),c,Offset(c.x+r*cos(rad).toFloat(),c.y+r*sin(rad).toFloat()),strokeWidth=6.dp.toPx())};drawCircle(Color(0xFF1A1A1A),r-6.dp.toPx(),c)}};Text(label,fontSize=8.sp,color=CC.T3)}}

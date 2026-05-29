@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.myvideo.editor.ui.editor.panels.*
-import com.myvideo.editor.engine.VideoPlayerManager
 import com.myvideo.editor.engine.rememberVideoPlayer
 import com.myvideo.editor.core.security.membership.MembershipValidator
 import android.net.Uri
@@ -61,7 +60,7 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
         }
     }
 
-    if (vm.showToast) { kotlinx.coroutines.delay(2000); vm.showToast = false }
+    LaunchedEffect(vm.showToast) { if (vm.showToast) { kotlinx.coroutines.delay(2000); vm.showToast = false } }
 
     Box(modifier = Modifier.fillMaxSize().background(EC.Bg)) {
         Column(modifier = Modifier.fillMaxSize()) {

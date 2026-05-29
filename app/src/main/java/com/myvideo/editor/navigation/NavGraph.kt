@@ -83,7 +83,7 @@ fun NavGraph() {
                     onOpenProject = { currentTab = "editor" },
                     onOpenDraftBox = {}, onOpenTemplateCenter = {},
                     onOpenTutorial = { showTutorial = true },
-                    onSearchProject = {}, onRenameProject = {},
+                    onSearchProject = {}, onRenameProject = { _, _ -> },
                     onDeleteProject = {}, onDuplicateProject = {}
                 )
                 currentTab == "editor" -> EditorScreen(vm = editorVm)

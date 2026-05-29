@@ -143,7 +143,7 @@ private fun TimelineContent(vm: EditorViewModel) {
     val totalWidth = (400 + vm.tracks.size * 48 * 8).dp
     val hScroll = rememberScrollState()
 
-    Box(modifier = Modifier.weight(1f).fillMaxHeight()
+    Box(modifier = Modifier.fillMaxSize()
         .horizontalScroll(hScroll).verticalScroll(rememberScrollState())) {
         Box(modifier = Modifier.width(totalWidth).height((vm.tracks.size * 48).dp)) {
             // 片段

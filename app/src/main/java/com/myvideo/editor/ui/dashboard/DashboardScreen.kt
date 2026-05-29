@@ -33,8 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.myvideo.editor.theme.AppColors
-import com.myvideo.editor.theme.AppTypography
+import androidx.compose.ui.focus.FocusRequester
 import kotlinx.coroutines.delay
 
 data class ProjectItem(
@@ -103,7 +102,7 @@ fun DashboardScreen(
             }
 
             AnimatedVisibility(visible = showSearch, enter = fadeIn(tween(250)), exit = fadeOut(tween(250))) {
-                val fr = remember { androidx.compose.ui.focus.FocusRequester() }
+                val fr = remember { FocusRequester() }
                 LaunchedEffect(Unit) { delay(100); fr.requestFocus() }
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).height(38.dp)
                     .clip(RoundedCornerShape(10.dp)).background(DC.Card).padding(horizontal = 12.dp),
@@ -137,7 +136,7 @@ fun DashboardScreen(
                 modifier = Modifier.padding(start = 20.dp, top = 14.dp, bottom = 10.dp))
             LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(recentProjects.filter { it.isDraft }) { p ->
-                    DraftCard(DraftItem(p.id, p.name, p.duration, p.lastModified, p.thumbnailColors)) { onOpenProject(p.id) }
+                    DraftCard(DraftItem(p.id, p.name, p.duration, p.lastModified, false, p.thumbnailColors)) { onOpenProject(p.id) }
                 }
             }
 
