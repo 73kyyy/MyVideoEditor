@@ -6,8 +6,7 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
-        maven { url = uri("https://maven.arthenica.onl/repository/maven-releases/") }
-        maven { url = uri("https://repo1.maven.org/maven2/") }
+        maven { url = uri("https://maven.aliyun.com/repository/central/") }
     }
 }
 
@@ -16,8 +15,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://maven.arthenica.onl/repository/maven-releases/") }
-        maven { url = uri("https://repo1.maven.org/maven2/") }
+        maven { url = uri("https://maven.aliyun.com/repository/central/") }
     }
 }
 
