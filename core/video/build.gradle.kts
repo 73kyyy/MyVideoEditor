@@ -52,7 +52,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     // FFmpeg
-    implementation("com.arthenica:ffmpeg-kit-full:4.5.1")
+    implementation("com.arthenica:ffmpeg-kit-full:6.0-2")
 
     // Media3
     implementation("androidx.media3:media3-exoplayer:1.2.1")

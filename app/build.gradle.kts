@@ -165,7 +165,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // ===== 音视频处理：FFmpeg =====
-    implementation("com.arthenica:ffmpeg-kit-full:4.5.1")
+    implementation("com.arthenica:ffmpeg-kit-full:6.0-2")
 
     // ===== 视频播放：Media3 ExoPlayer =====
     implementation("androidx.media3:media3-exoplayer:1.2.1")

@@ -9,7 +9,7 @@ plugins {
 allprojects {
     configurations.all {
         resolutionStrategy {
-            force("com.arthenica:ffmpeg-kit-full:4.5.1")
+            force("com.arthenica:ffmpeg-kit-full:6.0-2")
         }
     }
 }
