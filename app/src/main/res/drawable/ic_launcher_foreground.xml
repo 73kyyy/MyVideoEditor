@@ -4,9 +4,21 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- 白色 N 字母居中 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,30 L54,78 M30,54 L78,54"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="8"/>
+        android:pathData="M30,74 L30,34 L36,34 L62,60 L62,34 L68,34 L68,74 L62,74 L36,48 L36,74 Z"/>
+
+    <!-- 右上角黄色 AI -->
+    <path
+        android:fillColor="#E8A820"
+        android:pathData="M72,26 L74.5,26 L78,33 L81.5,26 L84,26 L79,35 L77,35 Z"/>
+    <path
+        android:fillColor="#E8A820"
+        android:pathData="M74.5,27 L76,27 L76,29 L74.5,29 Z"/>
+    <path
+        android:fillColor="#E8A820"
+        android:pathData="M85,26 L87,26 L87,35 L85,35 Z M85,26.5 L87,26.5 L87,28.5 L85,28.5 Z M85,30 L87,30 L87,35 L85,35 Z"/>
+
 </vector>
