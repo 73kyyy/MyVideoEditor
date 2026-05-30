@@ -53,7 +53,6 @@ dependencies {
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")
 
     // PyTorch Mobile
-    implementation("org.pytorch:pytorch_android_lite:2.1.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
