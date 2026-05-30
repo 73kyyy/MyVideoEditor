@@ -144,7 +144,7 @@ class EditorBridge(private val context: Context) {
         val input = getClipPath(vm, clip.id) ?: return onError("找不到视频文件")
         val output = getOutputPath("speed_${System.currentTimeMillis()}.mp4")
         val speedStr = "%.1f".format(speed)
-        renderEngine.run("-i $input -filter_complex "[0:v]setpts=PTS/$speedStr[v];[0:a]atempo=$speedStr[a]" -map "[v]" -map "[a]" -c:v libx264 -preset fast -y $output", makeCallback(vm, clip.id, output, onComplete, onError))
+        renderEngine.run("-i $input -filter_complex [0:v]setpts=PTS/$speedStr[v];[0:a]atempo=$speedStr[a] -map [v] -map [a] -c:v libx264 -preset fast -y $output", makeCallback(vm, clip.id, output, onComplete, onError))
     }
 
     fun applyReverse(vm: EditorViewModel, onComplete: (String) -> Unit, onError: (String) -> Unit) {
@@ -217,10 +217,8 @@ class EditorBridge(private val context: Context) {
         val path1 = getClipPath(vm, clip1.id) ?: return onError("找不到第一个视频")
         val path2 = getClipPath(vm, clip2.id) ?: return onError("找不到第二个视频")
         val output = getOutputPath("transition_${System.currentTimeMillis()}.mp4")
-        val tt = com.myvideo.editor.core.video.model.TransitionType.values().find { it.name.contains(type, true) }
-            ?: com.myvideo.editor.core.video.model.TransitionType.CrossFade
-        val config = com.myvideo.editor.core.video.model.ParametricTransition("t1", type, tt, durationMs)
-        renderEngine.run("-i $path1 -i $path2 -filter_complex xfade=transition=${tt.ffmpegXfade}:duration=${durationMs/1000.0} -c:v libx264 -preset fast -c:a copy -y $output", makeCallback(vm, null, output, onComplete, onError))
+        val ttName = type.lowercase().replace(" ", "")
+        renderEngine.run("-i $path1 -i $path2 -filter_complex xfade=transition=$ttName:duration=${durationMs/1000.0} -c:v libx264 -preset fast -c:a copy -y $output", makeCallback(vm, null, output, onComplete, onError))
     }
 
     fun trimClip(vm: EditorViewModel, startMs: Long, endMs: Long, onComplete: (String) -> Unit, onError: (String) -> Unit) {

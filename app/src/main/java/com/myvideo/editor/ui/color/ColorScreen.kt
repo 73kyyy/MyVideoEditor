@@ -486,4 +486,3 @@ private fun CcSlider(label:String,value:String,position:Float,colors:List<Color>
 }
 @Composable
 private fun OptRow(options:List<String>,selected:String,onSelect:(String)->Unit){Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){options.forEach{opt->val on=selected==opt;Box(Modifier.clip(RoundedCornerShape(6.dp)).background(if(on)CC.Acc.copy(0.15f)else CC.Card).clickable{onSelect(opt)}.padding(horizontal=10.dp,vertical=5.dp)){Text(opt,fontSize=10.sp,color=if(on)CC.Acc else CC.T2)}}}}
-@Composable
