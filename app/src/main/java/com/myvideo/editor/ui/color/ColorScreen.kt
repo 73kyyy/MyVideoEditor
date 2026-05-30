@@ -88,7 +88,7 @@ fun ColorScreen(onBack: () -> Unit = {}) {
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Text("00:01.10",fontSize=10.sp,color=CC.T2,fontFamily=FontFamily.Monospace)
             Spacer(modifier = Modifier.width(8.dp))
-            listOf("[<<]","[<]",if(playing)"||"else">","[>]","[>>]").forEach { i ->
+            listOf("[<<]","[<]",if(playing) "||" else ">","[>]","[>>]").forEach { i ->
                 val main=i==">"||i=="||"
                 Box(modifier = Modifier.size(if(main)36.dp else 30.dp).clip(RoundedCornerShape(8.dp))
                     .background(if(main)CC.Acc.copy(0.2f)else Color.Transparent)

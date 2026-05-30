@@ -79,7 +79,7 @@ fun AudioScreen(onBack: () -> Unit = {}) {
         Row(modifier = Modifier.fillMaxWidth().height(40.dp).background(AC.Surf).border(1.dp,AC.Line)
             .padding(horizontal=16.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.Center) {
             Text("00:01.10",fontSize=10.sp,color=AC.T2,fontFamily=FontFamily.Monospace); Spacer(Modifier.width(8.dp))
-            listOf("[<<]","[<]",if(playing)"||"else">","[>]","[>>]").forEach { i -> val main=i==">"||i=="||"
+            listOf("[<<]","[<]",if(playing) "||" else ">","[>]","[>>]").forEach { i -> val main=i==">"||i=="||"
                 Box(modifier=Modifier.size(if(main)36.dp else 30.dp).clip(RoundedCornerShape(8.dp))
                     .background(if(main)AC.Acc.copy(0.2f)else Color.Transparent).clickable{if(main)playing=!playing},
                     contentAlignment=Alignment.Center) { Text(i,fontSize=if(main)16.sp else 11.sp,color=AC.T1) }
@@ -135,7 +135,7 @@ fun AudioScreen(onBack: () -> Unit = {}) {
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) { Text(n,fontSize=11.sp,color=AC.T1,fontWeight=FontWeight.Medium); Text(d,fontSize=8.sp,color=AC.T3) }
                 Box(Modifier.clip(RoundedCornerShape(4.dp)).background(if(free)AC.Green.copy(0.12f)else AC.Gold.copy(0.12f)).padding(horizontal=6.dp,vertical=2.dp)) {
-                    Text(if(free)"免费"else"PRO",fontSize=8.sp,color=if(free)AC.Green else AC.Gold,fontWeight=FontWeight.Bold) }
+                    Text(if(free) "免费" else "PRO",fontSize=8.sp,color=if(free)AC.Green else AC.Gold,fontWeight=FontWeight.Bold) }
             }
         }
     }
