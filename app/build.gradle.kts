@@ -181,7 +181,9 @@ dependencies {
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")
 
     // ===== AI推理：PyTorch Mobile =====
-    implementation("org.pytorch:pytorch_android:2.1.0")
+    implementation("org.pytorch:pytorch_android:2.1.0") {
+        exclude(group = "org.pytorch", module = "pytorch_android_lite")
+    }
 
     // ===== AI框架：MediaPipe =====
     implementation("com.google.mediapipe:tasks-vision:0.10.8")
