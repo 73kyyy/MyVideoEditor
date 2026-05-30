@@ -88,8 +88,8 @@ fun ColorScreen(onBack: () -> Unit = {}) {
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
             Text("00:01.10",fontSize=10.sp,color=CC.T2,fontFamily=FontFamily.Monospace)
             Spacer(modifier = Modifier.width(8.dp))
-            listOf("⏮","⏪",if(playing)"⏸"else"▶","⏩","⏭").forEach { i ->
-                val main=i=="▶"||i=="⏸"
+            listOf("[<<]","[<]",if(playing)"||"else">","[>]","[>>]").forEach { i ->
+                val main=i==">"||i=="||"
                 Box(modifier = Modifier.size(if(main)36.dp else 30.dp).clip(RoundedCornerShape(8.dp))
                     .background(if(main)CC.Acc.copy(0.2f)else Color.Transparent)
                     .clickable{if(main)playing=!playing}, contentAlignment=Alignment.Center) {
@@ -424,7 +424,7 @@ private fun AudioPage() {
                 .background(CC.Card).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(28.dp).clip(RoundedCornerShape(6.dp))
                     .background(if(free) CC.Green.copy(0.1f) else CC.Gold.copy(0.1f)),
-                    contentAlignment = Alignment.Center) { Text("▶", fontSize = 10.sp, color = if(free) CC.Green else CC.Gold) }
+                    contentAlignment = Alignment.Center) { Text(">", fontSize = 10.sp, color = if(free) CC.Green else CC.Gold) }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(name, fontSize = 11.sp, color = CC.T1, fontWeight = FontWeight.Medium)

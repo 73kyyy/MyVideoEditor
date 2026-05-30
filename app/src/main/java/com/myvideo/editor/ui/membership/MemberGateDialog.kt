@@ -24,10 +24,10 @@ fun MemberGateDialog(
     onDismiss: () -> Unit = {}
 ) {
     Box(modifier = Modifier.fillMaxSize().background(Color(0x80000000)),
-        contentAlignment = Alignment.Center) {
+        horizontalAlignment = Alignment.CenterHorizontally) {
         Column(modifier = Modifier.width(300.dp).clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF1A1A1A)).padding(24.dp),
-            contentAlignment = Alignment.Center) {
+            horizontalAlignment = Alignment.CenterHorizontally) {
             Text("PRO", fontSize = 12.sp, fontWeight = FontWeight.Bold,
                 color = Color(0xFFE8A820),
                 modifier = Modifier.clip(RoundedCornerShape(4.dp))
@@ -45,7 +45,7 @@ fun MemberGateDialog(
                 .background(Brush.linearGradient(listOf(Color(0xFFE8A820).copy(0.2f), Color(0xFFE8A820).copy(0.08f))))
                 .border(1.dp, Color(0xFFE8A820).copy(0.3f), RoundedCornerShape(12.dp))
                 .clickable { onSubscribe() }.padding(16.dp),
-                contentAlignment = Alignment.Center) {
+                horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("¥228/年", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE8A820))
                 Spacer(modifier = Modifier.height(4.dp))
                 Text("每天不到 ¥0.63 · 月付¥29 · 季付¥76", fontSize = 11.sp, color = Color(0xFF999999))

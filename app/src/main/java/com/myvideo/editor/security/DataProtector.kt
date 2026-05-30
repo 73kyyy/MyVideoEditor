@@ -91,14 +91,10 @@ object DataProtector {
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                     .setKeySize(KEY_SIZE)
                     .setUserAuthenticationRequired(true)
-                    unlockedDeviceRequired = true
                     .setInvalidatedByBiometricEnrollment(true)
                     .apply {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                             setIsStrongBoxBacked(true)
-                        }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                           unlockedDeviceRequired = true
                         }
                     }
                     .build()
