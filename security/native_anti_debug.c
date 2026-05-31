@@ -10,13 +10,29 @@
  */
 
 #include <jni.h>
+#include <dirent.h>
+#include <sys/types.h>
 #include <stdio.h>
+#include <dirent.h>
+#include <sys/types.h>
 #include <stdlib.h>
+#include <dirent.h>
+#include <sys/types.h>
 #include <string.h>
+#include <dirent.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/types.h>
 #include <sys/wait.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <sys/types.h>
 
 /*
  * 编号18 层1：/proc/self/status TracerPid
@@ -116,6 +132,8 @@ static int check_task_tracer(pid_t pid) {
 }
 
 #include <dirent.h>
+#include <dirent.h>
+#include <sys/types.h>
 
 /*
  * 编号33 C层检测1：/proc/self/fdinfo中调试器fd

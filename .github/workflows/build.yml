@@ -98,6 +98,8 @@ jobs:
           mkdir -p app/src/main/cpp/openssl/include app/src/main/cpp/openssl/arm64-v8a app/src/main/cpp/openssl/armeabi-v7a
           cp -r $GITHUB_WORKSPACE/openssl/arm64-v8a/include/* app/src/main/cpp/openssl/include/
           cp $GITHUB_WORKSPACE/openssl/arm64-v8a/lib/libcrypto.a app/src/main/cpp/openssl/arm64-v8a/
+          cp $GITHUB_WORKSPACE/openssl/arm64-v8a/lib/libssl.a app/src/main/cpp/openssl/arm64-v8a/
+          cp $GITHUB_WORKSPACE/openssl/armeabi-v7a/lib/libssl.a app/src/main/cpp/openssl/armeabi-v7a/
           cp $GITHUB_WORKSPACE/openssl/armeabi-v7a/lib/libcrypto.a app/src/main/cpp/openssl/armeabi-v7a/
       - name: Download opencv-mobile
         run: |

@@ -51,6 +51,15 @@ if(EXISTS "${MNN_DIR}/${ANDROID_ABI}/lib/libMNN.so")
     target_compile_definitions(nexclip_native PRIVATE HAS_MNN=1)
 endif()
 
+# ===== OpenSSL =====
+set(OPENSSL_DIR "${CMAKE_SOURCE_DIR}/openssl")
+if(EXISTS "${OPENSSL_DIR}/${ANDROID_ABI}/lib/libcrypto.a")
+    include_directories("${OPENSSL_DIR}/include")
+    target_link_libraries(nexclip_native
+        "${OPENSSL_DIR}/${ANDROID_ABI}/lib/libcrypto.a"
+        "${OPENSSL_DIR}/${ANDROID_ABI}/lib/libssl.a")
+endif()
+
 # ===== RNNoise =====
 set(RNNOISE_DIR "${CMAKE_SOURCE_DIR}/third_party/rnnoise")
 if(EXISTS "${RNNOISE_DIR}/${ANDROID_ABI}/lib/librnnoise.a")
