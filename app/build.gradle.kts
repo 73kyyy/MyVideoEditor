@@ -7,6 +7,7 @@ plugins {
 android {
     ndkVersion = "26.1.10909125"
     buildFeatures {
+        compose = true
         buildConfig = true
     }
     namespace = "com.myvideo.editor"
