@@ -31,7 +31,7 @@ class VideoPlayerManager(private val context: Context) {
                     }
                 }
                 override fun onIsPlayingChanged(playing: Boolean) {
-                    isPlaying = playing
+                    this@VideoPlayerManager.isPlaying = playing
                 }
             })
         }
