@@ -53,8 +53,8 @@ endif()
 
 # ===== OpenSSL =====
 set(OPENSSL_DIR "${CMAKE_SOURCE_DIR}/openssl")
+include_directories("${OPENSSL_DIR}/include")
 if(EXISTS "${OPENSSL_DIR}/${ANDROID_ABI}/libcrypto.a")
-    include_directories("${OPENSSL_DIR}/include")
     target_link_libraries(nexclip_native
         "${OPENSSL_DIR}/${ANDROID_ABI}/libcrypto.a"
         "${OPENSSL_DIR}/${ANDROID_ABI}/libssl.a")
