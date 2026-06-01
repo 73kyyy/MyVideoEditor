@@ -70,7 +70,7 @@ jobs:
           fi
       - name: Build OpenSSL for Android
         run: |
-          if [ -d "app/src/main/cpp/openssl/arm64-v8a" ]; then
+          if [ -f "app/src/main/cpp/openssl/include/openssl/ssl.h" ]; then
             echo "OpenSSL已存在，跳过"
             exit 0
           fi
