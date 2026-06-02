@@ -1,0 +1,2 @@
+failed to get run: HTTP 401: Bad credentials (https://api.github.com/repos/73kyyy/MyVideoEditor/actions/runs/%E6%9C%80%E6%96%B0%E6%9E%84%E5%BB%BAID?exclude_pull_requests=true)
+Try authenticating with:  gh auth login -h github.com
