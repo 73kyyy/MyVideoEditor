@@ -78,7 +78,7 @@ jobs:
           wget -q https://github.com/openssl/openssl/releases/download/openssl-3.2.1/openssl-3.2.1.tar.gz
           tar -xzf openssl-3.2.1.tar.gz
           mkdir -p app/src/main/cpp/openssl/include/openssl app/src/main/cpp/openssl/arm64-v8a app/src/main/cpp/openssl/armeabi-v7a
-          cp openssl-3.2.1/include/openssl/*.h app/src/main/cpp/openssl/include/openssl/
+          cp -r openssl-3.2.1/include/openssl app/src/main/cpp/openssl/include/
           cd openssl-3.2.1
           export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
           TC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
