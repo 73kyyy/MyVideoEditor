@@ -77,8 +77,6 @@ jobs:
           fi
           wget -q https://github.com/openssl/openssl/releases/download/openssl-3.2.1/openssl-3.2.1.tar.gz
           tar -xzf openssl-3.2.1.tar.gz
-          mkdir -p app/src/main/cpp/openssl/include/openssl app/src/main/cpp/openssl/arm64-v8a app/src/main/cpp/openssl/armeabi-v7a
-          cp -r openssl-3.2.1/include/openssl/. app/src/main/cpp/openssl/include/openssl/
           cd openssl-3.2.1
           export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
           TC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
@@ -88,7 +86,10 @@ jobs:
           export CC=aarch64-linux-android26-clang
           export CXX=aarch64-linux-android26-clang++
           ./Configure android-arm64 no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
+          mkdir -p ../app/src/main/cpp/openssl/include/openssl
+          cp include/openssl/*.h ../app/src/main/cpp/openssl/include/openssl/
           make -j$(nproc) build_libs
+          mkdir -p ../app/src/main/cpp/openssl/arm64-v8a
           cp libcrypto.a ../app/src/main/cpp/openssl/arm64-v8a/
           cp libssl.a ../app/src/main/cpp/openssl/arm64-v8a/
           make clean 2>/dev/null || true
@@ -96,6 +97,7 @@ jobs:
           export CXX=armv7a-linux-androideabi26-clang++
           ./Configure android-arm no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
           make -j$(nproc) build_libs
+          mkdir -p ../app/src/main/cpp/openssl/armeabi-v7a
           cp libcrypto.a ../app/src/main/cpp/openssl/armeabi-v7a/
           cp libssl.a ../app/src/main/cpp/openssl/armeabi-v7a/
           cd ..
