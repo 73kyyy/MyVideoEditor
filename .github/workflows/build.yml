@@ -90,24 +90,6 @@ jobs:
           make -j$(nproc)
           mkdir -p ../app/src/main/cpp/openssl/include/openssl
           cp -rL include/openssl/* ../app/src/main/cpp/openssl/include/openssl/
-          # 强制复制hkdf.h
-          # 如果没有hkdf.h，创建兼容shim
-          if [ ! -f "include/openssl/hkdf.h" ]; then
-            echo "创建hkdf.h兼容shim..."
-            cat > ../app/src/main/cpp/openssl/include/openssl/hkdf.h << SHIM
-/* hkdf.h compatibility shim for OpenSSL 3.x */
-#ifndef OPENSSL_HKDF_H
-#define OPENSSL_HKDF_H
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#endif
-            SHIM
-            echo "已创建: hkdf.h兼容shim"
-          fi
-          if [ -f "include/openssl/hkdf.h" ] && [ ! -f "../app/src/main/cpp/openssl/include/openssl/hkdf.h" ]; then
-            cp include/openssl/hkdf.h ../app/src/main/cpp/openssl/include/openssl/
-            echo "显式复制: hkdf.h"
-          fi
           mkdir -p ../app/src/main/cpp/openssl/arm64-v8a
           cp libcrypto.a ../app/src/main/cpp/openssl/arm64-v8a/
           cp libssl.a ../app/src/main/cpp/openssl/arm64-v8a/
@@ -133,6 +115,8 @@ jobs:
           if [ -f "app/src/main/cpp/openssl/include/openssl/hkdf.h" ]; then
             echo "OK: hkdf.h"
           else
+            echo "FAIL: hkdf.h missing"
+            exit 1
           fi
           for f in arm64-v8a/libcrypto.a arm64-v8a/libssl.a armeabi-v7a/libcrypto.a armeabi-v7a/libssl.a; do
             if [ -f "app/src/main/cpp/openssl/$f" ]; then
@@ -372,8 +356,3 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 确保hkdf.h存在（从源码复制）
-          if [ ! -f "app/src/main/cpp/openssl/include/openssl/hkdf.h" ]; then
-            echo "复制缺失的hkdf.h..."
-            find openssl-3.2.1 -name "hkdf.h" -exec cp {} app/src/main/cpp/openssl/include/openssl/ \; 2>/dev/null || true
-          fi
