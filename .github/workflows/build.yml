@@ -70,37 +70,37 @@ jobs:
           fi
       - name: Build OpenSSL for Android
         run: |
-          if [ -f "app/src/main/cpp/openssl/include/openssl/ssl.h" ]; then
+          if [ -f "app/src/main/cpp/openssl/include/openssl/ssl.h" ] && \
+             [ -f "app/src/main/cpp/openssl/arm64-v8a/libcrypto.a" ]; then
             echo "OpenSSL已存在，跳过"
             exit 0
           fi
           wget -q https://github.com/openssl/openssl/releases/download/openssl-3.2.1/openssl-3.2.1.tar.gz
           tar -xzf openssl-3.2.1.tar.gz
+          mkdir -p app/src/main/cpp/openssl/include/openssl app/src/main/cpp/openssl/arm64-v8a app/src/main/cpp/openssl/armeabi-v7a
+          cp openssl-3.2.1/include/openssl/*.h app/src/main/cpp/openssl/include/openssl/
           cd openssl-3.2.1
-          NDK=$ANDROID_NDK_HOME
-          TC=$NDK/toolchains/llvm/prebuilt/linux-x86_64
-          export ANDROID_NDK_ROOT=$NDK
+          export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
+          TC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
           export PATH=$TC/bin:$PATH
-          for A in "arm64-v8a android-arm64 aarch64-linux-android" "armeabi-v7a android-arm armv7a-linux-androideabi"; do
-            ARCH=$(echo $A | awk '{print $1}')
-            CFG=$(echo $A | awk '{print $2}')
-            CCP=$(echo $A | awk '{print $3}')
-            export CC="${CCP}26-clang"
-            export CXX="${CCP}26-clang++"
-            export AR="llvm-ar"
-            export RANLIB="llvm-ranlib"
-            mkdir -p b_$ARCH && cd b_$ARCH
-            ../Configure $CFG --prefix=$GITHUB_WORKSPACE/openssl/$ARCH no-shared no-tests no-asm no-engine
-            make -j$(nproc) build_libs
-            make install_sw
-            cd ..
-          done
-          mkdir -p app/src/main/cpp/openssl/include app/src/main/cpp/openssl/arm64-v8a app/src/main/cpp/openssl/armeabi-v7a
-          cp -r $GITHUB_WORKSPACE/openssl/arm64-v8a/include/* app/src/main/cpp/openssl/include/
-          cp $GITHUB_WORKSPACE/openssl/arm64-v8a/lib/libcrypto.a app/src/main/cpp/openssl/arm64-v8a/
-          cp $GITHUB_WORKSPACE/openssl/arm64-v8a/lib/libssl.a app/src/main/cpp/openssl/arm64-v8a/
-          cp $GITHUB_WORKSPACE/openssl/armeabi-v7a/lib/libssl.a app/src/main/cpp/openssl/armeabi-v7a/
-          cp $GITHUB_WORKSPACE/openssl/armeabi-v7a/lib/libcrypto.a app/src/main/cpp/openssl/armeabi-v7a/
+          export AR=llvm-ar
+          export RANLIB=llvm-ranlib
+          export CC=aarch64-linux-android26-clang
+          export CXX=aarch64-linux-android26-clang++
+          ./Configure android-arm64 no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
+          make -j$(nproc) build_libs
+          cp libcrypto.a ../app/src/main/cpp/openssl/arm64-v8a/
+          cp libssl.a ../app/src/main/cpp/openssl/arm64-v8a/
+          make clean 2>/dev/null || true
+          export CC=armv7a-linux-androideabi26-clang
+          export CXX=armv7a-linux-androideabi26-clang++
+          ./Configure android-arm no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
+          make -j$(nproc) build_libs
+          cp libcrypto.a ../app/src/main/cpp/openssl/armeabi-v7a/
+          cp libssl.a ../app/src/main/cpp/openssl/armeabi-v7a/
+          cd ..
+          echo "=== OpenSSL build complete ==="
+          ls -la app/src/main/cpp/openssl/include/openssl/ssl.h app/src/main/cpp/openssl/arm64-v8a/libcrypto.a
       - name: Download opencv-mobile
         run: |
           mkdir -p app/src/main/cpp/third_party/opencv-mobile
