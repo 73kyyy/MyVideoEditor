@@ -1,3 +1,7 @@
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 /*
  * NexClip 类目十二：持续监控 - Native层（精简版）
  * 编号55：检测函数随机化（Fisher-Yates洗牌）

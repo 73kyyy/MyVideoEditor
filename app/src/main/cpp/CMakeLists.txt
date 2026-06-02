@@ -83,3 +83,5 @@ target_link_libraries(nexclip_native
     ${gles-lib}
     ${egl-lib}
 )
+    # 抑制OpenSSL弃用API警告
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE OSSL_SUPPRESS_DEPRECATED=1)
