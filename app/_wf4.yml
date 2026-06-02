@@ -1,0 +1,121 @@
+name: NexClip Build
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+env:
+  ANDROID_NDK_VERSION: "26.1.10909125"
+  JAVA_VERSION: "17"
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [free]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android/sdk/ndk 2>/dev/null || true
+          sudo rm -rf /usr/share/dotnet 2>/dev/null || true
+          sudo apt-get clean 2>/dev/null || true
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "temurin"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install NDK
+        run: |
+          sdkmanager "ndk;${{ env.ANDROID_NDK_VERSION }}"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "ndk.dir=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> local.properties
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: gradle-${{ runner.os }}-
+      - name: Cache third-party libs
+        uses: actions/cache@v4
+        with:
+          path: app/src/main/cpp/third_party
+          key: tp-v3-${{ runner.os }}
+          restore-keys: tp-v3-${{ runner.os }}-
+      - name: Link security Kotlin files
+        run: |
+          mkdir -p app/src/main/java/com/myvideo/editor/security
+          if [ -d "core/security/src/main/java" ]; then
+            find core/security/src/main/java -name "*.kt" -type f | while read f; do
+              fn=$(basename "$f")
+              if [ ! -f "app/src/main/java/com/myvideo/editor/security/$fn" ]; then
+                cp "$f" "app/src/main/java/com/myvideo/editor/security/$fn"
+              fi
+            done
+          fi
+      - name: Build OpenSSL for Android
+        run: |
+          set -e
+          if [ -f "app/src/main/cpp/openssl/include/openssl/ssl.h" ] && \
+             [ -f "app/src/main/cpp/openssl/arm64-v8a/libcrypto.a" ]; then
+            echo "OpenSSL已存在，跳过"
+            exit 0
+          fi
+          wget -q https://github.com/openssl/openssl/releases/download/openssl-3.2.1/openssl-3.2.1.tar.gz
+          tar -xzf openssl-3.2.1.tar.gz
+          cd openssl-3.2.1
+          export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
+          TC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
+          export PATH=$TC/bin:$PATH
+          export AR=llvm-ar
+          export RANLIB=llvm-ranlib
+          export CC=aarch64-linux-android26-clang
+          export CXX=aarch64-linux-android26-clang++
+          ./Configure android-arm64 no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
+          make -j$(nproc) build_libs
+          mkdir -p ../app/src/main/cpp/openssl/include/openssl
+          cp -rL include/openssl/. ../app/src/main/cpp/openssl/include/openssl/
+          mkdir -p ../app/src/main/cpp/openssl/arm64-v8a
+          cp libcrypto.a ../app/src/main/cpp/openssl/arm64-v8a/
+          cp libssl.a ../app/src/main/cpp/openssl/arm64-v8a/
+          make clean 2>/dev/null || true
+          export CC=armv7a-linux-androideabi26-clang
+          export CXX=armv7a-linux-androideabi26-clang++
+          ./Configure android-arm no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
+          make -j$(nproc) build_libs
+          mkdir -p ../app/src/main/cpp/openssl/armeabi-v7a
+          cp libcrypto.a ../app/src/main/cpp/openssl/armeabi-v7a/
+          cp libssl.a ../app/src/main/cpp/openssl/armeabi-v7a/
+          cd ..
+          echo "=== Verify files ==="
+          for f in ssl.h evp.h sha.h; do
+            if [ -f "app/src/main/cpp/openssl/include/openssl/$f" ]; then
+              echo "OK: $f exists"
+            else
+              echo "FAIL: $f not found"
+              exit 1
+            fi
+          done
+          for f in arm64-v8a/libcrypto.a arm64-v8a/libssl.a armeabi-v7a/libcrypto.a armeabi-v7a/libssl.a; do
+            if [ -f "app/src/main/cpp/openssl/$f" ]; then
+              echo "OK: $f exists ($(du -h app/src/main/cpp/openssl/$f | cut -f1))"
+            else
+              echo "FAIL: $f not found"
+              exit 1
+            fi
+          done
