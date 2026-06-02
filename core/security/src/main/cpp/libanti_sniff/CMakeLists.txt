@@ -8,3 +8,9 @@ add_library(anti_sniff SHARED
     crawler_detector.cpp
 )
 target_link_libraries(anti_sniff log android)
+
+# OpenSSL headers
+set(OPENSSL_INC "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../../app/src/main/cpp/openssl/include")
+if(EXISTS "${OPENSSL_INC}/openssl/ssl.h")
+    include_directories("${OPENSSL_INC}")
+endif()
