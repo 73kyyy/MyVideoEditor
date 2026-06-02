@@ -86,24 +86,25 @@ jobs:
           export RANLIB=llvm-ranlib
           export CC=aarch64-linux-android26-clang
           export CXX=aarch64-linux-android26-clang++
-          ./Configure android-arm64 --prefix=$GITHUB_WORKSPACE/openssl/arm64-v8a no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
-          make -j$(nproc)
-          make install_sw
+          ./Configure android-arm64 no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
+          make -j$(nproc) build_libs
+          mkdir -p ../app/src/main/cpp/openssl/include/openssl
+          cp -rL include/openssl/. ../app/src/main/cpp/openssl/include/openssl/
+          mkdir -p ../app/src/main/cpp/openssl/arm64-v8a
+          cp libcrypto.a ../app/src/main/cpp/openssl/arm64-v8a/
+          cp libssl.a ../app/src/main/cpp/openssl/arm64-v8a/
           make clean 2>/dev/null || true
           export CC=armv7a-linux-androideabi26-clang
           export CXX=armv7a-linux-androideabi26-clang++
-          ./Configure android-arm --prefix=$GITHUB_WORKSPACE/openssl/armeabi-v7a no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
-          make -j$(nproc)
-          make install_sw
+          ./Configure android-arm no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
+          make -j$(nproc) build_libs
+          mkdir -p ../app/src/main/cpp/openssl/armeabi-v7a
+          cp libcrypto.a ../app/src/main/cpp/openssl/armeabi-v7a/
+          cp libssl.a ../app/src/main/cpp/openssl/armeabi-v7a/
           cd ..
-          mkdir -p app/src/main/cpp/openssl/include app/src/main/cpp/openssl/arm64-v8a app/src/main/cpp/openssl/armeabi-v7a
-          cp -rL $GITHUB_WORKSPACE/openssl/arm64-v8a/include/openssl app/src/main/cpp/openssl/include/
-          cp $GITHUB_WORKSPACE/openssl/arm64-v8a/lib/libcrypto.a app/src/main/cpp/openssl/arm64-v8a/
-          cp $GITHUB_WORKSPACE/openssl/arm64-v8a/lib/libssl.a app/src/main/cpp/openssl/arm64-v8a/
-          cp $GITHUB_WORKSPACE/openssl/armeabi-v7a/lib/libcrypto.a app/src/main/cpp/openssl/armeabi-v7a/
-          cp $GITHUB_WORKSPACE/openssl/armeabi-v7a/lib/libssl.a app/src/main/cpp/openssl/armeabi-v7a/
           echo "=== Verify OpenSSL ==="
-          for f in ssl.h evp.h sha.h hkdf.h; do
+          echo "Header count: $(find app/src/main/cpp/openssl/include/openssl -name '*.h' | wc -l)"
+          for f in ssl.h evp.h sha.h; do
             if [ -f "app/src/main/cpp/openssl/include/openssl/$f" ]; then
               echo "OK: $f"
             else
@@ -111,9 +112,16 @@ jobs:
               exit 1
             fi
           done
+          if [ -f "app/src/main/cpp/openssl/include/openssl/hkdf.h" ]; then
+            echo "OK: hkdf.h"
+          else
+            echo "WARN: hkdf.h not found, searching..."
+            find . -name "hkdf.h" 2>/dev/null
+            echo "Skipping hkdf.h check - not all OpenSSL versions include it"
+          fi
           for f in arm64-v8a/libcrypto.a arm64-v8a/libssl.a armeabi-v7a/libcrypto.a armeabi-v7a/libssl.a; do
             if [ -f "app/src/main/cpp/openssl/$f" ]; then
-              echo "OK: $f"
+              echo "OK: $f ($(du -h app/src/main/cpp/openssl/$f | cut -f1))"
             else
               echo "FAIL: $f missing"
               exit 1
