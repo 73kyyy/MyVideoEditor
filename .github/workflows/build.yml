@@ -146,6 +146,7 @@ jobs:
           done
           if [ "$D" -eq 0 ]; then
             echo "opencv-mobile 下载失败，跳过"
+
           fi
       - name: Download ncnn
         run: |
@@ -159,6 +160,21 @@ jobs:
           else
             mkdir -p app/src/main/cpp/third_party/ncnn/arm64-v8a/include app/src/main/cpp/third_party/ncnn/armeabi-v7a/include
           fi
+      - name: Build FFmpeg
+        run: |
+          NDK=/usr/local/lib/android/sdk/ndk/26.1.10909125
+          TC=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+          PREFIX=$GITHUB_WORKSPACE/app/src/main/cpp/third_party/ffmpeg/arm64-v8a
+          mkdir -p $PREFIX
+          if [ -f "$PREFIX/lib/libavcodec.a" ]; then exit 0; fi
+          git clone --depth=1 --branch=n6.1 https://github.com/FFmpeg/FFmpeg.git ffmpeg_src
+          cd ffmpeg_src
+          ./configure --prefix=$PREFIX --target-os=android --arch=aarch64 --cc=$TC/bin/aarch64-linux-android26-clang --cxx=$TC/bin/aarch64-linux-android26-clang++ --enable-cross-compile --cross-prefix=$TC/bin/llvm- --sysroot=$TC/sysroot --enable-static --disable-shared --disable-doc --disable-programs --disable-asm --disable-autodetect --enable-avcodec --enable-avformat --enable-avutil --enable-swscale --enable-decoder=h264,hevc,aac,mp3,pcm_s16le,mpeg4,vp8,vp9,opus,vorbis --enable-parser=h264,hevc,aac,opus,vp8,vp9 --enable-demuxer=mov,matroska,mp3,aac,wav,ogg,webm,avi --enable-protocol=file --extra-cflags="-Os -fPIC" --extra-ldflags="-lm"
+          make -j$(nproc)
+          make install
+          cd ..
+          rm -rf ffmpeg_src
+
           rm -f ncnn.zip
       - name: Download MNN
         run: |
