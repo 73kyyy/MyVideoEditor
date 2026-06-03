@@ -145,7 +145,7 @@ jobs:
             done
           done
           if [ "$D" -eq 0 ]; then
-            mkdir -p app/src/main/cpp/third_party/opencv-mobile/sdk/native/jni/include
+            echo "opencv-mobile 下载失败，跳过"
           fi
       - name: Download ncnn
         run: |
