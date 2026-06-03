@@ -137,6 +137,7 @@ jobs:
               if curl -L -f -o cv.zip "$U" --connect-timeout 15 --max-time 120 2>/dev/null; then
                 if unzip -t cv.zip >/dev/null 2>&1; then
                   unzip -q cv.zip -d app/src/main/cpp/third_party/opencv-mobile/
+            mv app/src/main/cpp/third_party/opencv-mobile/opencv-mobile-*-android-sdk/sdk app/src/main/cpp/third_party/opencv-mobile/sdk 2>/dev/null || true
                   D=1; break 2
                 fi
               fi
