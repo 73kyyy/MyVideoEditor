@@ -4,11 +4,17 @@ project("nexclip_native")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 项目源码
-file(GLOB_RECURSE SOURCES
+# 项目源码（排除third_party目录）
+file(GLOB_RECURSE _ALL_SOURCES
     "*.c"
     "*.cpp"
 )
+set(SOURCES "")
+foreach(src ${_ALL_SOURCES})
+    if(NOT src MATCHES "third_party/")
+        list(APPEND SOURCES ${src})
+    endif()
+endforeach()
 
 # 安全模块源码（从security目录）
 set(SECURITY_DIR "${CMAKE_SOURCE_DIR}/../../../../security")
