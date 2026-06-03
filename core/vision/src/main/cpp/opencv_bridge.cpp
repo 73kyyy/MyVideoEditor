@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <android/log.h>
 
+#include <cstdlib>
 #define TAG "OpenCVBridge"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 
