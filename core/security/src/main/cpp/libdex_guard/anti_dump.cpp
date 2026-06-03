@@ -1,6 +1,8 @@
 #include <jni.h>
 #include <android/log.h>
 #include <sys/mman.h>
+#include <cstdio>
+#include <cstring>
 
 #define TAG "AntiDump"
 
