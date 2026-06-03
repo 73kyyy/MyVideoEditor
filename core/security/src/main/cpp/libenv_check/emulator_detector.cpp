@@ -8,7 +8,7 @@
 
 static bool checkProperty(const char* prop, const char* value) {
     char buf[PROP_VALUE_MAX];
-    __system_get_prop(prop, buf);
+    __system_property_get(prop, buf);
     return strstr(buf, value) != nullptr;
 }
 

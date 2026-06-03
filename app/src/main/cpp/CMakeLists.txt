@@ -29,7 +29,7 @@ set(OpenCV_DIR "${CMAKE_SOURCE_DIR}/third_party/opencv-mobile")
 if(EXISTS "${OpenCV_DIR}/sdk/native/jni")
     include_directories("${OpenCV_DIR}/sdk/native/jni/include")
     link_directories("${OpenCV_DIR}/sdk/native/jni/libs/${ANDROID_ABI}")
-    target_link_libraries(nexclip_native opencv_java4)
+    target_link_libraries(nexclip_native opencv)
     target_compile_definitions(nexclip_native PRIVATE HAS_OPENCV=1)
 endif()
 
