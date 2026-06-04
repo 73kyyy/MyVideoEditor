@@ -164,18 +164,58 @@ jobs:
         run: |
           NDK=/usr/local/lib/android/sdk/ndk/26.1.10909125
           TC=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+          SYSROOT=$TC/sysroot
           PREFIX=$GITHUB_WORKSPACE/app/src/main/cpp/third_party/ffmpeg/arm64-v8a
           mkdir -p $PREFIX
-          if [ -f "$PREFIX/lib/libavcodec.a" ]; then exit 0; fi
-          git clone --depth=1 --branch=n6.1 https://github.com/FFmpeg/FFmpeg.git ffmpeg_src
+          if [ -f "$PREFIX/lib/libavcodec.a" ]; then
+            echo "FFmpeg already built"
+            exit 0
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq nasm yasm 2>/dev/null || true
+          if ! git clone --depth=1 --branch=n6.1 https://github.com/FFmpeg/FFmpeg.git ffmpeg_src 2>/dev/null; then
+            echo "Clone failed, trying release tarball..."
+            curl -L -o ffmpeg.tar.xz "https://ffmpeg.org/releases/ffmpeg-6.1.tar.xz" --connect-timeout 30 --max-time 600
+            mkdir -p ffmpeg_src && tar xf ffmpeg.tar.xz -C ffmpeg_src --strip-components=1
+            rm -f ffmpeg.tar.xz
+          fi
           cd ffmpeg_src
-          ./configure --prefix=$PREFIX --target-os=android --arch=aarch64 --cc=$TC/bin/aarch64-linux-android26-clang --cxx=$TC/bin/aarch64-linux-android26-clang++ --enable-cross-compile --cross-prefix=$TC/bin/llvm- --sysroot=$TC/sysroot --enable-static --disable-shared --disable-doc --disable-programs --disable-asm --disable-autodetect --enable-avcodec --enable-avformat --enable-avutil --enable-swscale --enable-decoder=h264,hevc,aac,mp3,pcm_s16le,mpeg4,vp8,vp9,opus,vorbis --enable-parser=h264,hevc,aac,opus,vp8,vp9 --enable-demuxer=mov,matroska,mp3,aac,wav,ogg,webm,avi --enable-protocol=file --extra-cflags="-Os -fPIC" --extra-ldflags="-lm"
+          ./configure \
+            --prefix=$PREFIX \
+            --target-os=android \
+            --arch=aarch64 \
+            --cc=$TC/bin/aarch64-linux-android26-clang \
+            --cxx=$TC/bin/aarch64-linux-android26-clang++ \
+            --enable-cross-compile \
+            --cross-prefix=$TC/bin/llvm- \
+            --sysroot=$SYSROOT \
+            --ar=$TC/bin/llvm-ar \
+            --nm=$TC/bin/llvm-nm \
+            --ranlib=$TC/bin/llvm-ranlib \
+            --strip=$TC/bin/llvm-strip \
+            --enable-static \
+            --disable-shared \
+            --disable-doc \
+            --disable-programs \
+            --disable-asm \
+            --disable-autodetect \
+            --disable-network \
+            --enable-avcodec \
+            --enable-avformat \
+            --enable-avutil \
+            --enable-swscale \
+            --enable-decoder=h264,hevc,aac,mp3,pcm_s16le,mpeg4,vp8,vp9,opus,vorbis \
+            --enable-parser=h264,hevc,aac,opus,vp8,vp9 \
+            --enable-demuxer=mov,matroska,mp3,aac,wav,ogg,webm,avi \
+            --enable-protocol=file \
+            --extra-cflags="-Os -fPIC" \
+            --extra-ldflags="-lm"
           make -j$(nproc)
           make install
           cd ..
           rm -rf ffmpeg_src
+          echo "FFmpeg build complete:"
+          ls -la $PREFIX/lib/*.a 2>/dev/null || echo "WARNING: No .a files found!"
 
-          rm -f ncnn.zip
       - name: Download MNN
         run: |
           if [ -d "app/src/main/cpp/third_party/mnn/arm64-v8a/lib" ]; then exit 0; fi
@@ -327,6 +367,9 @@ jobs:
           keytool -genkeypair -v -keystore keystore/debug.jks -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,OU=Android,O=Android,L=Mountain View,ST=California,C=US"
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+      - name: Clean CMake caches
+        run: find . -type d -name ".cxx" -exec rm -rf {} + 2>/dev/null || true
+
       - name: Build Debug APK
         run: |
           export KEYSTORE_PASSWORD=nexclip123
