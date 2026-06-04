@@ -367,6 +367,13 @@ jobs:
           keytool -genkeypair -v -keystore keystore/debug.jks -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,OU=Android,O=Android,L=Mountain View,ST=California,C=US"
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+      - name: Create debug keystore
+        run: |
+          mkdir -p keystore
+          if [ ! -f keystore/debug.jks ]; then
+            keytool -genkeypair -v -keystore keystore/debug.jks -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: Clean CMake caches
         run: find . -type d -name ".cxx" -exec rm -rf {} + 2>/dev/null || true
 
