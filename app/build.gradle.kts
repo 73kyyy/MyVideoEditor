@@ -47,12 +47,18 @@ android {
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
             keyAlias = "nexclip"
             keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
         getByName("debug") {
             storeFile = file("../keystore/debug.jks")
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
     }
 
