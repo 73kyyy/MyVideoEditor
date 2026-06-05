@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NexClip 剪辑页</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --bg: #0C0C0E; --surface: #141416; --surface2: #1C1C1F; --surface3: #242428;
+    --border: #2A2A2E; --border2: #35353A;
+    --text1: #F5F5F7; --text2: #A1A1A6; --text3: #6E6E73; --text4: #48484A;
+    --accent: #0A84FF; --accent2: #409CFF; --accent-bg: rgba(10,132,255,0.1);
+    --mint: #30D158; --mint-bg: rgba(48,209,88,0.1);
+    --coral: #FF6482; --coral-bg: rgba(255,100,130,0.1);
+    --amber: #FFD60A; --amber-bg: rgba(255,214,10,0.1);
+    --violet: #BF5AF2; --violet-bg: rgba(191,90,242,0.1);
+    --orange: #FF9F0A; --orange-bg: rgba(255,159,10,0.1);
+    --teal: #64D2FF; --teal-bg: rgba(100,210,255,0.1);
+    --radius: 12px; --radius-sm: 8px; --radius-xs: 6px;
+  }
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: #000; color: var(--text1);
+    overflow: hidden; height: 100vh; width: 100vw;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .device {
+    width: 393px; height: 852px; background: var(--bg);
+    border-radius: 48px; overflow: hidden; position: relative;
+    box-shadow: 0 0 0 3px #2a2a2e, 0 0 0 6px #141416, 0 30px 100px rgba(0,0,0,0.9);
+    display: flex; flex-direction: column;
+  }
+
+  /* === 顶栏 === */
+  .topbar {
+    height: 52px; padding: 0 20px; display: flex; align-items: center;
+    justify-content: space-between; flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .back { width: 28px; height: 28px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .back svg { width: 16px; height: 16px; stroke: var(--text2); fill: none; stroke-width: 2; }
+  .project-name { font-size: 14px; font-weight: 600; color: var(--text1); letter-spacing: -0.3px; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .settings-btn { width: 28px; height: 28px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .settings-btn svg { width: 15px; height: 15px; stroke: var(--text3); fill: none; stroke-width: 1.8; }
+  .export-btn {
+    height: 30px; padding: 0 16px; border-radius: 15px;
+    background: var(--accent); display: flex; align-items: center; gap: 5px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .export-btn:hover { background: var(--accent2); }
+  .export-btn span { font-size: 12px; font-weight: 600; color: #fff; }
+
+  /* === 预览区 === */
+  .preview {
+    height: 260px; padding: 0 16px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .preview-frame {
+    width: 88%; aspect-ratio: 16/9; border-radius: var(--radius);
+    background: linear-gradient(160deg, #18181C 0%, #0E1218 50%, #141018 100%);
+    position: relative; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .preview-frame .gradient-orb1 {
+    position: absolute; width: 60%; height: 60%; top: -10%; right: -10%;
+    background: radial-gradient(circle, rgba(10,132,255,0.06) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .preview-frame .gradient-orb2 {
+    position: absolute; width: 50%; height: 50%; bottom: -5%; left: -5%;
+    background: radial-gradient(circle, rgba(191,90,242,0.04) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .preview-frame .center-play {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .center-play:hover { background: rgba(255,255,255,0.1); transform: translate(-50%,-50%) scale(1.05); }
+  .center-play svg { width: 18px; height: 18px; fill: rgba(255,255,255,0.4); margin-left: 2px; }
+  .preview .info-left {
+    position: absolute; top: 12px; left: 28px;
+    display: flex; gap: 6px;
+  }
+  .preview .info-right {
+    position: absolute; top: 12px; right: 28px;
+    display: flex; gap: 6px;
+  }
+  .info-pill {
+    padding: 3px 8px; border-radius: 10px;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 500;
+    color: var(--text3); letter-spacing: 0.3px;
+  }
+  .info-pill.ai-active {
+    background: rgba(10,132,255,0.15); border: 1px solid rgba(10,132,255,0.2);
+    color: var(--accent2); display: flex; align-items: center; gap: 4px;
+  }
+  .info-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--mint); animation: blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* 画幅选择 */
+  .ratio-strip {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 4px; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+    padding: 3px; border-radius: 12px;
+  }
+  .ratio-pill {
+    padding: 3px 10px; border-radius: 9px; font-size: 9px; font-weight: 600;
+    color: var(--text4); cursor: pointer; transition: all 0.2s;
+  }
+  .ratio-pill.active { background: var(--accent-bg); color: var(--accent2); }
+
+  /* === 播放控制 === */
+  .controls {
+    height: 40px; padding: 0 20px; display: flex; align-items: center;
+    justify-content: center; gap: 4px; flex-shrink: 0;
+  }
+  .ctrl-time {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
+    color: var(--text3); width: 48px; text-align: center;
+  }
+  .ctrl-time.dim { color: var(--text4); }
+  .ctrl-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .ctrl-btn:hover { background: var(--surface2); }
+  .ctrl-btn svg { width: 14px; height: 14px; fill: var(--text3); }
+  .ctrl-play {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s; margin: 0 4px;
+  }
+  .ctrl-play:hover { transform: scale(1.05); background: var(--accent2); }
+  .ctrl-play svg { width: 16px; height: 16px; fill: #fff; margin-left: 1px; }
+
+  /* === 工具栏 === */
+  .toolbar {
+    height: 60px; padding: 0 8px; flex-shrink: 0;
+    display: flex; align-items: stretch;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .tool {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 4px; cursor: pointer;
+    position: relative; transition: all 0.2s;
+  }
+  .tool::after {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 0; height: 2px; border-radius: 1px; background: var(--accent);
+    transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .tool.active::after { width: 20px; }
+  .tool-icon {
+    width: 24px; height: 24px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .tool-icon svg { width: 18px; height: 18px; stroke: var(--text3); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tool.active .tool-icon svg { stroke: var(--accent2); }
+  .tool-label { font-size: 8px; font-weight: 600; color: var(--text4); letter-spacing: 0.5px; transition: color 0.2s; }
+  .tool.active .tool-label { color: var(--accent2); }
+  .tool .ai-badge {
+    position: absolute; top: 4px; right: calc(50% - 16px);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); opacity: 0.5;
+  }
+  .tool.active .ai-badge { opacity: 1; }
+
+  /* === 底部区域 === */
+  .bottom {
+    flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    position: relative;
+  }
+
+  /* 时间轴 */
+  .timeline { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .timeline.hidden { display: none; }
+
+  .tl-ruler {
+    height: 22px; background: var(--surface); flex-shrink: 0;
+    position: relative; border-bottom: 1px solid var(--border);
+  }
+  .tl-ruler-marks {
+    display: flex; align-items: flex-end; height: 100%; padding-left: 56px;
+  }
+  .tl-ruler-mark {
+    font-family: 'JetBrains Mono', monospace; font-size: 7px; color: var(--text4);
+    width: 72px; padding-bottom: 3px; position: relative;
+  }
+  .tl-ruler-mark::before {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    width: 1px; height: 5px; background: var(--border2);
+  }
+  .tl-playhead {
+    position: absolute; top: 0; left: 110px; width: 1.5px; height: 100%;
+    background: var(--text1); z-index: 5;
+  }
+  .tl-playhead::before {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid var(--text1);
+  }
+
+  .tl-tracks { flex: 1; overflow-y: auto; scrollbar-width: none; }
+  .tl-tracks::-webkit-scrollbar { display: none; }
+
+  .tl-row {
+    display: flex; height: 44px; border-bottom: 1px solid var(--border);
+  }
+  .tl-track-head {
+    width: 56px; flex-shrink: 0; background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px;
+  }
+  .tl-track-name { font-size: 8px; font-weight: 700; color: var(--text3); letter-spacing: 0.5px; }
+  .tl-track-btns { display: flex; gap: 2px; }
+  .tl-track-btn {
+    width: 12px; height: 12px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 6px; font-weight: 800; cursor: pointer;
+  }
+  .tl-track-btn.on { background: var(--accent-bg); color: var(--accent2); }
+  .tl-track-btn.off { color: var(--text4); }
+
+  .tl-track-body {
+    flex: 1; position: relative; display: flex; align-items: center;
+    padding: 5px 0;
+  }
+  .tl-clip {
+    position: absolute; height: 34px; border-radius: 6px;
+    display: flex; align-items: center; padding: 0 8px;
+    cursor: pointer; transition: all 0.15s; overflow: hidden;
+  }
+  .tl-clip:hover { filter: brightness(1.1); }
+  .tl-clip.selected { box-shadow: 0 0 0 1.5px var(--text1); }
+  .tl-clip-video {
+    background: linear-gradient(90deg, rgba(10,132,255,0.15), rgba(10,132,255,0.25));
+    border: 1px solid rgba(10,132,255,0.2);
+  }
+  .tl-clip-audio {
+    background: linear-gradient(90deg, rgba(48,209,88,0.12), rgba(48,209,88,0.2));
+    border: 1px solid rgba(48,209,88,0.15);
+  }
+  .tl-clip-sub {
+    background: linear-gradient(90deg, rgba(255,214,10,0.1), rgba(255,214,10,0.18));
+    border: 1px solid rgba(255,214,10,0.15);
+  }
+  .tl-clip-name { font-size: 8px; font-weight: 500; color: rgba(255,255,255,0.45); white-space: nowrap; }
+  .tl-clip .kf {
+    position: absolute; width: 5px; height: 5px; border-radius: 1px;
+    background: rgba(255,255,255,0.7); top: 50%; transform: translateY(-50%);
+  }
+  .tl-clip .ai-tag {
+    position: absolute; top: 2px; right: 4px;
+    font-size: 6px; color: var(--accent2);
+  }
+
+  .tl-add-track {
+    height: 28px; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 500; color: var(--text4); cursor: pointer;
+  }
+
+  /* 选中片段操作条 */
+  .clip-actions {
+    height: 40px; background: var(--surface2); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    border-top: 1px solid var(--border);
+  }
+  .ca-btn {
+    padding: 5px 14px; border-radius: var(--radius-xs);
+    font-size: 10px; font-weight: 600; color: var(--text2);
+    background: var(--surface3); cursor: pointer; transition: all 0.15s;
+  }
+  .ca-btn:hover { background: var(--border); color: var(--text1); }
+  .ca-btn.danger { color: var(--coral); }
+  .ca-btn.danger:hover { background: var(--coral-bg); }
+
+  /* === 面板 === */
+  .panel {
+    display: none; flex-direction: column; height: 100%;
+  }
+  .panel.visible { display: flex; }
+
+  .panel-handle {
+    height: 16px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: grab;
+  }
+  .panel-handle .bar { width: 32px; height: 3px; border-radius: 2px; background: var(--border2); }
+
+  .panel-head {
+    padding: 0 16px 10px; display: flex; align-items: center;
+    justify-content: space-between; flex-shrink: 0;
+  }
+  .panel-title { font-size: 13px; font-weight: 700; color: var(--text1); letter-spacing: -0.3px; }
+  .panel-mode {
+    display: flex; background: var(--surface3); border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .pm-btn {
+    padding: 5px 12px; font-size: 10px; font-weight: 600;
+    color: var(--text4); cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .pm-btn.active { background: var(--accent-bg); color: var(--accent2); border-radius: var(--radius-xs); }
+
+  .panel-scroll {
+    flex: 1; overflow-y: auto; padding: 0 16px 16px;
+    scrollbar-width: none;
+  }
+  .panel-scroll::-webkit-scrollbar { display: none; }
+
+  /* 手动工具网格 */
+  .tool-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  }
+  .tg-item {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 14px 4px; border-radius: var(--radius); cursor: pointer;
+    transition: background 0.15s;
+  }
+  .tg-item:hover { background: var(--surface2); }
+  .tg-icon {
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    background: var(--surface2); display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .tg-item:hover .tg-icon { background: var(--surface3); }
+  .tg-icon svg { width: 20px; height: 20px; stroke: var(--text2); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tg-label { font-size: 9px; font-weight: 600; color: var(--text3); letter-spacing: 0.3px; }
+
+  /* AI 卡片 */
+  .ai-card {
+    background: var(--surface2); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 10px;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+  .ai-card:hover { border-color: var(--border2); }
+  .ai-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .ai-card-icon {
+    width: 32px; height: 32px; border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ai-card-icon svg { width: 18px; height: 18px; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+  .ai-card-icon.blue { background: var(--accent-bg); }
+  .ai-card-icon.blue svg { stroke: var(--accent2); }
+  .ai-card-icon.mint { background: var(--mint-bg); }
+  .ai-card-icon.mint svg { stroke: var(--mint); }
+  .ai-card-icon.coral { background: var(--coral-bg); }
+  .ai-card-icon.coral svg { stroke: var(--coral); }
+  .ai-card-icon.amber { background: var(--amber-bg); }
+  .ai-card-icon.amber svg { stroke: var(--amber); }
+  .ai-card-icon.violet { background: var(--violet-bg); }
+  .ai-card-icon.violet svg { stroke: var(--violet); }
+  .ai-card-icon.orange { background: var(--orange-bg); }
+  .ai-card-icon.orange svg { stroke: var(--orange); }
+  .ai-card-title { font-size: 12px; font-weight: 700; color: var(--text1); letter-spacing: -0.2px; }
+  .ai-card-desc { font-size: 10px; color: var(--text3); line-height: 1.5; margin-bottom: 10px; }
+
+  .ai-slider {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .ai-slider-label { font-size: 9px; font-weight: 600; color: var(--text3); min-width: 28px; }
+  .ai-slider-track {
+    flex: 1; height: 3px; background: var(--border); border-radius: 2px;
+    position: relative;
+  }
+  .ai-slider-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+  .ai-slider-thumb {
+    position: absolute; top: 50%; transform: translate(-50%,-50%);
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent2); border: 2.5px solid var(--bg);
+  }
+  .ai-slider-val {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 500;
+    color: var(--accent2); min-width: 28px; text-align: right;
+  }
+
+  .ai-actions { display: flex; gap: 8px; }
+  .ai-preview-btn {
+    flex: 1; height: 34px; border-radius: var(--radius-sm);
+    background: var(--surface3); border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    font-size: 11px; font-weight: 600; color: var(--text2); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ai-preview-btn:hover { background: var(--border); color: var(--text1); }
+  .ai-preview-btn svg { width: 12px; height: 12px; fill: currentColor; }
+  .ai-apply-btn {
+    flex: 1; height: 34px; border-radius: var(--radius-sm);
+    background: var(--accent); display: flex; align-items: center;
+    justify-content: center; gap: 4px;
+    font-size: 11px; font-weight: 700; color: #fff; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ai-apply-btn:hover { background: var(--accent2); }
+
+  .ai-live {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: var(--radius-xs);
+    background: var(--mint-bg); border: 1px solid rgba(48,209,88,0.15);
+  }
+  .ai-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); animation: blink 2s infinite; }
+  .ai-live-text { font-size: 9px; font-weight: 600; color: var(--mint); }
+
+  /* 压缩时间轴 */
+  .mini-tl {
+    height: 52px; background: var(--surface); flex-shrink: 0;
+    border-top: 1px solid var(--border); overflow: hidden;
+    display: flex; flex-direction: column; padding: 4px 0;
+  }
+  .mini-tl-row {
+    height: 14px; display: flex; align-items: center; padding: 0 56px 0 8px;
+  }
+  .mini-clip { height: 10px; border-radius: 3px; }
+  .mini-clip-v { background: rgba(10,132,255,0.2); }
+  .mini-clip-a { background: rgba(48,209,88,0.15); }
+  .mini-clip-s { background: rgba(255,214,10,0.15); }
+
+  .home-bar { height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .home-bar .bar { width: 134px; height: 5px; border-radius: 3px; background: var(--text4); }
+</style>
+</head>
+<body>
+
+<div class="device">
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="back"><svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></div>
+      <span class="project-name">旅行Vlog</span>
+    </div>
+    <div class="topbar-right">
+      <div class="settings-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
+      <div class="export-btn"><span>导出</span></div>
+    </div>
+  </div>
+
+  <!-- 预览区 -->
+  <div class="preview">
+    <div class="info-left"><span class="info-pill">4K</span></div>
+    <div class="info-right">
+      <span class="info-pill ai-active"><span class="dot"></span>AI</span>
+      <span class="info-pill">60fps</span>
+    </div>
+    <div class="preview-frame">
+      <div class="gradient-orb1"></div>
+      <div class="gradient-orb2"></div>
+      <div class="center-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    </div>
+    <div class="ratio-strip">
+      <span class="ratio-pill" onclick="selRatio(this)">1:1</span>
+      <span class="ratio-pill" onclick="selRatio(this)">9:16</span>
+      <span class="ratio-pill active" onclick="selRatio(this)">16:9</span>
+      <span class="ratio-pill" onclick="selRatio(this)">4:3</span>
+      <span class="ratio-pill" onclick="selRatio(this)">21:9</span>
+    </div>
+  </div>
+
+  <!-- 播放控制 -->
+  <div class="controls">
+    <span class="ctrl-time">00:03</span>
+    <div class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></div>
+    <div class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" transform="scale(0.7) translate(5,5)"/></svg></div>
+    <div class="ctrl-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    <div class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" transform="scale(0.7) translate(5,5)"/></svg></div>
+    <div class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></div>
+    <span class="ctrl-time dim">00:12</span>
+  </div>
+
+  <!-- 工具栏 -->
+  <div class="toolbar">
+    <div class="tool active" onclick="switchTool(this,'clip')">
+      <div class="ai-badge"></div>
+      <div class="tool-icon"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></div>
+      <span class="tool-label">剪辑</span>
+    </div>
+    <div class="tool" onclick="switchTool(this,'audio')">
+      <div class="ai-badge"></div>
+      <div class="tool-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 18c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3zM21 16c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg></div>
+      <span class="tool-label">音频</span>
+    </div>
+    <div class="tool" onclick="switchTool(this,'text')">
+      <div class="ai-badge"></div>
+      <div class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div>
+      <span class="tool-label">文字</span>
+    </div>
+    <div class="tool" onclick="switchTool(this,'color')">
+      <div class="ai-badge"></div>
+      <div class="tool-icon"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div>
+      <span class="tool-label">调色</span>
+    </div>
+    <div class="tool" onclick="switchTool(this,'fx')">
+      <div class="ai-badge"></div>
+      <div class="tool-icon"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-5.3 3.5L16 20l-4-3-4 3 1.3-6.5L4 10l6.1-1.2z"/></svg></div>
+      <span class="tool-label">特效</span>
+    </div>
+    <div class="tool" onclick="switchTool(this,'more')">
+      <div class="tool-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></div>
+      <span class="tool-label">更多</span>
+    </div>
+  </div>
+
+  <!-- 底部 -->
+  <div class="bottom">
+    <!-- 时间轴 -->
+    <div class="timeline" id="timeline">
+      <div class="tl-ruler">
+        <div class="tl-playhead"></div>
+        <div class="tl-ruler-marks">
+          <span class="tl-ruler-mark">0:00</span>
+          <span class="tl-ruler-mark">0:05</span>
+          <span class="tl-ruler-mark">0:10</span>
+          <span class="tl-ruler-mark">0:15</span>
+        </div>
+      </div>
+      <div class="tl-tracks">
+        <div class="tl-row">
+          <div class="tl-track-head">
+            <span class="tl-track-name">V1</span>
+            <div class="tl-track-btns">
+              <span class="tl-track-btn on">S</span>
+              <span class="tl-track-btn off">M</span>
+              <span class="tl-track-btn on">E</span>
+            </div>
+          </div>
+          <div class="tl-track-body">
+            <div class="tl-clip tl-clip-video selected" style="left:8px;width:130px;">
+              <span class="tl-clip-name">Scene_01</span>
+              <span class="kf" style="left:20px;"></span>
+              <span class="kf" style="left:60px;"></span>
+              <span class="ai-tag">AI</span>
+            </div>
+            <div class="tl-clip tl-clip-video" style="left:148px;width:95px;">
+              <span class="tl-clip-name">Scene_02</span>
+            </div>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-track-head">
+            <span class="tl-track-name">A1</span>
+            <div class="tl-track-btns">
+              <span class="tl-track-btn off">S</span>
+              <span class="tl-track-btn off">M</span>
+              <span class="tl-track-btn on">E</span>
+            </div>
+          </div>
+          <div class="tl-track-body">
+            <div class="tl-clip tl-clip-audio" style="left:8px;width:235px;">
+              <span class="tl-clip-name">bgm.mp3</span>
+              <span class="ai-tag">AI</span>
+            </div>
+          </div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-track-head">
+            <span class="tl-track-name">S1</span>
+            <div class="tl-track-btns">
+              <span class="tl-track-btn off">S</span>
+              <span class="tl-track-btn off">M</span>
+              <span class="tl-track-btn on">E</span>
+            </div>
+          </div>
+          <div class="tl-track-body">
+            <div class="tl-clip tl-clip-sub" style="left:8px;width:55px;"><span class="tl-clip-name">字幕1</span></div>
+            <div class="tl-clip tl-clip-sub" style="left:72px;width:65px;"><span class="tl-clip-name">字幕2</span></div>
+            <div class="tl-clip tl-clip-sub" style="left:148px;width:45px;"><span class="tl-clip-name">字幕3</span></div>
+          </div>
+        </div>
+        <div class="tl-add-track">+ 添加轨道</div>
+      </div>
+      <div class="clip-actions">
+        <span class="ca-btn">分割</span>
+        <span class="ca-btn">变速</span>
+        <span class="ca-btn">复制</span>
+        <span class="ca-btn">音量</span>
+        <span class="ca-btn danger">删除</span>
+      </div>
+    </div>
+
+    <!-- 剪辑面板 -->
+    <div class="panel" id="panel-clip">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head">
+        <span class="panel-title">剪辑</span>
+        <div class="panel-mode">
+          <div class="pm-btn active" onclick="switchMode(this,'manual')">手动</div>
+          <div class="pm-btn" onclick="switchMode(this,'ai')">AI</div>
+        </div>
+      </div>
+      <div class="panel-scroll">
+        <div id="clip-manual">
+          <div class="tool-grid">
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><span class="tg-label">分割</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><polygon points="5,4 15,12 5,20"/><line x1="19" y1="5" x2="19" y2="19"/></svg></div><span class="tg-label">变速</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></div><span class="tg-label">倒放</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg></div><span class="tg-label">裁剪</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg></div><span class="tg-label">音量</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/></svg></div><span class="tg-label">定格</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></div><span class="tg-label">复制</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></div><span class="tg-label">删除</span></div>
+          </div>
+        </div>
+        <div id="clip-ai" style="display:none">
+          <div class="ai-card">
+            <div class="ai-card-top">
+              <div class="ai-card-icon blue"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div>
+              <span class="ai-card-title">AI Auto Clip</span>
+            </div>
+            <div class="ai-card-desc">智能识别高光片段，自动剪辑成片</div>
+            <div class="ai-slider"><span class="ai-slider-label">风格</span><div style="flex:1;display:flex;gap:4px"><span style="padding:3px 8px;border-radius:5px;background:var(--accent-bg);font-size:8px;font-weight:600;color:var(--accent2)">Vlog</span><span style="padding:3px 8px;border-radius:5px;background:var(--surface3);font-size:8px;color:var(--text4)">电影</span><span style="padding:3px 8px;border-radius:5px;background:var(--surface3);font-size:8px;color:var(--text4)">快剪</span></div></div>
+            <div class="ai-actions"><div class="ai-preview-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply-btn">应用</div></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top">
+              <div class="ai-card-icon coral"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+              <span class="ai-card-title">AI 智能分割</span>
+            </div>
+            <div class="ai-card-desc">自动检测场景切换点分割片段</div>
+            <div class="ai-slider"><span class="ai-slider-label">灵敏度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:50%"></div><div class="ai-slider-thumb" style="left:50%"></div></div><span class="ai-slider-val">中</span></div>
+            <div class="ai-actions"><div class="ai-preview-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply-btn">应用</div></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top">
+              <div class="ai-card-icon amber"><svg viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></div>
+              <span class="ai-card-title">AI 删静音</span>
+            </div>
+            <div class="ai-card-desc">自动删除无声片段和停顿</div>
+            <div class="ai-actions"><div class="ai-preview-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply-btn">应用</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-tl">
+        <div class="mini-tl-row"><div class="mini-clip mini-clip-v" style="width:50%;margin-left:3%"></div><div class="mini-clip mini-clip-v" style="width:35%;margin-left:2%"></div></div>
+        <div class="mini-tl-row"><div class="mini-clip mini-clip-a" style="width:88%;margin-left:3%"></div></div>
+        <div class="mini-tl-row"><div class="mini-clip mini-clip-s" style="width:20%;margin-left:3%"></div><div class="mini-clip mini-clip-s" style="width:22%;margin-left:3%"></div></div>
+      </div>
+    </div>
+
+    <!-- 音频面板 -->
+    <div class="panel" id="panel-audio">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head">
+        <span class="panel-title">音频</span>
+        <div class="panel-mode"><div class="pm-btn active" onclick="switchMode(this,'manual')">手动</div><div class="pm-btn" onclick="switchMode(this,'ai')">AI</div></div>
+      </div>
+      <div class="panel-scroll">
+        <div id="audio-manual">
+          <div class="tool-grid">
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 18c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg></div><span class="tg-label">音乐</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg></div><span class="tg-label">录音</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div><span class="tg-label">降噪</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M2 12h4l3-9 6 18 3-9h4"/></svg></div><span class="tg-label">淡入淡出</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg></div><span class="tg-label">节拍器</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><span class="tg-label">提取</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><span class="tg-label">音效</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg></div><span class="tg-label">音量</span></div>
+          </div>
+        </div>
+        <div id="audio-ai" style="display:none">
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon mint"><svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div><span class="ai-card-title">AI 实时降噪</span></div>
+            <div class="ai-card-desc">去除环境噪音，保留清晰人声</div>
+            <div class="ai-slider"><span class="ai-slider-label">强度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:60%"></div><div class="ai-slider-thumb" style="left:60%"></div></div><span class="ai-slider-val">60%</span></div>
+            <div class="ai-live"><span class="ai-live-dot"></span><span class="ai-live-text">已启用 · 实时预览中</span></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon violet"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><span class="ai-card-title">AI 音频分离</span></div>
+            <div class="ai-card-desc">分离人声和伴奏为独立轨道</div>
+            <div class="ai-slider"><span class="ai-slider-label">模式</span><div style="flex:1;display:flex;gap:4px"><span style="padding:3px 8px;border-radius:5px;background:var(--accent-bg);font-size:8px;font-weight:600;color:var(--accent2)">人声+伴奏</span><span style="padding:3px 8px;border-radius:5px;background:var(--surface3);font-size:8px;color:var(--text4)">仅人声</span><span style="padding:3px 8px;border-radius:5px;background:var(--surface3);font-size:8px;color:var(--text4)">仅伴奏</span></div></div>
+            <div class="ai-actions"><div class="ai-preview-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply-btn">应用</div></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon orange"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg></div><span class="ai-card-title">AI 语音增强</span></div>
+            <div class="ai-card-desc">录音棚级别人声清晰度</div>
+            <div class="ai-slider"><span class="ai-slider-label">强度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:40%"></div><div class="ai-slider-thumb" style="left:40%"></div></div><span class="ai-slider-val">40%</span></div>
+            <div class="ai-live"><span class="ai-live-dot"></span><span class="ai-live-text">已启用 · 实时预览中</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-clip mini-clip-v" style="width:50%;margin-left:3%"></div></div><div class="mini-tl-row"><div class="mini-clip mini-clip-a" style="width:88%;margin-left:3%"></div></div></div>
+    </div>
+
+    <!-- 文字面板 -->
+    <div class="panel" id="panel-text">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">文字</span><div class="panel-mode"><div class="pm-btn active" onclick="switchMode(this,'manual')">手动</div><div class="pm-btn" onclick="switchMode(this,'ai')">AI</div></div></div>
+      <div class="panel-scroll">
+        <div id="text-manual">
+          <div class="tool-grid">
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div><span class="tg-label">新建</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h6"/></svg></div><span class="tg-label">模板</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div><span class="tg-label">花字</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><span class="tg-label">贴纸</span></div>
+          </div>
+        </div>
+        <div id="text-ai" style="display:none">
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon blue"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div><span class="ai-card-title">AI 自动字幕</span></div>
+            <div class="ai-card-desc">语音转文字，实时生成字幕轨道</div>
+            <div class="ai-slider"><span class="ai-slider-label">语言</span><div style="flex:1;display:flex;gap:4px"><span style="padding:3px 8px;border-radius:5px;background:var(--accent-bg);font-size:8px;font-weight:600;color:var(--accent2)">中文</span><span style="padding:3px 8px;border-radius:5px;background:var(--surface3);font-size:8px;color:var(--text4)">English</span><span style="padding:3px 8px;border-radius:5px;background:var(--surface3);font-size:8px;color:var(--text4)">日本語</span></div></div>
+            <div class="ai-actions"><div class="ai-preview-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply-btn">应用</div></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon violet"><svg viewBox="0 0 24 24"><path d="M5 8l6 6M4 14l6-6"/><path d="M2 12h4l3-9 6 18 3-9h4"/></svg></div><span class="ai-card-title">AI 翻译字幕</span></div>
+            <div class="ai-card-desc">将已有字幕翻译为其他语言</div>
+            <div class="ai-actions"><div class="ai-preview-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply-btn">应用</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-clip mini-clip-v" style="width:50%;margin-left:3%"></div></div><div class="mini-tl-row"><div class="mini-clip mini-clip-s" style="width:20%;margin-left:3%"></div><div class="mini-clip mini-clip-s" style="width:22%;margin-left:3%"></div></div></div>
+    </div>
+
+    <!-- 调色面板 -->
+    <div class="panel" id="panel-color">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">调色</span><div class="panel-mode"><div class="pm-btn active" onclick="switchMode(this,'manual')">手动</div><div class="pm-btn" onclick="switchMode(this,'ai')">AI</div></div></div>
+      <div class="panel-scroll">
+        <div id="color-manual">
+          <div class="tool-grid">
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg></div><span class="tg-label">基础</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><span class="tg-label">曲线</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 000 20" fill="none"/><path d="M12 2a10 10 0 010 20" fill="none"/></svg></div><span class="tg-label">HSL</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div><span class="tg-label">色轮</span></div>
+          </div>
+        </div>
+        <div id="color-ai" style="display:none">
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon blue"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div><span class="ai-card-title">AI 一键调色</span></div>
+            <div class="ai-card-desc">自动分析画面并优化色彩</div>
+            <div class="ai-slider"><span class="ai-slider-label">强度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:70%"></div><div class="ai-slider-thumb" style="left:70%"></div></div><span class="ai-slider-val">70%</span></div>
+            <div class="ai-live"><span class="ai-live-dot"></span><span class="ai-live-text">已启用 · 实时预览中</span></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon violet"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><span class="ai-card-title">AI 风格迁移</span></div>
+            <div class="ai-card-desc">将电影/胶片风格应用到画面</div>
+            <div style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap">
+              <span style="padding:4px 10px;border-radius:6px;background:var(--accent-bg);border:1px solid rgba(10,132,255,0.2);font-size:9px;font-weight:600;color:var(--accent2)">赛博朋克</span>
+              <span style="padding:4px 10px;border-radius:6px;background:var(--surface3);font-size:9px;color:var(--text4)">胶片复古</span>
+              <span style="padding:4px 10px;border-radius:6px;background:var(--surface3);font-size:9px;color:var(--text4)">日系清新</span>
+              <span style="padding:4px 10px;border-radius:6px;background:var(--surface3);font-size:9px;color:var(--text4)">暖阳</span>
+              <span style="padding:4px 10px;border-radius:6px;background:var(--surface3);font-size:9px;color:var(--text4)">冷调</span>
+              <span style="padding:4px 10px;border-radius:6px;background:var(--surface3);font-size:9px;color:var(--text4)">黑白</span>
+            </div>
+            <div class="ai-slider"><span class="ai-slider-label">强度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:80%"></div><div class="ai-slider-thumb" style="left:80%"></div></div><span class="ai-slider-val">80%</span></div>
+            <div class="ai-live"><span class="ai-live-dot"></span><span class="ai-live-text">已启用 · 实时预览中</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-clip mini-clip-v" style="width:50%;margin-left:3%"></div></div></div>
+    </div>
+
+    <!-- 特效面板 -->
+    <div class="panel" id="panel-fx">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">特效</span><div class="panel-mode"><div class="pm-btn active" onclick="switchMode(this,'manual')">手动</div><div class="pm-btn" onclick="switchMode(this,'ai')">AI</div></div></div>
+      <div class="panel-scroll">
+        <div id="fx-manual">
+          <div class="tool-grid">
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/></svg></div><span class="tg-label">画面</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><span class="tg-label">转场</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div><span class="tg-label">滤镜</span></div>
+            <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div><span class="tg-label">粒子</span></div>
+          </div>
+        </div>
+        <div id="fx-ai" style="display:none">
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon blue"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><span class="ai-card-title">AI 抠图</span></div>
+            <div class="ai-card-desc">一键分离前景和背景</div>
+            <div class="ai-slider"><span class="ai-slider-label">羽化</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:20%"></div><div class="ai-slider-thumb" style="left:20%"></div></div><span class="ai-slider-val">20%</span></div>
+            <div class="ai-live"><span class="ai-live-dot"></span><span class="ai-live-text">已启用 · 实时预览中</span></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon mint"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div><span class="ai-card-title">AI 超分辨率</span></div>
+            <div class="ai-card-desc">画质增强 2x</div>
+            <div class="ai-slider"><span class="ai-slider-label">强度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:70%"></div><div class="ai-slider-thumb" style="left:70%"></div></div><span class="ai-slider-val">70%</span></div>
+            <div class="ai-live"><span class="ai-live-dot"></span><span class="ai-live-text">已启用 · 实时预览中</span></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon coral"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div><span class="ai-card-title">AI 插帧</span></div>
+            <div class="ai-card-desc">30fps → 60fps 智能补帧</div>
+            <div class="ai-slider"><span class="ai-slider-label">目标</span><div style="flex:1;display:flex;gap:4px"><span style="padding:3px 8px;border-radius:5px;background:var(--surface3);font-size:8px;color:var(--text4)">48fps</span><span style="padding:3px 8px;border-radius:5px;background:var(--accent-bg);font-size:8px;font-weight:600;color:var(--accent2)">60fps</span><span style="padding:3px 8px;border-radius:5px;background:var(--surface3);font-size:8px;color:var(--text4)">120fps</span></div></div>
+            <div class="ai-live"><span class="ai-live-dot"></span><span class="ai-live-text">已启用 · 实时预览中</span></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon violet"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><span class="ai-card-title">AI 风格化</span></div>
+            <div class="ai-card-desc">将画面转换为动漫/漫画/3D风格</div>
+            <div style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap">
+              <span style="padding:4px 10px;border-radius:6px;background:var(--accent-bg);border:1px solid rgba(10,132,255,0.2);font-size:9px;font-weight:600;color:var(--accent2)">动漫</span>
+              <span style="padding:4px 10px;border-radius:6px;background:var(--surface3);font-size:9px;color:var(--text4)">漫画</span>
+              <span style="padding:4px 10px;border-radius:6px;background:var(--surface3);font-size:9px;color:var(--text4)">油画</span>
+              <span style="padding:4px 10px;border-radius:6px;background:var(--surface3);font-size:9px;color:var(--text4)">水彩</span>
+            </div>
+            <div class="ai-slider"><span class="ai-slider-label">强度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:80%"></div><div class="ai-slider-thumb" style="left:80%"></div></div><span class="ai-slider-val">80%</span></div>
+            <div class="ai-live"><span class="ai-live-dot"></span><span class="ai-live-text">已启用 · 实时预览中</span></div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top"><div class="ai-card-icon amber"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div><span class="ai-card-title">AI 物体消除</span></div>
+            <div class="ai-card-desc">涂抹画面中不需要的物体自动消除</div>
+            <div class="ai-actions"><div class="ai-preview-btn">进入涂抹模式</div><div class="ai-apply-btn">应用</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-clip mini-clip-v" style="width:50%;margin-left:3%"></div></div></div>
+    </div>
+
+    <!-- 更多面板 -->
+    <div class="panel" id="panel-more">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">更多</span></div>
+      <div class="panel-scroll">
+        <div class="tool-grid">
+          <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg></div><span class="tg-label">画中画</span></div>
+          <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></div><span class="tg-label">绿幕</span></div>
+          <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8l4 4-4 4"/></svg></div><span class="tg-label">运动追踪</span></div>
+          <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><rect x="1" y="6" width="22" height="12" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="tg-label">稳定器</span></div>
+          <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg></div><span class="tg-label">混合模式</span></div>
+          <div class="tg-item"><div class="tg-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></div><span class="tg-label">马赛克</span></div>
+        </div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-clip mini-clip-v" style="width:50%;margin-left:3%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="home-bar"><div class="bar"></div></div>
+</div>
+
+<script>
+  let curTool = 'clip';
+  function switchTool(el, name) {
+    if (curTool === name) {
+      // 收起面板，显示时间轴
+      document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+      document.getElementById('timeline').classList.remove('hidden');
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('visible'));
+      curTool = null;
+      return;
+    }
+    curTool = name;
+    document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('timeline').classList.add('hidden');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('visible'));
+    const panel = document.getElementById('panel-' + name);
+    if (panel) panel.classList.add('visible');
+  }
+  function switchMode(el, mode) {
+    const parent = el.closest('.panel-mode');
+    parent.querySelectorAll('.pm-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    const panelArea = el.closest('.panel');
+    const manual = panelArea.querySelector('[id$="-manual"]');
+    const ai = panelArea.querySelector('[id$="-ai"]');
+    if (mode === 'ai') { if (manual) manual.style.display = 'none'; if (ai) ai.style.display = 'block'; }
+    else { if (manual) manual.style.display = 'block'; if (ai) ai.style.display = 'none'; }
+  }
+  function selRatio(el) {
+    document.querySelectorAll('.ratio-pill').forEach(r => r.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+</body>
+</html>
