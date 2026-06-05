@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NexClip 当前剪辑页面 UI（项目代码还原）</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --ec-bg: #1E1E1E; --ec-surf: #282828; --ec-card: #2C2C2C; --ec-cardh: #323232;
+    --ec-line: #3A3A3A; --ec-line2: #444444;
+    --ec-t1: #CCCCCC; --ec-t2: #999999; --ec-t3: #666666; --ec-t4: #4A4A4A;
+    --ec-acc: #4A90D9; --ec-accl: #6AAFE6; --ec-accs: rgba(74,144,217,0.12);
+    --ec-gold: #E8A820; --ec-green: #7EC850; --ec-red: #E85050;
+  }
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: #000; color: var(--ec-t1);
+    overflow: hidden; height: 100vh; width: 100vw;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .phone {
+    width: 393px; height: 852px;
+    background: var(--ec-bg); border-radius: 44px; overflow: hidden;
+    box-shadow: 0 0 0 3px #333, 0 0 0 6px #1a1a1a, 0 25px 80px rgba(0,0,0,0.8);
+    display: flex; flex-direction: column; position: relative;
+  }
+  /* 状态栏 */
+  .statusbar { height: 54px; padding: 14px 28px 0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+  .statusbar .r { display: flex; gap: 6px; }
+  .statusbar .r svg { width: 16px; height: 16px; fill: var(--ec-t1); }
+
+  /* 会员横幅 - 来自代码 L68-77 */
+  .membership-banner {
+    background: linear-gradient(90deg, #E8A820, #D4942A);
+    padding: 8px 12px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .membership-banner .icon { font-size: 14px; }
+  .membership-banner .info { flex: 1; }
+  .membership-banner .title { font-size: 10px; font-weight: 700; color: #fff; }
+  .membership-banner .sub { font-size: 8px; color: rgba(255,255,255,0.8); }
+
+  /* AI次数条 - 来自代码 L72-77 */
+  .ai-quota {
+    height: 28px; background: #1A1A1A; padding: 0 12px;
+    display: flex; align-items: center; flex-shrink: 0;
+  }
+  .ai-quota span { font-size: 9px; color: var(--ec-gold); }
+
+  /* 预览区 - 来自代码 L78-80 */
+  .preview {
+    width: 100%; height: 180px; background: #000;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; flex-shrink: 0;
+  }
+  .preview .canvas {
+    width: 65%; height: 75%; border-radius: 4px;
+    background: linear-gradient(135deg, #1A1A20, #0A1520, #101818);
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .preview .canvas .inner-circle {
+    width: 30%; height: 30%; border: 1px solid rgba(255,255,255,0.08); border-radius: 50%;
+    position: absolute;
+  }
+  .preview .canvas .inner-rect {
+    width: 44%; height: 30%; border-radius: 4px; background: rgba(255,255,255,0.08);
+    position: absolute;
+  }
+  .preview .canvas .inner-blue {
+    width: 30%; height: 20%; border-radius: 50%; background: rgba(100,150,255,0.06);
+    position: absolute; bottom: 15%;
+  }
+  .preview .res-tag {
+    position: absolute; top: 8px; left: 8px;
+    padding: 2px 5px; background: rgba(0,0,0,0.55); border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace; font-size: 7px; color: var(--ec-t3);
+  }
+  .preview .fps-tag {
+    position: absolute; bottom: 8px; right: 8px;
+    padding: 2px 5px; background: rgba(0,0,0,0.55); border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace; font-size: 7px; color: var(--ec-t3);
+  }
+
+  /* 拖拽手柄 - 来自代码 L81-84 */
+  .drag-handle {
+    width: 100%; height: 12px; background: var(--ec-surf);
+    border-top: 1px solid var(--ec-line); border-bottom: 1px solid var(--ec-line);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .drag-handle .bar { width: 36px; height: 3px; border-radius: 2px; background: var(--ec-line2); }
+
+  /* 工具栏 - 来自代码 L278-311 EditorToolbar */
+  .toolbar {
+    width: 100%; height: 40px; background: var(--ec-surf);
+    border-bottom: 1px solid var(--ec-line);
+    display: flex; align-items: center; padding: 0 6px;
+    overflow-x: auto; flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .toolbar::-webkit-scrollbar { display: none; }
+  .tb-btn {
+    min-width: 32px; height: 32px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 500; color: var(--ec-t2);
+    cursor: pointer; flex-shrink: 0; transition: background 0.15s;
+  }
+  .tb-btn:hover { background: var(--ec-accs); }
+  .tb-btn.active { background: var(--ec-accs); color: var(--ec-accl); }
+  .tb-sep {
+    width: 1px; height: 16px; background: var(--ec-line2);
+    margin: 0 2px; flex-shrink: 0;
+  }
+
+  /* 时间轴区 - 来自代码 L86-88 */
+  .timeline-container {
+    flex: 1; background: var(--ec-card); display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* 刻度尺 - 来自代码 L62-96 RulerBar */
+  .ruler {
+    height: 26px; background: var(--ec-surf); border-bottom: 1px solid var(--ec-line);
+    position: relative; overflow: hidden; flex-shrink: 0;
+  }
+  .ruler-marks {
+    display: flex; height: 100%; padding-left: 30px; align-items: flex-end;
+  }
+  .ruler-mark {
+    font-family: 'JetBrains Mono', monospace; font-size: 6px; color: var(--ec-t4);
+    position: relative; width: 80px; padding-bottom: 3px; text-align: left;
+  }
+  .ruler-mark::after {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    width: 1px; height: 8px; background: var(--ec-line2);
+  }
+  .ruler .playhead {
+    position: absolute; top: 0; left: 135px; width: 2px; height: 100%;
+    background: #fff; z-index: 5;
+  }
+  .ruler .playhead::before {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 7px solid #fff;
+  }
+
+  /* 轨道区 - 来自代码 L46-58 */
+  .tracks-row {
+    flex: 1; display: flex; overflow: hidden;
+  }
+
+  /* 轨道头 - 来自代码 L98-128 TrackPanel */
+  .track-panel {
+    width: 90px; background: var(--ec-surf); border-right: 1px solid var(--ec-line);
+    overflow-y: auto; flex-shrink: 0; scrollbar-width: none;
+  }
+  .track-panel::-webkit-scrollbar { display: none; }
+  .track-item {
+    height: 48px; display: flex; align-items: center; padding: 5px;
+    border-bottom: 1px solid var(--ec-line); cursor: pointer;
+  }
+  .track-item.selected { background: var(--ec-accs); border-left: 2px solid var(--ec-acc); }
+  .track-item .track-info { flex: 1; }
+  .track-item .track-name { font-size: 7.5px; font-weight: 600; color: var(--ec-t2); }
+  .track-item .track-switches { display: flex; gap: 1px; margin-top: 2px; }
+  .track-sw {
+    width: 14px; height: 14px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 7px; font-weight: 700; cursor: pointer;
+  }
+  .track-sw.on { background: var(--ec-accs); color: var(--ec-accl); border: 1px solid rgba(74,144,217,0.2); }
+  .track-sw.off { color: var(--ec-t4); }
+  .track-sw.mute-on { background: rgba(232,80,80,0.12); color: var(--ec-red); border: 1px solid rgba(232,80,80,0.2); }
+  .add-track {
+    height: 32px; display: flex; align-items: center; justify-content: center;
+    border-top: 1px solid var(--ec-line); cursor: pointer;
+  }
+  .add-track span { font-size: 8px; font-weight: 500; color: var(--ec-t4); }
+
+  /* 折叠按钮 - 来自代码 L50-54 */
+  .collapse-btn {
+    width: 14px; background: var(--ec-surf); border-right: 1px solid var(--ec-line);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .collapse-btn span { font-size: 8px; color: var(--ec-t3); }
+
+  /* 时间轴内容 - 来自代码 L142-171 */
+  .timeline-content {
+    flex: 1; overflow: auto; position: relative; scrollbar-width: none;
+  }
+  .timeline-content::-webkit-scrollbar { display: none; }
+
+  /* 片段 - 来自代码 L174-219 ClipView */
+  .clip {
+    position: absolute; height: 36px; border-radius: 4px;
+    display: flex; align-items: center; padding: 0 6px;
+    cursor: pointer; transition: box-shadow 0.15s;
+  }
+  .clip:hover { box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
+  .clip.selected { box-shadow: 0 0 0 1.5px #fff; }
+  .clip-video {
+    background: linear-gradient(90deg, rgba(74,144,217,0.15), rgba(74,144,217,0.25));
+    border: 1px solid rgba(74,144,217,0.2);
+  }
+  .clip-audio {
+    background: linear-gradient(90deg, rgba(126,200,80,0.08), rgba(126,200,80,0.08));
+    border: 1px solid rgba(126,200,80,0.12);
+  }
+  .clip-subtitle {
+    background: linear-gradient(90deg, rgba(232,168,32,0.1), rgba(232,168,32,0.18));
+    border: 1px solid rgba(232,168,32,0.18);
+  }
+  .clip-name {
+    font-size: 7.5px; font-weight: 500; color: rgba(255,255,255,0.5);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .clip .kf-diamond {
+    position: absolute; width: 6px; height: 6px; border-radius: 1px;
+    background: rgba(255,255,255,0.8); top: 50%; transform: translateY(-50%);
+  }
+  .clip .grp-tag {
+    position: absolute; top: 1px; left: 1px;
+    font-size: 5px; font-family: 'JetBrains Mono', monospace; color: var(--ec-accl);
+  }
+
+  /* 播放头线 - 时间轴内 */
+  .tl-playhead {
+    position: absolute; top: 0; width: 2px; height: 100%;
+    background: #fff; z-index: 5; left: 105px;
+  }
+  /* 节拍标记 */
+  .beat-mark {
+    position: absolute; top: 0; width: 1.5px; height: 100%;
+    background: rgba(232,168,32,0.35);
+  }
+
+  /* 播放控制条 - 来自代码 L230-256 PlaybackBar */
+  .playback {
+    height: 44px; background: var(--ec-surf);
+    border-top: 1px solid var(--ec-line);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    flex-shrink: 0;
+  }
+  .pb-time {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: var(--ec-t2); width: 48px; text-align: center;
+  }
+  .pb-time.total { color: var(--ec-t4); }
+  .pb-btn {
+    width: 26px; height: 26px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--ec-t3); cursor: pointer;
+  }
+  .pb-btn:hover { background: var(--ec-card); }
+  .pb-main {
+    width: 34px; height: 34px; border-radius: 17px;
+    background: linear-gradient(135deg, var(--ec-acc), var(--ec-accl));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #fff; cursor: pointer;
+  }
+
+  /* FAB按钮 - 来自代码 L91-98 */
+  .fab {
+    position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+    width: 36px; height: 36px; border-radius: 18px;
+    background: linear-gradient(135deg, var(--ec-acc), var(--ec-accl));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #fff; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(74,144,217,0.4);
+  }
+
+  /* 面板覆盖层 - 来自代码 L334-385 PanelOverlay */
+  .panel-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); display: none;
+    flex-direction: column; justify-content: flex-end;
+    z-index: 20;
+  }
+  .panel-overlay.visible { display: flex; }
+  .panel-sheet {
+    background: var(--ec-surf); border-radius: 16px 16px 0 0;
+    max-height: 70%;
+  }
+  .panel-header {
+    height: 44px; padding: 0 16px;
+    border-bottom: 1px solid var(--ec-line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title { font-size: 13px; font-weight: 600; color: var(--ec-t1); }
+  .panel-close {
+    width: 28px; height: 28px; border-radius: 8px; background: var(--ec-card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--ec-t3); cursor: pointer;
+  }
+  .panel-body {
+    padding: 12px 16px; max-height: 400px; overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .panel-body::-webkit-scrollbar { display: none; }
+
+  /* 调色面板 - 来自 ColorGradingPanel */
+  .cg-tabs {
+    display: flex; height: 30px; border-bottom: 1px solid var(--ec-line);
+  }
+  .cg-tab {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 600; color: var(--ec-t3); cursor: pointer;
+  }
+  .cg-tab.active { color: var(--ec-acc); }
+  .cg-section-title { font-size: 9px; font-weight: 600; color: var(--ec-t4); margin: 12px 0 6px; }
+  .cg-slider-row {
+    display: flex; align-items: center; gap: 8px; margin: 6px 0;
+  }
+  .cg-slider-label { font-size: 9px; color: var(--ec-t2); min-width: 40px; }
+  .cg-slider {
+    flex: 1; height: 4px; background: var(--ec-line); border-radius: 2px; position: relative;
+  }
+  .cg-slider-fill { height: 100%; background: var(--ec-acc); border-radius: 2px; }
+  .cg-slider-thumb {
+    position: absolute; top: 50%; transform: translate(-50%,-50%);
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--ec-accl); border: 2px solid var(--ec-bg);
+  }
+  .cg-slider-value {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    color: var(--ec-accl); min-width: 24px; text-align: right;
+  }
+  .cg-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .cg-chip {
+    padding: 6px 10px; border-radius: 8px; background: var(--ec-card);
+    font-size: 10px; font-weight: 500; color: var(--ec-t2); cursor: pointer;
+  }
+  .cg-chip.selected { background: var(--ec-accs); border: 1.5px solid var(--ec-acc); color: var(--ec-accl); }
+  .cg-apply-btn {
+    width: 100%; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--ec-acc), var(--ec-accl));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #fff; cursor: pointer;
+    margin-top: 16px;
+  }
+
+  /* 音频面板 - 来自 AudioPanel */
+  .audio-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px; border-radius: 8px; margin: 2px 0; cursor: pointer;
+  }
+  .audio-item.selected { background: var(--ec-accs); border: 1px solid var(--ec-acc); }
+  .audio-item .play-icon { font-size: 12px; color: var(--ec-t3); }
+  .audio-item .audio-info { flex: 1; }
+  .audio-item .audio-name { font-size: 11px; font-weight: 500; color: var(--ec-t1); }
+  .audio-item .audio-meta { font-size: 8px; color: var(--ec-t3); }
+  .audio-item .use-btn {
+    padding: 2px 6px; border-radius: 3px; background: var(--ec-accs);
+    font-size: 8px; font-weight: 600; color: var(--ec-accl); cursor: pointer;
+  }
+
+  /* 效果面板 - 来自 EffectsPanel */
+  .fx-preset {
+    padding: 8px 10px; border-radius: 8px; background: var(--ec-card);
+    font-size: 10px; font-weight: 500; color: var(--ec-t2); cursor: pointer;
+  }
+  .fx-preset.selected { background: var(--ec-accs); border: 1.5px solid var(--ec-acc); color: var(--ec-accl); }
+
+  /* Home indicator */
+  .home-indicator { height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .home-indicator .bar { width: 134px; height: 5px; border-radius: 3px; background: var(--ec-t4); }
+
+  /* 标注 */
+  .annotation {
+    position: absolute; right: -200px; top: 0;
+    width: 180px; font-size: 9px; color: var(--ec-t3);
+    line-height: 1.5; padding: 4px 8px;
+    background: rgba(40,40,40,0.9); border-radius: 6px;
+    border: 1px solid var(--ec-line);
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <!-- 状态栏 -->
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="r">
+      <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+    </div>
+  </div>
+
+  <!-- 会员横幅 - EditorScreen.kt L68-70 -->
+  <div class="membership-banner">
+    <span class="icon">👑</span>
+    <div class="info">
+      <div class="title">开通会员 · 解锁全部AI功能</div>
+      <div class="sub">¥29/月 · ¥76/季 · ¥228/年</div>
+    </div>
+  </div>
+
+  <!-- AI次数条 - EditorScreen.kt L72-77 -->
+  <div class="ai-quota">
+    <span>🧠 AI免费次数: 0/3 · 👑 升级PRO无限使用</span>
+  </div>
+
+  <!-- 预览区 - EditorScreen.kt L78-80 -->
+  <div class="preview">
+    <div class="canvas">
+      <div class="inner-circle"></div>
+      <div class="inner-rect"></div>
+      <div class="inner-blue"></div>
+    </div>
+    <span class="res-tag">1920×1080</span>
+    <span class="fps-tag">30fps</span>
+  </div>
+
+  <!-- 拖拽手柄 - EditorScreen.kt L81-84 -->
+  <div class="drag-handle"><div class="bar"></div></div>
+
+  <!-- 工具栏 - EditorScreen.kt L278-311 -->
+  <div class="toolbar">
+    <div class="tb-btn">撤销</div>
+    <div class="tb-btn">重做</div>
+    <div class="tb-sep"></div>
+    <div class="tb-btn">分割</div>
+    <div class="tb-btn">删除</div>
+    <div class="tb-sep"></div>
+    <div class="tb-btn">钢笔</div>
+    <div class="tb-btn">清除</div>
+    <div class="tb-sep"></div>
+    <div class="tb-btn">关键帧</div>
+    <div class="tb-btn" onclick="openPanel('color')">调色</div>
+    <div class="tb-btn" onclick="openPanel('fx')">效果</div>
+    <div class="tb-btn" onclick="openPanel('text')">文字</div>
+    <div class="tb-btn" onclick="openPanel('audio')">音频</div>
+    <div class="tb-sep"></div>
+    <div class="tb-btn">AI抠图</div>
+    <div class="tb-btn">AI超分</div>
+    <div class="tb-btn">AI插帧</div>
+    <div class="tb-btn">AI语音</div>
+    <div class="tb-btn">AI降噪</div>
+    <div class="tb-btn">AI分离</div>
+    <div class="tb-sep"></div>
+    <div class="tb-btn">混合</div>
+    <div class="tb-btn">导出</div>
+    <div class="tb-btn">转场</div>
+  </div>
+
+  <!-- 时间轴区 - EditorScreen.kt L86-88 -->
+  <div class="timeline-container">
+    <!-- 刻度尺 - TimelineView.kt L62-96 -->
+    <div class="ruler">
+      <div class="playhead"></div>
+      <div class="ruler-marks">
+        <span class="ruler-mark">0:00</span>
+        <span class="ruler-mark">0:01</span>
+        <span class="ruler-mark">0:02</span>
+        <span class="ruler-mark">0:03</span>
+        <span class="ruler-mark">0:04</span>
+      </div>
+    </div>
+
+    <!-- 轨道行 - TimelineView.kt L46-58 -->
+    <div class="tracks-row">
+      <!-- 轨道头 - TimelineView.kt L98-128 -->
+      <div class="track-panel">
+        <div class="track-item selected">
+          <div class="track-info">
+            <div class="track-name">视频 1</div>
+            <div class="track-switches">
+              <span class="track-sw on">S</span>
+              <span class="track-sw off">M</span>
+              <span class="track-sw on">E</span>
+              <span class="track-sw off">L</span>
+            </div>
+          </div>
+        </div>
+        <div class="track-item">
+          <div class="track-info">
+            <div class="track-name">音频 1</div>
+            <div class="track-switches">
+              <span class="track-sw off">S</span>
+              <span class="track-sw mute-on">M</span>
+              <span class="track-sw on">E</span>
+              <span class="track-sw off">L</span>
+            </div>
+          </div>
+        </div>
+        <div class="track-item">
+          <div class="track-info">
+            <div class="track-name">字幕 1</div>
+            <div class="track-switches">
+              <span class="track-sw off">S</span>
+              <span class="track-sw off">M</span>
+              <span class="track-sw on">E</span>
+              <span class="track-sw off">L</span>
+            </div>
+          </div>
+        </div>
+        <div class="add-track"><span>+ 添加轨道</span></div>
+      </div>
+
+      <!-- 折叠按钮 - TimelineView.kt L50-54 -->
+      <div class="collapse-btn"><span>◀</span></div>
+
+      <!-- 时间轴内容 - TimelineView.kt L142-171 -->
+      <div class="timeline-content" style="position:relative;">
+        <!-- 播放头线 -->
+        <div class="tl-playhead"></div>
+        <!-- 节拍标记 -->
+        <div class="beat-mark" style="left:60px;"></div>
+        <div class="beat-mark" style="left:97px;"></div>
+        <div class="beat-mark" style="left:135px;"></div>
+        <div class="beat-mark" style="left:172px;"></div>
+        <div class="beat-mark" style="left:210px;"></div>
+        <div class="beat-mark" style="left:247px;"></div>
+        <div class="beat-mark" style="left:285px;"></div>
+
+        <!-- 视频1轨道 - 片段来自 EditorViewModel.kt L68-71 -->
+        <div class="clip clip-video selected" style="left:30px; top:6px; width:140px;">
+          <span class="clip-name">Scene_01.mp4</span>
+          <span class="kf-diamond" style="left:15px;"></span>
+          <span class="kf-diamond" style="left:55px;"></span>
+          <span class="kf-diamond" style="left:95px;"></span>
+        </div>
+        <div class="clip clip-video" style="left:200px; top:6px; width:100px;">
+          <span class="clip-name">Scene_02.mp4</span>
+        </div>
+
+        <!-- 音频1轨道 -->
+        <div class="clip clip-audio" style="left:30px; top:54px; width:270px;">
+          <span class="clip-name">bgm.mp3</span>
+        </div>
+
+        <!-- 字幕1轨道 -->
+        <div class="clip clip-subtitle" style="left:30px; top:102px; width:60px;">
+          <span class="clip-name">字幕1</span>
+        </div>
+        <div class="clip clip-subtitle" style="left:100px; top:102px; width:70px;">
+          <span class="clip-name">字幕2</span>
+        </div>
+        <div class="clip clip-subtitle" style="left:180px; top:102px; width:50px;">
+          <span class="clip-name">字幕3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 播放控制条 - EditorScreen.kt L230-256 -->
+  <div class="playback">
+    <span class="pb-time">00:01.10</span>
+    <div class="pb-btn">⏮</div>
+    <div class="pb-btn">◀◀</div>
+    <div class="pb-main">▶</div>
+    <div class="pb-btn">▶▶</div>
+    <div class="pb-btn">⏭</div>
+    <span class="pb-time total">00:01.70</span>
+  </div>
+
+  <!-- FAB按钮 - EditorScreen.kt L91-98 -->
+  <div class="fab">+</div>
+
+  <!-- 面板覆盖层 - EditorScreen.kt L334-385 -->
+  <div class="panel-overlay" id="panelOverlay" onclick="closePanel(event)">
+    <div class="panel-sheet" onclick="event.stopPropagation()">
+      <div class="panel-header">
+        <span class="panel-title" id="panelTitle">调色 · AE级</span>
+        <div class="panel-close" onclick="closePanel()">✕</div>
+      </div>
+      <div class="panel-body" id="panelBody">
+        <!-- 动态内容 -->
+      </div>
+    </div>
+  </div>
+
+  <div class="home-indicator"><div class="bar"></div></div>
+</div>
+
+<script>
+  function openPanel(type) {
+    const overlay = document.getElementById('panelOverlay');
+    const title = document.getElementById('panelTitle');
+    const body = document.getElementById('panelBody');
+    overlay.classList.add('visible');
+
+    if (type === 'color') {
+      title.textContent = '调色 · AE级';
+      body.innerHTML = `
+        <div class="cg-tabs">
+          <div class="cg-tab active">滤镜</div>
+          <div class="cg-tab">色轮</div>
+          <div class="cg-tab">曲线</div>
+          <div class="cg-tab">HSL</div>
+          <div class="cg-tab">色阶</div>
+          <div class="cg-tab">LUT</div>
+        </div>
+        <div style="padding:12px 0;">
+          <div class="cg-section-title">滤镜预设</div>
+          <div class="cg-chip-row">
+            <span class="cg-chip selected">自然</span>
+            <span class="cg-chip">暖阳</span>
+            <span class="cg-chip">冷调</span>
+            <span class="cg-chip">胶片</span>
+            <span class="cg-chip">HDR</span>
+            <span class="cg-chip">复古</span>
+            <span class="cg-chip">日系</span>
+            <span class="cg-chip">黑白</span>
+          </div>
+          <div class="cg-section-title">基础调节</div>
+          <div class="cg-slider-row"><span class="cg-slider-label">亮度</span><div class="cg-slider"><div class="cg-slider-fill" style="width:50%"></div><div class="cg-slider-thumb" style="left:50%"></div></div><span class="cg-slider-value">0</span></div>
+          <div class="cg-slider-row"><span class="cg-slider-label">对比度</span><div class="cg-slider"><div class="cg-slider-fill" style="width:50%"></div><div class="cg-slider-thumb" style="left:50%"></div></div><span class="cg-slider-value">0</span></div>
+          <div class="cg-slider-row"><span class="cg-slider-label">饱和度</span><div class="cg-slider"><div class="cg-slider-fill" style="width:50%"></div><div class="cg-slider-thumb" style="left:50%"></div></div><span class="cg-slider-value">0</span></div>
+          <div class="cg-slider-row"><span class="cg-slider-label">色温</span><div class="cg-slider"><div class="cg-slider-fill" style="width:50%"></div><div class="cg-slider-thumb" style="left:50%"></div></div><span class="cg-slider-value">0</span></div>
+          <div class="cg-slider-row"><span class="cg-slider-label">锐度</span><div class="cg-slider"><div class="cg-slider-fill" style="width:10%"></div><div class="cg-slider-thumb" style="left:10%"></div></div><span class="cg-slider-value">0</span></div>
+          <div class="cg-slider-row"><span class="cg-slider-label">暗角</span><div class="cg-slider"><div class="cg-slider-fill" style="width:0%"></div><div class="cg-slider-thumb" style="left:0%"></div></div><span class="cg-slider-value">0</span></div>
+          <div class="cg-slider-row"><span class="cg-slider-label">颗粒</span><div class="cg-slider"><div class="cg-slider-fill" style="width:0%"></div><div class="cg-slider-thumb" style="left:0%"></div></div><span class="cg-slider-value">0</span></div>
+          <div class="cg-apply-btn">应用调色</div>
+        </div>`;
+    } else if (type === 'audio') {
+      title.textContent = '音频';
+      body.innerHTML = `
+        <div class="cg-section-title">音频素材</div>
+        <div class="audio-item selected"><span class="play-icon">▶</span><div class="audio-info"><div class="audio-name">背景音乐 01</div><div class="audio-meta">0:15 · 轻松 · 免费</div></div><span class="use-btn">使用</span></div>
+        <div class="audio-item"><span class="play-icon">▶</span><div class="audio-info"><div class="audio-name">背景音乐 02</div><div class="audio-meta">0:23 · 动感 · 免费</div></div><span class="use-btn">使用</span></div>
+        <div class="audio-item"><span class="play-icon">▶</span><div class="audio-info"><div class="audio-name">环境音</div><div class="audio-meta">0:31 · 自然 · 免费</div></div><span class="use-btn">使用</span></div>
+        <div class="audio-item"><span class="play-icon">▶</span><div class="audio-info"><div class="audio-name">鼓点节奏</div><div class="audio-meta">0:39 · 节拍 · 免费</div></div><span class="use-btn">使用</span></div>
+        <div class="cg-section-title">音量控制</div>
+        <div class="cg-slider-row"><span class="cg-slider-label">主音量</span><div class="cg-slider"><div class="cg-slider-fill" style="width:53%"></div><div class="cg-slider-thumb" style="left:53%"></div></div><span class="cg-slider-value">80</span></div>
+        <div class="cg-slider-row"><span class="cg-slider-label">淡入</span><div class="cg-slider"><div class="cg-slider-fill" style="width:0%"></div><div class="cg-slider-thumb" style="left:0%"></div></div><span class="cg-slider-value">0ms</span></div>
+        <div class="cg-slider-row"><span class="cg-slider-label">淡出</span><div class="cg-slider"><div class="cg-slider-fill" style="width:0%"></div><div class="cg-slider-thumb" style="left:0%"></div></div><span class="cg-slider-value">0ms</span></div>
+        <div class="cg-section-title">音效</div>
+        <div class="cg-chip-row">
+          <span class="cg-chip selected">无</span>
+          <span class="cg-chip">混响</span>
+          <span class="cg-chip">回声</span>
+          <span class="cg-chip">均衡器</span>
+          <span class="cg-chip">降噪</span>
+          <span class="cg-chip">变速不变调</span>
+        </div>
+        <div class="cg-apply-btn">添加到时间轴</div>`;
+    } else if (type === 'fx') {
+      title.textContent = '效果';
+      body.innerHTML = `
+        <div class="cg-section-title">预设滤镜组</div>
+        <div class="cg-chip-row">
+          <span class="fx-preset">电影感</span>
+          <span class="fx-preset selected">复古胶片</span>
+          <span class="fx-preset">赛博朋克</span>
+          <span class="fx-preset">日系清新</span>
+          <span class="fx-preset">黑白经典</span>
+          <span class="fx-preset">抖音风格</span>
+          <span class="fx-preset">梦幻</span>
+          <span class="fx-preset">恐怖</span>
+        </div>
+        <div class="cg-section-title">基础</div>
+        <div class="cg-chip-row">
+          <span class="cg-chip">模糊</span><span class="cg-chip">锐化</span><span class="cg-chip">发光</span><span class="cg-chip">阴影</span>
+          <span class="cg-chip">浮雕</span><span class="cg-chip">马赛克</span><span class="cg-chip">像素化</span><span class="cg-chip">色差</span>
+          <span class="cg-chip">暗角</span><span class="cg-chip">噪声</span><span class="cg-chip">高对比</span><span class="cg-chip">柔光</span>
+        </div>
+        <div class="cg-section-title">风格化</div>
+        <div class="cg-chip-row">
+          <span class="cg-chip">老电影</span><span class="cg-chip selected">故障</span><span class="cg-chip">复古</span><span class="cg-chip">霓虹</span>
+          <span class="cg-chip">油画</span><span class="cg-chip">素描</span><span class="cg-chip">卡通</span><span class="cg-chip">水墨</span>
+          <span class="cg-chip">清新</span><span class="cg-chip">胶片</span><span class="cg-chip">赛博</span><span class="cg-chip">黑白</span>
+        </div>
+        <div class="cg-slider-row"><span class="cg-slider-label">故障强度</span><div class="cg-slider"><div class="cg-slider-fill" style="width:50%"></div><div class="cg-slider-thumb" style="left:50%"></div></div><span class="cg-slider-value">50</span></div>
+        <div class="cg-section-title">变形</div>
+        <div class="cg-chip-row">
+          <span class="cg-chip">扭曲</span><span class="cg-chip">波纹</span><span class="cg-chip">球面化</span><span class="cg-chip">湍流置换</span>
+          <span class="cg-chip">鱼眼</span><span class="cg-chip">旋转模糊</span><span class="cg-chip">径向模糊</span><span class="cg-chip">万花筒</span>
+        </div>
+        <div class="cg-apply-btn">应用效果</div>`;
+    } else if (type === 'text') {
+      title.textContent = '文字编辑';
+      body.innerHTML = `
+        <div class="cg-section-title">文字样式</div>
+        <div class="cg-chip-row">
+          <span class="cg-chip selected">默认</span><span class="cg-chip">标题</span><span class="cg-chip">副标题</span><span class="cg-chip">正文</span>
+        </div>
+        <div class="cg-section-title">文字内容</div>
+        <div style="padding:8px;background:var(--ec-card);border-radius:8px;border:1px solid var(--ec-line);margin:6px 0;">
+          <span style="font-size:11px;color:var(--ec-t1);">在这里输入文字...</span>
+        </div>
+        <div class="cg-section-title">字体</div>
+        <div class="cg-chip-row">
+          <span class="cg-chip selected">默认</span><span class="cg-chip">黑体</span><span class="cg-chip">宋体</span><span class="cg-chip">圆体</span>
+        </div>
+        <div class="cg-slider-row"><span class="cg-slider-label">大小</span><div class="cg-slider"><div class="cg-slider-fill" style="width:40%"></div><div class="cg-slider-thumb" style="left:40%"></div></div><span class="cg-slider-value">24</span></div>
+        <div class="cg-slider-row"><span class="cg-slider-label">行距</span><div class="cg-slider"><div class="cg-slider-fill" style="width:50%"></div><div class="cg-slider-thumb" style="left:50%"></div></div><span class="cg-slider-value">1.0</span></div>
+        <div class="cg-apply-btn">添加文字</div>`;
+    }
+  }
+
+  function closePanel(e) {
+    if (e && e.target !== document.getElementById('panelOverlay')) return;
+    document.getElementById('panelOverlay').classList.remove('visible');
+  }
+</script>
+
+</body>
+</html>
