@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NexClip</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#09090B;--s1:#111114;--s2:#18181C;--s3:#222228;--s4:#2C2C33;
+    --bd:#27272E;--bd2:#333340;
+    --t1:#EDEDF0;--t2:#9898A4;--t3:#5C5C66;--t4:#3A3A42;
+    --c:#E8553D;--c2:#FF7A5C;--cb:rgba(232,85,61,0.1);
+    --teal:#2DD4A8;--teal2:#5EEAD4;--tealb:rgba(45,212,168,0.1);
+    --sky:#38BDF8;--sky2:#7DD3FC;--skyb:rgba(56,189,248,0.1);
+    --lime:#A3E635;--limeb:rgba(163,230,53,0.1);
+    --rose:#FB7185;--roseb:rgba(251,113,133,0.1);
+    --amber:#FBBF24;--amberb:rgba(251,191,36,0.1);
+    --violet:#A78BFA;--violetb:rgba(167,139,250,0.1);
+    --r:14px;--rs:10px;--rx:7px;
+  }
+  body{font-family:'Space Grotesk',system-ui,sans-serif;background:#000;color:var(--t1);overflow:hidden;height:100vh;width:100vw;display:flex;justify-content:center;align-items:center}
+  .d{width:393px;height:852px;background:var(--bg);border-radius:48px;overflow:hidden;position:relative;box-shadow:0 0 0 3px #222,0 0 0 6px #111,0 40px 120px rgba(0,0,0,.95);display:flex;flex-direction:column}
+
+  /* 状态栏 */
+  .sb{height:54px;padding:14px 28px 0;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;flex-shrink:0}
+
+  /* 顶栏 */
+  .hd{height:48px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .hd-l{display:flex;align-items:center;gap:12px}
+  .hd-back{width:30px;height:30px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s}
+  .hd-back:hover{background:var(--s3)}
+  .hd-back svg{width:16px;height:16px;stroke:var(--t2);fill:none;stroke-width:2.2}
+  .hd-name{font-size:14px;font-weight:600;color:var(--t1);letter-spacing:-.4px}
+  .hd-r{display:flex;align-items:center;gap:8px}
+  .hd-ai{height:30px;padding:0 12px;border-radius:15px;background:var(--cb);border:1px solid rgba(232,85,61,.2);display:flex;align-items:center;gap:5px;cursor:pointer;transition:all .2s}
+  .hd-ai:hover{background:rgba(232,85,61,.15)}
+  .hd-ai span{font-size:10px;font-weight:600;color:var(--c2)}
+  .hd-ai .dot{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .hd-exp{height:30px;padding:0 16px;border-radius:15px;background:linear-gradient(135deg,var(--c),var(--c2));display:flex;align-items:center;gap:5px;cursor:pointer;transition:opacity .2s}
+  .hd-exp:hover{opacity:.9}
+  .hd-exp span{font-size:11px;font-weight:700;color:#fff;letter-spacing:.3px}
+
+  /* 预览 */
+  .pv{height:248px;padding:0 14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative}
+  .pv-frame{width:92%;aspect-ratio:16/9;border-radius:var(--r);position:relative;overflow:hidden;background:linear-gradient(155deg,#12121A 0%,#0A0E14 40%,#100A14 100%);box-shadow:0 4px 24px rgba(0,0,0,.5),inset 0 .5px 0 rgba(255,255,255,.04)}
+  .pv-frame .orb1{position:absolute;width:70%;height:70%;top:-15%;right:-15%;background:radial-gradient(circle,rgba(232,85,61,.05) 0%,transparent 60%);border-radius:50%}
+  .pv-frame .orb2{position:absolute;width:50%;height:50%;bottom:-10%;left:-5%;background:radial-gradient(circle,rgba(45,212,168,.03) 0%,transparent 60%);border-radius:50%}
+  .pv-frame .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.05);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;border:1px solid rgba(255,255,255,.06)}
+  .pv-frame .play:hover{background:rgba(255,255,255,.08);transform:translate(-50%,-50%) scale(1.06)}
+  .pv-frame .play svg{width:18px;height:18px;fill:rgba(255,255,255,.35);margin-left:2px}
+  .pv .tag-l{position:absolute;top:10px;left:26px;display:flex;gap:5px}
+  .pv .tag-r{position:absolute;top:10px;right:26px;display:flex;gap:5px}
+  .pv-tag{padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:500;color:var(--t3);letter-spacing:.5px}
+  .pv-tag.ai{background:rgba(45,212,168,.1);border:1px solid rgba(45,212,168,.15);color:var(--teal2);display:flex;align-items:center;gap:3px}
+  .pv-tag.ai .d{width:4px;height:4px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+  .pv-ratio{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:3px;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);padding:3px;border-radius:10px}
+  .pv-r{padding:3px 9px;border-radius:7px;font-size:8px;font-weight:600;color:var(--t4);cursor:pointer;transition:all .2s}
+  .pv-r.on{background:var(--cb);color:var(--c2)}
+
+  /* 进度条 */
+  .prog{height:20px;padding:0 18px;flex-shrink:0;display:flex;align-items:center;gap:8px}
+  .prog-bar{flex:1;height:2px;background:var(--s3);border-radius:1px;position:relative;cursor:pointer}
+  .prog-fill{height:100%;width:25%;background:var(--c);border-radius:1px;position:relative}
+  .prog-fill::after{content:'';position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:var(--c2);box-shadow:0 0 8px rgba(232,85,61,.4)}
+  .prog-t{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t4);min-width:28px}
+  .prog-t.cur{color:var(--t2)}
+
+  /* 控制条 */
+  .ctl{height:36px;padding:0 24px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:2px}
+  .ctl-btn{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+  .ctl-btn:hover{background:var(--s2)}
+  .ctl-btn svg{width:14px;height:14px;fill:var(--t3)}
+  .ctl-play{width:36px;height:36px;border-radius:50%;background:var(--c);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;margin:0 6px}
+  .ctl-play:hover{transform:scale(1.06);background:var(--c2)}
+  .ctl-play svg{width:15px;height:15px;fill:#fff;margin-left:1px}
+
+  /* 工具栏 */
+  .tb{height:56px;padding:0 4px;flex-shrink:0;display:flex;align-items:stretch;border-top:1px solid var(--bd);background:var(--s1)}
+  .tb-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:relative;transition:all .2s}
+  .tb-item::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:2px;border-radius:1px;background:var(--c);transition:width .3s cubic-bezier(.4,0,.2,1)}
+  .tb-item.on::before{width:18px}
+  .tb-ico{width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+  .tb-ico svg{width:18px;height:18px;stroke:var(--t3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
+  .tb-item.on .tb-ico svg{stroke:var(--c2)}
+  .tb-lbl{font-size:8px;font-weight:600;color:var(--t4);letter-spacing:.3px;transition:color .2s}
+  .tb-item.on .tb-lbl{color:var(--c2)}
+  .tb-item .ai-dot{position:absolute;top:5px;right:calc(50% - 14px);width:5px;height:5px;border-radius:50%;background:var(--c);opacity:.4}
+  .tb-item.on .ai-dot{opacity:1}
+
+  /* 底部 */
+  .bt{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+  /* 时间轴 */
+  .tl{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .tl.hid{display:none}
+  .tl-ruler{height:20px;background:var(--s1);border-bottom:1px solid var(--bd);position:relative;flex-shrink:0}
+  .tl-ruler-m{display:flex;align-items:flex-end;height:100%;padding-left:48px}
+  .tl-rm{font-family:'IBM Plex Mono',monospace;font-size:6px;color:var(--t4);width:68px;padding-bottom:2px;position:relative}
+  .tl-rm::before{content:'';position:absolute;bottom:0;left:0;width:1px;height:4px;background:var(--bd2)}
+  .tl-ph{position:absolute;top:0;left:95px;width:1.5px;height:100%;background:var(--t1);z-index:5}
+  .tl-ph::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);border-left:3px solid transparent;border-right:3px solid transparent;border-top:4px solid var(--t1)}
+  .tl-tracks{flex:1;overflow-y:auto;scrollbar-width:none}
+  .tl-tracks::-webkit-scrollbar{display:none}
+  .tl-row{display:flex;height:42px;border-bottom:1px solid var(--bd)}
+  .tl-th{width:48px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--bd);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+  .tl-th-name{font-size:7px;font-weight:700;color:var(--t3);letter-spacing:.8px}
+  .tl-th-btns{display:flex;gap:1px}
+  .tl-thb{width:10px;height:10px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:5px;font-weight:800;cursor:pointer}
+  .tl-thb.on{background:var(--skyb);color:var(--sky2)}
+  .tl-thb.off{color:var(--t4)}
+  .tl-tb{flex:1;position:relative;display:flex;align-items:center;padding:4px 0}
+  .tl-clip{position:absolute;height:32px;border-radius:5px;display:flex;align-items:center;padding:0 7px;cursor:pointer;transition:all .15s;overflow:hidden}
+  .tl-clip:hover{filter:brightness(1.15)}
+  .tl-clip.sel{box-shadow:0 0 0 1.5px var(--t1)}
+  .tl-cv{background:linear-gradient(90deg,rgba(56,189,248,.12),rgba(56,189,248,.22));border:1px solid rgba(56,189,248,.15)}
+  .tl-ca{background:linear-gradient(90deg,rgba(45,212,168,.1),rgba(45,212,168,.18));border:1px solid rgba(45,212,168,.12)}
+  .tl-cs{background:linear-gradient(90deg,rgba(251,191,36,.08),rgba(251,191,36,.15));border:1px solid rgba(251,191,36,.12)}
+  .tl-cn{font-size:7px;font-weight:500;color:rgba(255,255,255,.35);white-space:nowrap}
+  .tl-clip .kf{position:absolute;width:4px;height:4px;border-radius:1px;background:rgba(255,255,255,.6);top:50%;transform:translateY(-50%)}
+  .tl-clip .ait{position:absolute;top:2px;right:3px;font-size:5px;font-weight:700;color:var(--c2);letter-spacing:.5px}
+  .tl-add{height:26px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:500;color:var(--t4);cursor:pointer}
+  .ca-bar{height:38px;background:var(--s1);flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:5px;border-top:1px solid var(--bd)}
+  .ca-b{padding:4px 12px;border-radius:var(--rx);font-size:9px;font-weight:600;color:var(--t2);background:var(--s2);cursor:pointer;transition:all .15s}
+  .ca-b:hover{background:var(--s3);color:var(--t1)}
+  .ca-b.red{color:var(--rose)}
+  .ca-b.red:hover{background:var(--roseb)}
+
+  /* 面板 */
+  .pn{display:none;flex-direction:column;height:100%}
+  .pn.vis{display:flex}
+  .pn-h{height:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:grab}
+  .pn-h .bar{width:28px;height:2.5px;border-radius:2px;background:var(--bd2)}
+  .pn-head{padding:0 16px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .pn-title{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+  .pn-mode{display:flex;background:var(--s3);border-radius:var(--rx);overflow:hidden}
+  .pm{padding:4px 11px;font-size:9px;font-weight:600;color:var(--t4);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:3px}
+  .pm.on{background:var(--cb);color:var(--c2);border-radius:5px}
+  .pn-scroll{flex:1;overflow-y:auto;padding:0 16px 14px;scrollbar-width:none}
+  .pn-scroll::-webkit-scrollbar{display:none}
+
+  /* 工具网格 */
+  .tg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .tg-i{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 2px;border-radius:var(--rs);cursor:pointer;transition:background .15s}
+  .tg-i:hover{background:var(--s2)}
+  .tg-ic{width:38px;height:38px;border-radius:var(--rs);background:var(--s2);display:flex;align-items:center;justify-content:center;transition:background .15s}
+  .tg-i:hover .tg-ic{background:var(--s3)}
+  .tg-ic svg{width:18px;height:18px;stroke:var(--t2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .tg-l{font-size:8px;font-weight:600;color:var(--t3);letter-spacing:.2px}
+
+  /* AI 卡片 */
+  .ac{background:var(--s2);border-radius:var(--r);padding:12px;margin-bottom:8px;border:1px solid var(--bd);transition:border-color .2s}
+  .ac:hover{border-color:var(--bd2)}
+  .ac-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .ac-ico{width:30px;height:30px;border-radius:var(--rx);display:flex;align-items:center;justify-content:center}
+  .ac-ico svg{width:16px;height:16px;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;fill:none}
+  .ac-ico.c1{background:var(--cb)}.ac-ico.c1 svg{stroke:var(--c2)}
+  .ac-ico.t1{background:var(--tealb)}.ac-ico.t1 svg{stroke:var(--teal2)}
+  .ac-ico.s1{background:var(--skyb)}.ac-ico.s1 svg{stroke:var(--sky2)}
+  .ac-ico.l1{background:var(--limeb)}.ac-ico.l1 svg{stroke:var(--lime)}
+  .ac-ico.r1{background:var(--roseb)}.ac-ico.r1 svg{stroke:var(--rose)}
+  .ac-ico.a1{background:var(--amberb)}.ac-ico.a1 svg{stroke:var(--amber)}
+  .ac-ico.v1{background:var(--violetb)}.ac-ico.v1 svg{stroke:var(--violet)}
+  .ac-name{font-size:11px;font-weight:700;color:var(--t1);letter-spacing:-.2px}
+  .ac-desc{font-size:9px;color:var(--t3);line-height:1.5;margin-bottom:8px}
+  .ac-sl{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+  .ac-sl-l{font-size:8px;font-weight:600;color:var(--t3);min-width:24px}
+  .ac-sl-t{flex:1;height:2.5px;background:var(--bd);border-radius:2px;position:relative}
+  .ac-sl-f{height:100%;border-radius:2px;background:var(--c)}
+  .ac-sl-th{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:var(--c2);border:2px solid var(--bg)}
+  .ac-sl-v{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:500;color:var(--c2);min-width:24px;text-align:right}
+  .ac-acts{display:flex;gap:6px}
+  .ac-prev{flex:1;height:32px;border-radius:var(--rx);background:var(--s3);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:600;color:var(--t2);cursor:pointer;transition:all .15s}
+  .ac-prev:hover{background:var(--s4);color:var(--t1)}
+  .ac-prev svg{width:10px;height:10px;fill:currentColor}
+  .ac-apply{flex:1;height:32px;border-radius:var(--rx);background:var(--c);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;cursor:pointer;transition:background .15s}
+  .ac-apply:hover{background:var(--c2)}
+  .ac-live{display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:5px;background:var(--tealb);border:1px solid rgba(45,212,168,.1)}
+  .ac-live .d{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+  .ac-live span{font-size:8px;font-weight:600;color:var(--teal)}
+  .ac-chips{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px}
+  .ac-chip{padding:3px 8px;border-radius:5px;font-size:8px;font-weight:600;cursor:pointer;transition:all .15s}
+  .ac-chip.on{background:var(--cb);color:var(--c2);border:1px solid rgba(232,85,61,.2)}
+  .ac-chip.off{background:var(--s3);color:var(--t4)}
+
+  /* 压缩时间轴 */
+  .mtl{height:46px;background:var(--s1);flex-shrink:0;border-top:1px solid var(--bd);overflow:hidden;display:flex;flex-direction:column;padding:3px 0}
+  .mtl-r{height:12px;display:flex;align-items:center;padding:0 48px 0 6px}
+  .mtl-c{height:8px;border-radius:2px}
+  .mtl-v{background:rgba(56,189,248,.15)}.mtl-a{background:rgba(45,212,168,.1)}.mtl-s{background:rgba(251,191,36,.1)}
+
+  .hi{height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .hi .bar{width:134px;height:5px;border-radius:3px;background:var(--t4)}
+</style>
+</head>
+<body>
+<div class="d">
+  <div class="sb"><span>9:41</span><span>⦁⦁⦁</span></div>
+
+  <!-- 顶栏 -->
+  <div class="hd">
+    <div class="hd-l">
+      <div class="hd-back"><svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></div>
+      <span class="hd-name">旅行Vlog</span>
+    </div>
+    <div class="hd-r">
+      <div class="hd-ai"><span class="dot"></span><span>AI</span></div>
+      <div class="hd-exp"><span>导出</span></div>
+    </div>
+  </div>
+
+  <!-- 预览 -->
+  <div class="pv">
+    <div class="tag-l"><span class="pv-tag">4K</span></div>
+    <div class="tag-r"><span class="pv-tag ai"><span class="d"></span>AI</span><span class="pv-tag">60fps</span></div>
+    <div class="pv-frame">
+      <div class="orb1"></div><div class="orb2"></div>
+      <div class="play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    </div>
+    <div class="pv-ratio">
+      <span class="pv-r" onclick="sr(this)">1:1</span>
+      <span class="pv-r" onclick="sr(this)">9:16</span>
+      <span class="pv-r on" onclick="sr(this)">16:9</span>
+      <span class="pv-r" onclick="sr(this)">4:3</span>
+    </div>
+  </div>
+
+  <!-- 进度条 -->
+  <div class="prog">
+    <span class="prog-t cur">0:03</span>
+    <div class="prog-bar"><div class="prog-fill"></div></div>
+    <span class="prog-t">0:12</span>
+  </div>
+
+  <!-- 控制 -->
+  <div class="ctl">
+    <div class="ctl-btn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></div>
+    <div class="ctl-btn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" transform="scale(.65) translate(6,6)"/></svg></div>
+    <div class="ctl-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    <div class="ctl-btn"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" transform="scale(.65) translate(6,6)"/></svg></div>
+    <div class="ctl-btn"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></div>
+  </div>
+
+  <!-- 工具栏 -->
+  <div class="tb">
+    <div class="tb-item on" onclick="st(this,'clip')"><div class="ai-dot"></div><div class="tb-ico"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></div><span class="tb-lbl">剪辑</span></div>
+    <div class="tb-item" onclick="st(this,'audio')"><div class="ai-dot"></div><div class="tb-ico"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 18c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3zM21 16c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg></div><span class="tb-lbl">音频</span></div>
+    <div class="tb-item" onclick="st(this,'text')"><div class="ai-dot"></div><div class="tb-ico"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div><span class="tb-lbl">文字</span></div>
+    <div class="tb-item" onclick="st(this,'color')"><div class="ai-dot"></div><div class="tb-ico"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div><span class="tb-lbl">调色</span></div>
+    <div class="tb-item" onclick="st(this,'fx')"><div class="ai-dot"></div><div class="tb-ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-5.3 3.5L16 20l-4-3-4 3 1.3-6.5L4 10l6.1-1.2z"/></svg></div><span class="tb-lbl">特效</span></div>
+    <div class="tb-item" onclick="st(this,'more')"><div class="tb-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></div><span class="tb-lbl">更多</span></div>
+  </div>
+
+  <!-- 底部 -->
+  <div class="bt">
+    <!-- 时间轴 -->
+    <div class="tl" id="tl">
+      <div class="tl-ruler"><div class="tl-ph"></div><div class="tl-ruler-m"><span class="tl-rm">0:00</span><span class="tl-rm">0:05</span><span class="tl-rm">0:10</span><span class="tl-rm">0:15</span></div></div>
+      <div class="tl-tracks">
+        <div class="tl-row"><div class="tl-th"><span class="tl-th-name">V1</span><div class="tl-th-btns"><span class="tl-thb on">S</span><span class="tl-thb off">M</span><span class="tl-thb on">E</span></div></div><div class="tl-tb"><div class="tl-clip tl-cv sel" style="left:6px;width:120px"><span class="tl-cn">Scene_01</span><span class="kf" style="left:18px"></span><span class="kf" style="left:55px"></span><span class="ait">AI</span></div><div class="tl-clip tl-cv" style="left:134px;width:88px"><span class="tl-cn">Scene_02</span></div></div></div>
+        <div class="tl-row"><div class="tl-th"><span class="tl-th-name">A1</span><div class="tl-th-btns"><span class="tl-thb off">S</span><span class="tl-thb off">M</span><span class="tl-thb on">E</span></div></div><div class="tl-tb"><div class="tl-clip tl-ca" style="left:6px;width:216px"><span class="tl-cn">bgm.mp3</span><span class="ait">AI</span></div></div></div>
+        <div class="tl-row"><div class="tl-th"><span class="tl-th-name">S1</span><div class="tl-th-btns"><span class="tl-thb off">S</span><span class="tl-thb off">M</span><span class="tl-thb on">E</span></div></div><div class="tl-tb"><div class="tl-clip tl-cs" style="left:6px;width:50px"><span class="tl-cn">字幕1</span></div><div class="tl-clip tl-cs" style="left:62px;width:58px"><span class="tl-cn">字幕2</span></div><div class="tl-clip tl-cs" style="left:128px;width:40px"><span class="tl-cn">字幕3</span></div></div></div>
+        <div class="tl-add">+ 添加轨道</div>
+      </div>
+      <div class="ca-bar"><span class="ca-b">分割</span><span class="ca-b">变速</span><span class="ca-b">复制</span><span class="ca-b">音量</span><span class="ca-b red">删除</span></div>
+    </div>
+
+    <!-- 剪辑面板 -->
+    <div class="pn" id="pn-clip">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">剪辑</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="clip-m">
+          <div class="tg">
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><span class="tg-l">分割</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><polygon points="5,4 15,12 5,20"/><line x1="19" y1="5" x2="19" y2="19"/></svg></div><span class="tg-l">变速</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></div><span class="tg-l">倒放</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div><span class="tg-l">裁剪</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg></div><span class="tg-l">音量</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/></svg></div><span class="tg-l">定格</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></div><span class="tg-l">复制</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></div><span class="tg-l">删除</span></div>
+          </div>
+        </div>
+        <div id="clip-a" style="display:none">
+          <div class="ac"><div class="ac-top"><div class="ac-ico c1"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div><span class="ac-name">AI Auto Clip</span></div><div class="ac-desc">智能识别高光片段，自动剪辑成片</div><div class="ac-chips"><span class="ac-chip on">Vlog</span><span class="ac-chip off">电影</span><span class="ac-chip off">快剪</span></div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico r1"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><span class="ac-name">AI 智能分割</span></div><div class="ac-desc">自动检测场景切换点分割片段</div><div class="ac-sl"><span class="ac-sl-l">灵敏度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:50%"></div><div class="ac-sl-th" style="left:50%"></div></div><span class="ac-sl-v">中</span></div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico a1"><svg viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></div><span class="ac-name">AI 删静音</span></div><div class="ac-desc">自动删除无声片段和停顿</div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+        </div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div><div class="mtl-c mtl-v" style="width:34%;margin-left:2%"></div></div><div class="mtl-r"><div class="mtl-c mtl-a" style="width:86%;margin-left:2%"></div></div><div class="mtl-r"><div class="mtl-c mtl-s" style="width:18%;margin-left:2%"></div><div class="mtl-c mtl-s" style="width:20%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 音频面板 -->
+    <div class="pn" id="pn-audio">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">音频</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="audio-m">
+          <div class="tg">
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 18c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg></div><span class="tg-l">音乐</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg></div><span class="tg-l">录音</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div><span class="tg-l">降噪</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M2 12h4l3-9 6 18 3-9h4"/></svg></div><span class="tg-l">淡入淡出</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg></div><span class="tg-l">节拍器</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><span class="tg-l">提取</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><span class="tg-l">音效</span></div>
+            <div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg></div><span class="tg-l">音量</span></div>
+          </div>
+        </div>
+        <div id="audio-a" style="display:none">
+          <div class="ac"><div class="ac-top"><div class="ac-ico t1"><svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div><span class="ac-name">AI 实时降噪</span></div><div class="ac-desc">去除环境噪音，保留清晰人声</div><div class="ac-sl"><span class="ac-sl-l">强度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:60%"></div><div class="ac-sl-th" style="left:60%"></div></div><span class="ac-sl-v">60%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico v1"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><span class="ac-name">AI 音频分离</span></div><div class="ac-desc">分离人声和伴奏为独立轨道</div><div class="ac-chips"><span class="ac-chip on">人声+伴奏</span><span class="ac-chip off">仅人声</span><span class="ac-chip off">仅伴奏</span></div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico a1"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg></div><span class="ac-name">AI 语音增强</span></div><div class="ac-desc">录音棚级别人声清晰度</div><div class="ac-sl"><span class="ac-sl-l">强度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:40%"></div><div class="ac-sl-th" style="left:40%"></div></div><span class="ac-sl-v">40%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+        </div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div><div class="mtl-r"><div class="mtl-c mtl-a" style="width:86%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 文字面板 -->
+    <div class="pn" id="pn-text">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">文字</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="text-m"><div class="tg"><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div><span class="tg-l">新建</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h6"/></svg></div><span class="tg-l">模板</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div><span class="tg-l">花字</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><span class="tg-l">贴纸</span></div></div></div>
+        <div id="text-a" style="display:none">
+          <div class="ac"><div class="ac-top"><div class="ac-ico s1"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div><span class="ac-name">AI 自动字幕</span></div><div class="ac-desc">语音转文字，实时生成字幕轨道</div><div class="ac-chips"><span class="ac-chip on">中文</span><span class="ac-chip off">English</span><span class="ac-chip off">日本語</span></div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico v1"><svg viewBox="0 0 24 24"><path d="M5 8l6 6M4 14l6-6"/></svg></div><span class="ac-name">AI 翻译字幕</span></div><div class="ac-desc">将已有字幕翻译为其他语言</div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+        </div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div><div class="mtl-r"><div class="mtl-c mtl-s" style="width:18%;margin-left:2%"></div><div class="mtl-c mtl-s" style="width:20%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 调色面板 -->
+    <div class="pn" id="pn-color">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">调色</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="color-m"><div class="tg"><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg></div><span class="tg-l">基础</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><span class="tg-l">曲线</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div><span class="tg-l">HSL</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/></svg></div><span class="tg-l">色轮</span></div></div></div>
+        <div id="color-a" style="display:none">
+          <div class="ac"><div class="ac-top"><div class="ac-ico c1"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div><span class="ac-name">AI 一键调色</span></div><div class="ac-desc">自动分析画面并优化色彩</div><div class="ac-sl"><span class="ac-sl-l">强度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:70%"></div><div class="ac-sl-th" style="left:70%"></div></div><span class="ac-sl-v">70%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico v1"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><span class="ac-name">AI 风格迁移</span></div><div class="ac-desc">将电影/胶片风格应用到画面</div><div class="ac-chips"><span class="ac-chip on">赛博朋克</span><span class="ac-chip off">胶片复古</span><span class="ac-chip off">日系清新</span><span class="ac-chip off">暖阳</span><span class="ac-chip off">冷调</span><span class="ac-chip off">黑白</span></div><div class="ac-sl"><span class="ac-sl-l">强度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:80%"></div><div class="ac-sl-th" style="left:80%"></div></div><span class="ac-sl-v">80%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+        </div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 特效面板 -->
+    <div class="pn" id="pn-fx">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">特效</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="fx-m"><div class="tg"><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/></svg></div><span class="tg-l">画面</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div><span class="tg-l">转场</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div><span class="tg-l">滤镜</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div><span class="tg-l">粒子</span></div></div></div>
+        <div id="fx-a" style="display:none">
+          <div class="ac"><div class="ac-top"><div class="ac-ico c1"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><span class="ac-name">AI 抠图</span></div><div class="ac-desc">一键分离前景和背景</div><div class="ac-sl"><span class="ac-sl-l">羽化</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:20%"></div><div class="ac-sl-th" style="left:20%"></div></div><span class="ac-sl-v">20%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico l1"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div><span class="ac-name">AI 超分辨率</span></div><div class="ac-desc">画质增强 2x</div><div class="ac-sl"><span class="ac-sl-l">强度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:70%"></div><div class="ac-sl-th" style="left:70%"></div></div><span class="ac-sl-v">70%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico r1"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div><span class="ac-name">AI 插帧</span></div><div class="ac-desc">30fps → 60fps 智能补帧</div><div class="ac-chips"><span class="ac-chip off">48fps</span><span class="ac-chip on">60fps</span><span class="ac-chip off">120fps</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico v1"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><span class="ac-name">AI 风格化</span></div><div class="ac-desc">将画面转换为动漫/漫画/3D风格</div><div class="ac-chips"><span class="ac-chip on">动漫</span><span class="ac-chip off">漫画</span><span class="ac-chip off">油画</span><span class="ac-chip off">水彩</span></div><div class="ac-sl"><span class="ac-sl-l">强度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:80%"></div><div class="ac-sl-th" style="left:80%"></div></div><span class="ac-sl-v">80%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico a1"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div><span class="ac-name">AI 物体消除</span></div><div class="ac-desc">涂抹画面中不需要的物体自动消除</div><div class="ac-acts"><div class="ac-prev">进入涂抹模式</div><div class="ac-apply">应用</div></div></div>
+        </div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 更多面板 -->
+    <div class="pn" id="pn-more">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">更多</span></div>
+      <div class="pn-scroll"><div class="tg"><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg></div><span class="tg-l">画中画</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></div><span class="tg-l">绿幕</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8l4 4-4 4"/></svg></div><span class="tg-l">运动追踪</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="1" y="6" width="22" height="12" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="tg-l">稳定器</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg></div><span class="tg-l">混合模式</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></div><span class="tg-l">马赛克</span></div></div></div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="hi"><div class="bar"></div></div>
+</div>
+
+<script>
+let cur=null;
+function st(el,n){if(cur===n){cur=null;document.querySelectorAll('.tb-item').forEach(t=>t.classList.remove('on'));document.getElementById('tl').classList.remove('hid');document.querySelectorAll('.pn').forEach(p=>p.classList.remove('vis'));return}cur=n;document.querySelectorAll('.tb-item').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById('tl').classList.add('hid');document.querySelectorAll('.pn').forEach(p=>p.classList.remove('vis'));const pn=document.getElementById('pn-'+n);if(pn)pn.classList.add('vis')}
+function sm(el,m){const p=el.closest('.pn-mode');p.querySelectorAll('.pm').forEach(b=>b.classList.remove('on'));el.classList.add('on');const pa=el.closest('.pn');const ma=pa.querySelector('[id$="-m"]');const ai=pa.querySelector('[id$="-a"]');if(m==='a'){if(ma)ma.style.display='none';if(ai)ai.style.display='block'}else{if(ma)ma.style.display='block';if(ai)ai.style.display='none'}}
+function sr(el){document.querySelectorAll('.pv-r').forEach(r=>r.classList.remove('on'));el.classList.add('on')}
+</script>
+</body>
+</html>
