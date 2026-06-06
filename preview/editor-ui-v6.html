@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>NexClip</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+--bg:#08080A;--s1:#0E0E12;--s2:#16161C;--s3:#1E1E26;--s4:#282832;
+--bd:#222230;--bd2:#2E2E3A;
+--t1:#EEEEF2;--t2:#8888A0;--t3:#55556A;--t4:#33334A;
+--accent:#E04E2A;--accent2:#F06A42;--accentBg:rgba(224,78,42,.08);--accentBg2:rgba(224,78,42,.16);
+--green:#3CD4A0;--greenBg:rgba(60,212,160,.08);
+--blue:#4E9EF0;--blueBg:rgba(78,158,240,.08);
+--yellow:#E0C040;--yellowBg:rgba(224,192,64,.08);
+--pink:#E060A0;--pinkBg:rgba(224,96,160,.08);
+--purple:#9050E0;--purpleBg:rgba(144,80,224,.08);
+}
+body{font-family:'Outfit',system-ui,sans-serif;background:#000;color:var(--t1);overflow:hidden;height:100vh;width:100vw;display:flex;justify-content:center;align-items:center}
+.phone{width:393px;height:852px;background:var(--bg);border-radius:48px;overflow:hidden;position:relative;box-shadow:0 0 0 3px #1a1a22,0 0 0 6px #0e0e12,0 40px 120px rgba(0,0,0,.95);display:flex;flex-direction:column}
+
+/* 顶栏 */
+.top{height:46px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.top-l{display:flex;align-items:center;gap:10px}
+.top-back{width:30px;height:30px;border-radius:10px;background:var(--s2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s}
+.top-back:hover{background:var(--s3)}
+.top-back svg{width:16px;height:16px;stroke:var(--t2);fill:none;stroke-width:2.2;stroke-linecap:round}
+.top-name{font-size:14px;font-weight:700;color:var(--t1);letter-spacing:-.5px}
+.top-r{display:flex;align-items:center;gap:6px}
+.top-btn{height:30px;padding:0 14px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s}
+.top-undo{background:var(--s2);color:var(--t3)}
+.top-undo:hover{background:var(--s3);color:var(--t2)}
+.top-export{background:var(--accent);color:#fff;letter-spacing:.3px}
+.top-export:hover{background:var(--accent2)}
+
+/* 预览区 */
+.preview{height:222px;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.preview-box{width:88%;aspect-ratio:16/9;border-radius:14px;position:relative;overflow:hidden;background:linear-gradient(150deg,#12121A 0%,#080C14 50%,#0E0814 100%);box-shadow:0 2px 20px rgba(0,0,0,.4),inset 0 .5px 0 rgba(255,255,255,.03)}
+.preview-box .glow1{position:absolute;width:80%;height:80%;top:-20%;right:-20%;background:radial-gradient(circle,rgba(224,78,42,.04) 0%,transparent 60%);border-radius:50%}
+.preview-box .glow2{position:absolute;width:60%;height:60%;bottom:-15%;left:-10%;background:radial-gradient(circle,rgba(60,212,160,.03) 0%,transparent 60%);border-radius:50%}
+.preview-box .center-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.04);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,.05);transition:all .2s}
+.preview-box .center-play:hover{background:rgba(255,255,255,.07);transform:translate(-50%,-50%) scale(1.04)}
+.preview-box .center-play svg{width:18px;height:18px;fill:rgba(255,255,255,.3);margin-left:2px}
+.preview .info-bl{position:absolute;top:10px;left:24px;display:flex;gap:4px}
+.preview .info-br{position:absolute;top:10px;right:24px;display:flex;gap:4px}
+.info-tag{padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:500;color:var(--t3);letter-spacing:.4px}
+.info-tag.live{background:var(--greenBg);border:1px solid rgba(60,212,160,.15);color:var(--green);display:flex;align-items:center;gap:3px}
+.info-tag.live .blink{width:4px;height:4px;border-radius:50%;background:var(--green);animation:bk 2s infinite}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.2}}
+.preview .ratio-bar{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:2px;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);padding:2px;border-radius:8px}
+.ratio-item{padding:2px 8px;border-radius:6px;font-size:8px;font-weight:600;color:var(--t4);cursor:pointer;transition:all .2s}
+.ratio-item.active{background:var(--accentBg2);color:var(--accent2)}
+
+/* 进度条 */
+.progress{height:18px;padding:0 18px;flex-shrink:0;display:flex;align-items:center;gap:8px}
+.progress-track{flex:1;height:2px;background:var(--s3);border-radius:1px;position:relative;cursor:pointer}
+.progress-fill{height:100%;width:25%;background:var(--accent);border-radius:1px;position:relative}
+.progress-fill::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--accent2);box-shadow:0 0 8px rgba(224,78,42,.35)}
+.progress-time{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:500;color:var(--t3);min-width:26px}
+.progress-time.dim{color:var(--t4)}
+
+/* 播放控制 */
+.controls{height:34px;padding:0 20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:2px}
+.ctrl-btn{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+.ctrl-btn:hover{background:var(--s2)}
+.ctrl-btn svg{width:13px;height:13px;fill:var(--t3)}
+.ctrl-main{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;margin:0 4px}
+.ctrl-main:hover{background:var(--accent2);transform:scale(1.04)}
+.ctrl-main svg{width:14px;height:14px;fill:#fff;margin-left:1px}
+
+/* 时间轴区域 */
+.timeline-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.timeline{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.timeline.hide{display:none}
+
+.tl-header{height:20px;background:var(--s1);border-bottom:1px solid var(--bd);border-top:1px solid var(--bd);position:relative;flex-shrink:0;display:flex;align-items:flex-end;padding-left:42px}
+.tl-mark{font-family:'JetBrains Mono',monospace;font-size:6px;color:var(--t4);width:56px;padding-bottom:2px;position:relative}
+.tl-mark::before{content:'';position:absolute;bottom:0;left:0;width:1px;height:3px;background:var(--bd2)}
+.tl-playhead{position:absolute;top:0;left:72px;width:1.5px;height:100%;background:#fff;z-index:5}
+.tl-playhead::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);border-left:3px solid transparent;border-right:3px solid transparent;border-top:4px solid #fff}
+
+.tl-body{flex:1;overflow-y:auto;scrollbar-width:none}
+.tl-body::-webkit-scrollbar{display:none}
+.tl-row{display:flex;height:38px;border-bottom:1px solid var(--bd)}
+.tl-track-hd{width:42px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--bd);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.tl-track-name{font-size:6px;font-weight:700;color:var(--t3);letter-spacing:.6px}
+.tl-track-btns{display:flex;gap:1px}
+.tl-track-btn{width:9px;height:9px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:5px;font-weight:800;cursor:pointer}
+.tl-track-btn.on{background:var(--blueBg);color:var(--blue)}
+.tl-track-btn.off{color:var(--t4)}
+.tl-track-body{flex:1;position:relative;display:flex;align-items:center;padding:3px 0}
+.tl-clip{position:absolute;height:28px;border-radius:5px;display:flex;align-items:center;padding:0 6px;cursor:pointer;transition:all .12s;overflow:hidden}
+.tl-clip:hover{filter:brightness(1.2)}
+.tl-clip.sel{box-shadow:0 0 0 1.5px #fff}
+.clip-v{background:linear-gradient(90deg,rgba(78,158,240,.08),rgba(78,158,240,.16));border:1px solid rgba(78,158,240,.1)}
+.clip-a{background:linear-gradient(90deg,rgba(60,212,160,.06),rgba(60,212,160,.12));border:1px solid rgba(60,212,160,.08)}
+.clip-s{background:linear-gradient(90deg,rgba(224,192,64,.06),rgba(224,192,64,.12));border:1px solid rgba(224,192,64,.08)}
+.clip-name{font-size:7px;font-weight:500;color:rgba(255,255,255,.25);white-space:nowrap}
+.clip-ai{position:absolute;top:1px;right:3px;font-size:5px;font-weight:700;color:var(--accent2)}
+.clip-speed{position:absolute;bottom:1px;left:4px;right:4px;height:6px}
+.clip-speed svg{width:100%;height:100%}
+.clip-speed svg path{fill:none;stroke:rgba(224,78,42,.4);stroke-width:.8}
+
+.tl-add{height:22px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:500;color:var(--t4);cursor:pointer}
+
+/* 选中操作条 */
+.sel-bar{height:34px;background:var(--s1);flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:4px;border-top:1px solid var(--bd)}
+.sel-btn{padding:4px 12px;border-radius:6px;font-size:9px;font-weight:600;color:var(--t2);background:var(--s2);cursor:pointer;transition:all .12s}
+.sel-btn:hover{background:var(--s3);color:var(--t1)}
+.sel-btn.del{color:var(--pink)}
+.sel-btn.del:hover{background:var(--pinkBg)}
+
+/* 工具栏 - 底部 */
+.toolbar{height:50px;flex-shrink:0;display:flex;align-items:stretch;border-top:1px solid var(--bd);background:var(--s1)}
+.tool{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;transition:all .2s}
+.tool::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:2px;border-radius:1px;background:var(--accent);transition:width .3s cubic-bezier(.4,0,.2,1)}
+.tool.active::before{width:18px}
+.tool svg{width:18px;height:18px;stroke:var(--t3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
+.tool.active svg{stroke:var(--accent2)}
+.tool span{font-size:8px;font-weight:500;color:var(--t4);transition:color .2s;letter-spacing:.2px}
+.tool.active span{color:var(--accent2);font-weight:600}
+
+/* 面板 */
+.panel{display:none;flex-direction:column;flex:1;overflow:hidden}
+.panel.show{display:flex}
+.panel-handle{height:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:grab}
+.panel-handle .bar{width:24px;height:2px;border-radius:1px;background:var(--bd2)}
+.panel-head{padding:0 14px 6px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.panel-title{font-size:12px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+.panel-toggle{display:flex;background:var(--s3);border-radius:6px;overflow:hidden}
+.panel-toggle-btn{padding:3px 10px;font-size:9px;font-weight:600;color:var(--t4);cursor:pointer;transition:all .2s}
+.panel-toggle-btn.active{background:var(--accentBg2);color:var(--accent2);border-radius:4px}
+.panel-body{flex:1;overflow-y:auto;padding:0 14px 10px;scrollbar-width:none}
+.panel-body::-webkit-scrollbar{display:none}
+
+/* 属性区 */
+.prop-group{margin-bottom:8px}
+.prop-group-title{font-size:7px;font-weight:700;color:var(--t4);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px;padding-bottom:2px;border-bottom:1px solid var(--bd)}
+.prop-row{display:flex;align-items:center;gap:6px;padding:3px 0;min-height:26px}
+.prop-label{font-size:9px;font-weight:500;color:var(--t3);min-width:32px}
+.prop-slider{flex:1;height:2.5px;background:var(--bd);border-radius:2px;position:relative;cursor:pointer}
+.prop-fill{height:100%;border-radius:2px}
+.prop-fill.blue{background:var(--blue)}.prop-fill.accent{background:var(--accent)}.prop-fill.green{background:var(--green)}.prop-fill.yellow{background:var(--yellow)}.prop-fill.pink{background:var(--pink)}.prop-fill.purple{background:var(--purple)}
+.prop-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;border:1.5px solid var(--bg)}
+.prop-thumb.blue{background:var(--blue)}.prop-thumb.accent{background:var(--accent2)}.prop-thumb.green{background:var(--green)}.prop-thumb.yellow{background:var(--yellow)}.prop-thumb.pink{background:var(--pink)}.prop-thumb.purple{background:var(--purple)}
+.prop-val{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:500;min-width:22px;text-align:right}
+.prop-val.blue{color:var(--blue)}.prop-val.accent{color:var(--accent2)}.prop-val.green{color:var(--green)}.prop-val.yellow{color:var(--yellow)}.prop-val.pink{color:var(--pink)}.prop-val.purple{color:var(--purple)}
+
+.prop-chips{display:flex;gap:3px;flex-wrap:wrap;margin:4px 0}
+.prop-chip{padding:3px 8px;border-radius:5px;font-size:8px;font-weight:600;cursor:pointer;transition:all .15s}
+.prop-chip.on{background:var(--accentBg2);color:var(--accent2)}
+.prop-chip.off{background:var(--s3);color:var(--t4)}
+
+.prop-add{display:flex;align-items:center;gap:4px;padding:5px 8px;border-radius:6px;background:var(--s2);border:1px dashed var(--bd2);cursor:pointer;margin-top:2px}
+.prop-add span{font-size:8px;font-weight:500;color:var(--t4)}
+.prop-add .plus{width:12px;height:12px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--t3)}
+
+/* 曲线编辑器 */
+.curve-editor{background:var(--s2);border-radius:8px;border:1px solid var(--bd);padding:8px;margin:4px 0}
+.curve-editor-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.curve-editor-title{font-size:8px;font-weight:600;color:var(--t2)}
+.curve-ch-tabs{display:flex;gap:2px}
+.curve-ch{width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;cursor:pointer;border:1px solid var(--bd2)}
+.curve-ch.master{background:rgba(255,255,255,.06);color:var(--t2)}
+.curve-ch.r{background:rgba(255,80,80,.08);color:#FF5050}
+.curve-ch.g{background:rgba(80,255,80,.08);color:#50FF50}
+.curve-ch.b{background:rgba(80,80,255,.08);color:#5050FF}
+.curve-canvas{width:100%;aspect-ratio:1.8;background:var(--s1);border-radius:4px;position:relative;overflow:hidden}
+.curve-canvas svg{width:100%;height:100%}
+.curve-canvas svg line{stroke:rgba(255,255,255,.03);stroke-width:.5}
+.curve-canvas svg .cpath{fill:none;stroke:rgba(255,255,255,.6);stroke-width:1.5}
+.curve-canvas svg .cpt{fill:#fff;stroke:var(--bg);stroke-width:1.5;cursor:grab}
+
+/* 色轮 */
+.wheels{display:flex;gap:6px;justify-content:center;margin:6px 0}
+.wheel{display:flex;flex-direction:column;align-items:center;gap:2px}
+.wheel-ring{width:56px;height:56px;border-radius:50%;position:relative;overflow:hidden;border:1px solid var(--bd2)}
+.wheel-bg{width:100%;height:100%;background:conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);opacity:.25}
+.wheel-dot{position:absolute;width:7px;height:7px;border-radius:50%;background:#fff;border:1.5px solid var(--bg);top:50%;left:50%;transform:translate(-50%,-50%);cursor:grab;box-shadow:0 0 4px rgba(0,0,0,.5)}
+.wheel-label{font-size:6px;font-weight:600;color:var(--t3)}
+.wheel-val{font-family:'JetBrains Mono',monospace;font-size:6px;color:var(--t4)}
+
+/* 示波器 */
+.scopes{display:flex;gap:3px;margin:4px 0}
+.scope{flex:1;background:var(--s2);border-radius:4px;border:1px solid var(--bd);overflow:hidden}
+.scope canvas{width:100%;display:block}
+.scope-name{font-size:5px;font-weight:600;color:var(--t4);text-align:center;padding:1px 0}
+
+/* AI 卡片 */
+.ai-card{background:var(--s2);border-radius:8px;padding:10px;margin-bottom:6px;border:1px solid var(--bd);transition:border-color .2s}
+.ai-card:hover{border-color:var(--bd2)}
+.ai-card-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.ai-card-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.ai-card-icon svg{width:14px;height:14px;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.ai-card-icon.accent{background:var(--accentBg)}.ai-card-icon.accent svg{stroke:var(--accent2)}
+.ai-card-icon.green{background:var(--greenBg)}.ai-card-icon.green svg{stroke:var(--green)}
+.ai-card-icon.blue{background:var(--blueBg)}.ai-card-icon.blue svg{stroke:var(--blue)}
+.ai-card-icon.yellow{background:var(--yellowBg)}.ai-card-icon.yellow svg{stroke:var(--yellow)}
+.ai-card-icon.pink{background:var(--pinkBg)}.ai-card-icon.pink svg{stroke:var(--pink)}
+.ai-card-icon.purple{background:var(--purpleBg)}.ai-card-icon.purple svg{stroke:var(--purple)}
+.ai-card-name{font-size:10px;font-weight:700;color:var(--t1)}
+.ai-card-desc{font-size:8px;color:var(--t3);line-height:1.4;margin-bottom:6px}
+.ai-slider{display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.ai-slider-label{font-size:7px;font-weight:600;color:var(--t3);min-width:18px}
+.ai-slider-track{flex:1;height:2px;background:var(--bd);border-radius:1px;position:relative}
+.ai-slider-fill{height:100%;border-radius:1px;background:var(--accent)}
+.ai-slider-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;background:var(--accent2);border:2px solid var(--bg)}
+.ai-slider-val{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--accent2);min-width:18px;text-align:right}
+.ai-actions{display:flex;gap:4px}
+.ai-preview{flex:1;height:26px;border-radius:5px;background:var(--s3);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;gap:3px;font-size:9px;font-weight:600;color:var(--t2);cursor:pointer;transition:all .12s}
+.ai-preview:hover{background:var(--s4);color:var(--t1)}
+.ai-preview svg{width:9px;height:9px;fill:currentColor}
+.ai-apply{flex:1;height:26px;border-radius:5px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;cursor:pointer;transition:background .12s}
+.ai-apply:hover{background:var(--accent2)}
+.ai-live{display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:4px;background:var(--greenBg);border:1px solid rgba(60,212,160,.1)}
+.ai-live .dot{width:4px;height:4px;border-radius:50%;background:var(--green);animation:bk 2s infinite}
+.ai-live span{font-size:7px;font-weight:600;color:var(--green)}
+
+/* Lumetri Tabs */
+.lum-tabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:6px}
+.lum-tab{flex:1;padding:4px 0;text-align:center;font-size:7px;font-weight:600;color:var(--t4);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.3px}
+.lum-tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.lum-sec{display:none}
+.lum-sec.active{display:block}
+
+/* 压缩时间轴 */
+.mini-tl{height:36px;background:var(--s1);flex-shrink:0;border-top:1px solid var(--bd);overflow:hidden;display:flex;flex-direction:column;padding:3px 0}
+.mini-tl-row{height:9px;display:flex;align-items:center;padding:0 42px 0 4px}
+.mini-tl-clip{height:6px;border-radius:2px}
+.mini-v{background:rgba(78,158,240,.1)}.mini-a{background:rgba(60,212,160,.06)}.mini-s{background:rgba(224,192,64,.06)}
+
+.home{height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.home .bar{width:134px;height:5px;border-radius:3px;background:var(--t4)}
+</style>
+</head>
+<body>
+<div class="phone">
+  <!-- 顶栏 -->
+  <div class="top">
+    <div class="top-l">
+      <div class="top-back"><svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></div>
+      <span class="top-name">旅行Vlog</span>
+    </div>
+    <div class="top-r">
+      <div class="top-btn top-undo"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 015 5 5 5 0 01-5 5H8"/><path d="M7 14L3 10l4-4"/></svg></div>
+      <div class="top-btn top-export">导出</div>
+    </div>
+  </div>
+
+  <!-- 预览 -->
+  <div class="preview">
+    <div class="info-bl"><span class="info-tag">4K</span></div>
+    <div class="info-br"><span class="info-tag live"><span class="blink"></span>AI</span><span class="info-tag">60fps</span></div>
+    <div class="preview-box">
+      <div class="glow1"></div><div class="glow2"></div>
+      <div class="center-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    </div>
+    <div class="ratio-bar">
+      <span class="ratio-item" onclick="selR(this)">1:1</span>
+      <span class="ratio-item" onclick="selR(this)">9:16</span>
+      <span class="ratio-item active" onclick="selR(this)">16:9</span>
+      <span class="ratio-item" onclick="selR(this)">4:3</span>
+    </div>
+  </div>
+
+  <!-- 进度条 -->
+  <div class="progress">
+    <span class="progress-time">0:03</span>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <span class="progress-time dim">0:12</span>
+  </div>
+
+  <!-- 播放控制 -->
+  <div class="controls">
+    <div class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></div>
+    <div class="ctrl-main"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    <div class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></div>
+  </div>
+
+  <!-- 时间轴+工具栏区域 -->
+  <div class="timeline-area">
+    <!-- 时间轴 -->
+    <div class="timeline" id="timeline">
+      <div class="tl-header"><div class="tl-playhead"></div><span class="tl-mark">0:00</span><span class="tl-mark">0:05</span><span class="tl-mark">0:10</span><span class="tl-mark">0:15</span></div>
+      <div class="tl-body">
+        <div class="tl-row"><div class="tl-track-hd"><span class="tl-track-name">V1</span><div class="tl-track-btns"><span class="tl-track-btn on">S</span><span class="tl-track-btn off">M</span><span class="tl-track-btn on">E</span></div></div><div class="tl-track-body"><div class="tl-clip clip-v sel" style="left:4px;width:100px"><span class="clip-name">Scene_01</span><span class="clip-ai">AI</span><div class="clip-speed"><svg viewBox="0 0 100 8" preserveAspectRatio="none"><path d="M0,6 C20,6 30,2 50,2 C70,2 80,5 100,5"/></svg></div></div><div class="tl-clip clip-v" style="left:110px;width:75px"><span class="clip-name">Scene_02</span></div></div></div>
+        <div class="tl-row"><div class="tl-track-hd"><span class="tl-track-name">A1</span><div class="tl-track-btns"><span class="tl-track-btn off">S</span><span class="tl-track-btn off">M</span><span class="tl-track-btn on">E</span></div></div><div class="tl-track-body"><div class="tl-clip clip-a" style="left:4px;width:181px"><span class="clip-name">bgm.mp3</span><span class="clip-ai">AI</span></div></div></div>
+        <div class="tl-row"><div class="tl-track-hd"><span class="tl-track-name">S1</span><div class="tl-track-btns"><span class="tl-track-btn off">S</span><span class="tl-track-btn off">M</span><span class="tl-track-btn on">E</span></div></div><div class="tl-track-body"><div class="tl-clip clip-s" style="left:4px;width:40px"><span class="clip-name">字幕1</span></div><div class="tl-clip clip-s" style="left:48px;width:48px"><span class="clip-name">字幕2</span></div><div class="tl-clip clip-s" style="left:102px;width:34px"><span class="clip-name">字幕3</span></div></div></div>
+        <div class="tl-add">+ 添加轨道</div>
+      </div>
+      <div class="sel-bar"><span class="sel-btn">分割</span><span class="sel-btn">变速</span><span class="sel-btn">复制</span><span class="sel-btn">音量</span><span class="sel-btn del">删除</span></div>
+    </div>
+
+    <!-- 面板们 -->
+    <!-- 剪辑 -->
+    <div class="panel" id="panel-clip">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">剪辑</span><div class="panel-toggle"><div class="panel-toggle-btn active" onclick="tog(this,'m')">手动</div><div class="panel-toggle-btn" onclick="tog(this,'a')">AI</div></div></div>
+      <div class="panel-body">
+        <div id="clip-m">
+          <div class="prop-group"><div class="prop-group-title">变换</div>
+            <div class="prop-row"><span class="prop-label">X</span><div class="prop-slider"><div class="prop-fill blue" style="width:50%"></div><div class="prop-thumb blue" style="left:50%"></div></div><span class="prop-val blue">960</span></div>
+            <div class="prop-row"><span class="prop-label">Y</span><div class="prop-slider"><div class="prop-fill blue" style="width:50%"></div><div class="prop-thumb blue" style="left:50%"></div></div><span class="prop-val blue">540</span></div>
+            <div class="prop-row"><span class="prop-label">缩放</span><div class="prop-slider"><div class="prop-fill blue" style="width:100%"></div><div class="prop-thumb blue" style="left:100%"></div></div><span class="prop-val blue">100%</span></div>
+            <div class="prop-row"><span class="prop-label">旋转</span><div class="prop-slider"><div class="prop-fill blue" style="width:50%"></div><div class="prop-thumb blue" style="left:50%"></div></div><span class="prop-val blue">0°</span></div>
+            <div class="prop-row"><span class="prop-label">透明</span><div class="prop-slider"><div class="prop-fill blue" style="width:100%"></div><div class="prop-thumb blue" style="left:100%"></div></div><span class="prop-val blue">100%</span></div>
+          </div>
+          <div class="prop-group"><div class="prop-group-title">速度曲线</div>
+            <div class="prop-row"><span class="prop-label">速度</span><div class="prop-slider"><div class="prop-fill accent" style="width:20%"></div><div class="prop-thumb accent" style="left:20%"></div></div><span class="prop-val accent">1.0x</span></div>
+            <div class="prop-chips"><span class="prop-chip on">自定义</span><span class="prop-chip off">线性</span><span class="prop-chip off">缓入</span><span class="prop-chip off">缓出</span><span class="prop-chip off">缓入缓出</span></div>
+          </div>
+          <div class="prop-group"><div class="prop-group-title">操作</div>
+            <div class="prop-chips"><span class="prop-chip off">分割</span><span class="prop-chip off">倒放</span><span class="prop-chip off">定格</span><span class="prop-chip off">裁剪</span><span class="prop-chip off">复制</span><span class="prop-chip off" style="color:var(--pink)">删除</span></div>
+          </div>
+          <div class="prop-add"><span class="plus">+</span><span>添加属性</span></div>
+        </div>
+        <div id="clip-a" style="display:none">
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon accent"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div><span class="ai-card-name">AI Auto Clip</span></div><div class="ai-card-desc">智能识别高光片段，自动剪辑成片</div><div class="ai-actions"><div class="ai-preview"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply">应用</div></div></div>
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon pink"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><span class="ai-card-name">AI 智能分割</span></div><div class="ai-card-desc">自动检测场景切换点分割片段</div><div class="ai-slider"><span class="ai-slider-label">灵敏度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:50%"></div><div class="ai-slider-thumb" style="left:50%"></div></div><span class="ai-slider-val">中</span></div><div class="ai-actions"><div class="ai-preview"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply">应用</div></div></div>
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon yellow"><svg viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></div><span class="ai-card-name">AI 删静音</span></div><div class="ai-card-desc">自动删除无声片段和停顿</div><div class="ai-actions"><div class="ai-preview"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply">应用</div></div></div>
+        </div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-tl-clip mini-v" style="width:46%;margin-left:2%"></div><div class="mini-tl-clip mini-v" style="width:32%;margin-left:2%"></div></div><div class="mini-tl-row"><div class="mini-tl-clip mini-a" style="width:82%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 音频 -->
+    <div class="panel" id="panel-audio">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">音频</span><div class="panel-toggle"><div class="panel-toggle-btn active" onclick="tog(this,'m')">手动</div><div class="panel-toggle-btn" onclick="tog(this,'a')">AI</div></div></div>
+      <div class="panel-body">
+        <div id="audio-m">
+          <div class="prop-group"><div class="prop-group-title">音量</div>
+            <div class="prop-row"><span class="prop-label">主音量</span><div class="prop-slider"><div class="prop-fill green" style="width:80%"></div><div class="prop-thumb green" style="left:80%"></div></div><span class="prop-val green">80</span></div>
+            <div class="prop-row"><span class="prop-label">淡入</span><div class="prop-slider"><div class="prop-fill green" style="width:0%"></div><div class="prop-thumb green" style="left:0%"></div></div><span class="prop-val green">0ms</span></div>
+            <div class="prop-row"><span class="prop-label">淡出</span><div class="prop-slider"><div class="prop-fill green" style="width:0%"></div><div class="prop-thumb green" style="left:0%"></div></div><span class="prop-val green">0ms</span></div>
+          </div>
+          <div class="prop-group"><div class="prop-group-title">素材</div><div class="prop-chips"><span class="prop-chip off">音乐</span><span class="prop-chip off">录音</span><span class="prop-chip off">音效</span><span class="prop-chip off">提取</span></div></div>
+          <div class="prop-add"><span class="plus">+</span><span>添加属性</span></div>
+        </div>
+        <div id="audio-a" style="display:none">
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon green"><svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div><span class="ai-card-name">AI 实时降噪</span></div><div class="ai-card-desc">去除环境噪音，保留清晰人声</div><div class="ai-slider"><span class="ai-slider-label">强度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:60%"></div><div class="ai-slider-thumb" style="left:60%"></div></div><span class="ai-slider-val">60%</span></div><div class="ai-live"><span class="dot"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon purple"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><span class="ai-card-name">AI 音频分离</span></div><div class="ai-card-desc">分离人声和伴奏为独立轨道</div><div class="ai-actions"><div class="ai-preview"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply">应用</div></div></div>
+        </div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-tl-clip mini-v" style="width:46%;margin-left:2%"></div></div><div class="mini-tl-row"><div class="mini-tl-clip mini-a" style="width:82%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 文字 -->
+    <div class="panel" id="panel-text">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">文字</span><div class="panel-toggle"><div class="panel-toggle-btn active" onclick="tog(this,'m')">手动</div><div class="panel-toggle-btn" onclick="tog(this,'a')">AI</div></div></div>
+      <div class="panel-body">
+        <div id="text-m"><div class="prop-chips"><span class="prop-chip off">新建</span><span class="prop-chip off">模板</span><span class="prop-chip off">花字</span><span class="prop-chip off">贴纸</span></div></div>
+        <div id="text-a" style="display:none"><div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon blue"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div><span class="ai-card-name">AI 自动字幕</span></div><div class="ai-card-desc">语音转文字，实时生成字幕轨道</div><div class="ai-actions"><div class="ai-preview"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ai-apply">应用</div></div></div></div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-tl-clip mini-v" style="width:46%;margin-left:2%"></div></div><div class="mini-tl-row"><div class="mini-tl-clip mini-s" style="width:16%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 调色 - AE Lumetri -->
+    <div class="panel" id="panel-color">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">调色</span><div class="panel-toggle"><div class="panel-toggle-btn active" onclick="tog(this,'m')">手动</div><div class="panel-toggle-btn" onclick="tog(this,'a')">AI</div></div></div>
+      <div class="panel-body">
+        <div id="color-m">
+          <div class="lum-tabs">
+            <div class="lum-tab active" onclick="lumT(this,0)">基础</div>
+            <div class="lum-tab" onclick="lumT(this,1)">曲线</div>
+            <div class="lum-tab" onclick="lumT(this,2)">色轮</div>
+            <div class="lum-tab" onclick="lumT(this,3)">HSL</div>
+            <div class="lum-tab" onclick="lumT(this,4)">示波器</div>
+          </div>
+          <div class="lum-sec active" id="lum-0">
+            <div class="prop-row"><span class="prop-label">色温</span><div class="prop-slider"><div class="prop-fill yellow" style="width:45%"></div><div class="prop-thumb yellow" style="left:45%"></div></div><span class="prop-val yellow">-5</span></div>
+            <div class="prop-row"><span class="prop-label">色调</span><div class="prop-slider"><div class="prop-fill purple" style="width:50%"></div><div class="prop-thumb purple" style="left:50%"></div></div><span class="prop-val purple">0</span></div>
+            <div class="prop-row"><span class="prop-label">曝光</span><div class="prop-slider"><div class="prop-fill blue" style="width:52%"></div><div class="prop-thumb blue" style="left:52%"></div></div><span class="prop-val blue">+0.2</span></div>
+            <div class="prop-row"><span class="prop-label">对比度</span><div class="prop-slider"><div class="prop-fill blue" style="width:55%"></div><div class="prop-thumb blue" style="left:55%"></div></div><span class="prop-val blue">+10</span></div>
+            <div class="prop-row"><span class="prop-label">高光</span><div class="prop-slider"><div class="prop-fill blue" style="width:48%"></div><div class="prop-thumb blue" style="left:48%"></div></div><span class="prop-val blue">-5</span></div>
+            <div class="prop-row"><span class="prop-label">阴影</span><div class="prop-slider"><div class="prop-fill blue" style="width:53%"></div><div class="prop-thumb blue" style="left:53%"></div></div><span class="prop-val blue">+8</span></div>
+            <div class="prop-row"><span class="prop-label">白色</span><div class="prop-slider"><div class="prop-fill blue" style="width:50%"></div><div class="prop-thumb blue" style="left:50%"></div></div><span class="prop-val blue">0</span></div>
+            <div class="prop-row"><span class="prop-label">黑色</span><div class="prop-slider"><div class="prop-fill blue" style="width:50%"></div><div class="prop-thumb blue" style="left:50%"></div></div><span class="prop-val blue">0</span></div>
+            <div class="prop-row"><span class="prop-label">饱和度</span><div class="prop-slider"><div class="prop-fill accent" style="width:55%"></div><div class="prop-thumb accent" style="left:55%"></div></div><span class="prop-val accent">+10</span></div>
+          </div>
+          <div class="lum-sec" id="lum-1">
+            <div class="curve-editor"><div class="curve-editor-head"><span class="curve-editor-title">RGB 曲线</span><div class="curve-ch-tabs"><span class="curve-ch master" style="border-color:rgba(255,255,255,.3)">M</span><span class="curve-ch r">R</span><span class="curve-ch g">G</span><span class="curve-ch b">B</span></div></div><div class="curve-canvas"><svg viewBox="0 0 160 100"><line x1="0" y1="25" x2="160" y2="25"/><line x1="0" y1="50" x2="160" y2="50"/><line x1="0" y1="75" x2="160" y2="75"/><line x1="40" y1="0" x2="40" y2="100"/><line x1="80" y1="0" x2="80" y2="100"/><line x1="120" y1="0" x2="120" y2="100"/><path class="cpath" d="M0,100 C30,100 40,60 80,40 C120,20 130,10 160,0"/><circle class="cpt" cx="0" cy="100" r="3"/><circle class="cpt" cx="80" cy="40" r="3"/><circle class="cpt" cx="160" cy="0" r="3"/></svg></div></div>
+            <div class="curve-editor"><div class="curve-editor-head"><span class="curve-editor-title">色相饱和度曲线</span></div>
+              <div class="prop-row"><span class="prop-label" style="min-width:22px">H-H</span><div style="flex:1;height:14px;background:var(--s1);border-radius:3px;border:1px solid var(--bd)"><svg viewBox="0 0 160 14" preserveAspectRatio="none" style="width:100%;height:100%"><line x1="0" y1="7" x2="160" y2="7" stroke="rgba(255,255,255,.03)" stroke-width=".5"/><path d="M0,7 L160,7" fill="none" stroke="var(--accent)" stroke-width="1"/></svg></div></div>
+              <div class="prop-row"><span class="prop-label" style="min-width:22px">H-S</span><div style="flex:1;height:14px;background:var(--s1);border-radius:3px;border:1px solid var(--bd)"><svg viewBox="0 0 160 14" preserveAspectRatio="none" style="width:100%;height:100%"><line x1="0" y1="7" x2="160" y2="7" stroke="rgba(255,255,255,.03)" stroke-width=".5"/><path d="M0,7 C40,3 80,11 120,5 C140,3 160,7 160,7" fill="none" stroke="var(--accent)" stroke-width="1"/></svg></div></div>
+              <div class="prop-row"><span class="prop-label" style="min-width:22px">H-L</span><div style="flex:1;height:14px;background:var(--s1);border-radius:3px;border:1px solid var(--bd)"><svg viewBox="0 0 160 14" preserveAspectRatio="none" style="width:100%;height:100%"><line x1="0" y1="7" x2="160" y2="7" stroke="rgba(255,255,255,.03)" stroke-width=".5"/><path d="M0,7 L160,7" fill="none" stroke="var(--accent)" stroke-width="1"/></svg></div></div>
+            </div>
+          </div>
+          <div class="lum-sec" id="lum-2">
+            <div class="wheels">
+              <div class="wheel"><div class="wheel-ring"><div class="wheel-bg"></div><div class="wheel-dot" style="top:45%;left:48%"></div></div><span class="wheel-label">阴影</span><span class="wheel-val">Lift</span></div>
+              <div class="wheel"><div class="wheel-ring"><div class="wheel-bg"></div><div class="wheel-dot" style="top:48%;left:52%"></div></div><span class="wheel-label">中间调</span><span class="wheel-val">Gamma</span></div>
+              <div class="wheel"><div class="wheel-ring"><div class="wheel-bg"></div><div class="wheel-dot" style="top:50%;left:55%"></div></div><span class="wheel-label">高光</span><span class="wheel-val">Gain</span></div>
+            </div>
+          </div>
+          <div class="lum-sec" id="lum-3">
+            <div class="prop-row"><span class="prop-label">色相</span><div class="prop-slider"><div class="prop-fill accent" style="width:50%"></div><div class="prop-thumb accent" style="left:50%"></div></div><span class="prop-val accent">0</span></div>
+            <div class="prop-row"><span class="prop-label">饱和度</span><div class="prop-slider"><div class="prop-fill accent" style="width:50%"></div><div class="prop-thumb accent" style="left:50%"></div></div><span class="prop-val accent">0</span></div>
+            <div class="prop-row"><span class="prop-label">亮度</span><div class="prop-slider"><div class="prop-fill accent" style="width:50%"></div><div class="prop-thumb accent" style="left:50%"></div></div><span class="prop-val accent">0</span></div>
+          </div>
+          <div class="lum-sec" id="lum-4">
+            <div class="scopes"><div class="scope"><canvas id="sw" width="140" height="70"></canvas><span class="scope-name">波形</span></div><div class="scope"><canvas id="sv" width="140" height="70"></canvas><span class="scope-name">矢量</span></div></div>
+            <div class="scopes"><div class="scope"><canvas id="sp" width="140" height="70"></canvas><span class="scope-name">检阅</span></div><div class="scope"><canvas id="sh" width="140" height="70"></canvas><span class="scope-name">直方图</span></div></div>
+          </div>
+        </div>
+        <div id="color-a" style="display:none">
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon accent"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div><span class="ai-card-name">AI 一键调色</span></div><div class="ai-card-desc">自动分析画面并优化色彩</div><div class="ai-slider"><span class="ai-slider-label">强度</span><div class="ai-slider-track"><div class="ai-slider-fill" style="width:70%"></div><div class="ai-slider-thumb" style="left:70%"></div></div><span class="ai-slider-val">70%</span></div><div class="ai-live"><span class="dot"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon purple"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><span class="ai-card-name">AI 风格迁移</span></div><div class="ai-card-desc">将电影/胶片风格应用到画面</div><div class="prop-chips"><span class="prop-chip on">赛博朋克</span><span class="prop-chip off">胶片复古</span><span class="prop-chip off">日系清新</span><span class="prop-chip off">暖阳</span></div><div class="ai-live"><span class="dot"></span><span>已启用 · 实时预览中</span></div></div>
+        </div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-tl-clip mini-v" style="width:46%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 特效 -->
+    <div class="panel" id="panel-fx">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">特效</span><div class="panel-toggle"><div class="panel-toggle-btn active" onclick="tog(this,'m')">手动</div><div class="panel-toggle-btn" onclick="tog(this,'a')">AI</div></div></div>
+      <div class="panel-body">
+        <div id="fx-m"><div class="prop-chips"><span class="prop-chip off">画面</span><span class="prop-chip off">转场</span><span class="prop-chip off">滤镜</span><span class="prop-chip off">粒子</span></div></div>
+        <div id="fx-a" style="display:none">
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon accent"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><span class="ai-card-name">AI 抠图</span></div><div class="ai-card-desc">一键分离前景和背景</div><div class="ai-live"><span class="dot"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon blue"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div><span class="ai-card-name">AI 超分辨率</span></div><div class="ai-card-desc">画质增强 2x</div><div class="ai-live"><span class="dot"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon pink"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div><span class="ai-card-name">AI 插帧</span></div><div class="ai-card-desc">30fps → 60fps 智能补帧</div><div class="ai-live"><span class="dot"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon purple"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><span class="ai-card-name">AI 风格化</span></div><div class="ai-card-desc">将画面转换为动漫/漫画风格</div><div class="ai-live"><span class="dot"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ai-card"><div class="ai-card-top"><div class="ai-card-icon yellow"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div><span class="ai-card-name">AI 物体消除</span></div><div class="ai-card-desc">涂抹画面中不需要的物体自动消除</div><div class="ai-actions"><div class="ai-preview">进入涂抹模式</div><div class="ai-apply">应用</div></div></div>
+        </div>
+      </div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-tl-clip mini-v" style="width:46%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 更多 -->
+    <div class="panel" id="panel-more">
+      <div class="panel-handle"><div class="bar"></div></div>
+      <div class="panel-head"><span class="panel-title">更多</span></div>
+      <div class="panel-body"><div class="prop-chips"><span class="prop-chip off">画中画</span><span class="prop-chip off">绿幕</span><span class="prop-chip off">运动追踪</span><span class="prop-chip off">稳定器</span><span class="prop-chip off">混合模式</span><span class="prop-chip off">马赛克</span></div></div>
+      <div class="mini-tl"><div class="mini-tl-row"><div class="mini-tl-clip mini-v" style="width:46%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 工具栏 - 底部 -->
+    <div class="toolbar">
+      <div class="tool" onclick="pick(this,'clip')"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>剪辑</span></div>
+      <div class="tool" onclick="pick(this,'audio')"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 18c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3zM21 16c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg><span>音频</span></div>
+      <div class="tool" onclick="pick(this,'text')"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg><span>文字</span></div>
+      <div class="tool" onclick="pick(this,'color')"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg><span>调色</span></div>
+      <div class="tool" onclick="pick(this,'fx')"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-5.3 3.5L16 20l-4-3-4 3 1.3-6.5L4 10l6.1-1.2z"/></svg><span>特效</span></div>
+      <div class="tool" onclick="pick(this,'more')"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg><span>更多</span></div>
+    </div>
+  </div>
+
+  <div class="home"><div class="bar"></div></div>
+</div>
+
+<script>
+let cur=null;
+function pick(el,n){
+  if(cur===n){cur=null;el.classList.remove('active');document.getElementById('timeline').classList.remove('hide');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'));return}
+  cur=n;document.querySelectorAll('.tool').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('timeline').classList.add('hide');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'));document.getElementById('panel-'+n).classList.add('show')
+}
+function tog(el,m){const p=el.closest('.panel-toggle');p.querySelectorAll('.panel-toggle-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');const pa=el.closest('.panel');const ma=pa.querySelector('[id$="-m"]');const ai=pa.querySelector('[id$="-a"]');if(m==='a'){if(ma)ma.style.display='none';if(ai)ai.style.display='block'}else{if(ma)ma.style.display='block';if(ai)ai.style.display='none'}}
+function lumT(el,i){document.querySelectorAll('.lum-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');for(let j=0;j<5;j++){const s=document.getElementById('lum-'+j);if(s){s.classList.remove('active');if(j===i)s.classList.add('active')}}}
+function selR(el){document.querySelectorAll('.ratio-item').forEach(r=>r.classList.remove('active'));el.classList.add('active')}
+
+// 示波器绘制
+function drawScopes(){
+  [['sw',drawW],['sv',drawV],['sp',drawP],['sh',drawH]].forEach(([id,fn])=>{const c=document.getElementById(id);if(c){const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);fn(x,c.width,c.height)}})
+}
+function drawW(x,w,h){x.strokeStyle='rgba(78,158,240,.35)';x.lineWidth=1;x.beginPath();for(let i=0;i<w;i++){x.lineTo(i,h/2+Math.sin(i*.08)*12+Math.sin(i*.03)*8+Math.random()*2)}x.stroke()}
+function drawV(x,w,h){const cx=w/2,cy=h/2;x.strokeStyle='rgba(78,158,240,.12)';x.lineWidth=.5;for(let r=8;r<Math.min(w,h)/2;r+=10){x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.stroke()}x.strokeStyle='rgba(78,158,240,.4)';x.lineWidth=1;x.beginPath();for(let a=0;a<Math.PI*2;a+=.05){x.lineTo(cx+Math.cos(a)*(12+Math.random()*16),cy+Math.sin(a)*(12+Math.random()*16))}x.closePath();x.stroke()}
+function drawP(x,w){const s=w/3;[['rgba(255,80,80,.35)',0],['rgba(80,255,80,.35)',s],['rgba(80,80,255,.35)',s*2]].forEach(([c,o])=>{x.strokeStyle=c;x.lineWidth=1;x.beginPath();for(let i=0;i<s;i++){x.lineTo(o+i,15+Math.random()*35)}x.stroke()})}
+function drawH(x,w,h){x.fillStyle='rgba(78,158,240,.25)';for(let i=0;i<w;i+=2){x.fillRect(i,h-Math.random()*h*.5,2,Math.random()*h*.5)}}
+setTimeout(drawScopes,200);
+</script>
+</body>
+</html>
