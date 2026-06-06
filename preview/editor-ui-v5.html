@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>NexClip</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+--bg:#0A0A0C;--s1:#111115;--s2:#19191E;--s3:#222228;--s4:#2C2C34;
+--bd:#26262E;--bd2:#33333D;
+--t1:#F0F0F5;--t2:#9898A4;--t3:#5E5E6A;--t4:#3A3A44;
+--c:#FF6B35;--c2:#FF8F5E;--cb:rgba(255,107,53,.1);--cb2:rgba(255,107,53,.18);
+--teal:#2DD4A8;--teal2:#5EEAD4;--tealb:rgba(45,212,168,.1);
+--sky:#38BDF8;--sky2:#7DD3FC;--skyb:rgba(56,189,248,.1);
+--lime:#A3E635;--limeb:rgba(163,230,53,.1);
+--rose:#FB7185;--roseb:rgba(251,113,133,.1);
+--amber:#FBBF24;--amberb:rgba(251,191,36,.1);
+--violet:#A78BFA;--violetb:rgba(167,139,250,.1);
+--r:12px;--rs:8px;--rx:6px;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:#000;color:var(--t1);overflow:hidden;height:100vh;width:100vw;display:flex;justify-content:center;align-items:center}
+.d{width:393px;height:852px;background:var(--bg);border-radius:48px;overflow:hidden;position:relative;box-shadow:0 0 0 3px #222,0 0 0 6px #111,0 40px 120px rgba(0,0,0,.95);display:flex;flex-direction:column}
+
+/* === 顶栏 - 剪映风格 === */
+.hd{height:44px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--bd)}
+.hd-l{display:flex;align-items:center;gap:10px}
+.hd-back{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.hd-back svg{width:18px;height:18px;stroke:var(--t2);fill:none;stroke-width:2}
+.hd-name{font-size:13px;font-weight:600;color:var(--t1)}
+.hd-r{display:flex;align-items:center;gap:6px}
+.hd-btn{height:28px;padding:0 12px;border-radius:14px;display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;font-weight:600}
+.hd-undo{background:var(--s2);color:var(--t3)}
+.hd-redo{background:var(--s2);color:var(--t3)}
+.hd-ai{background:var(--cb);color:var(--c2);border:1px solid rgba(255,107,53,.2)}
+.hd-exp{background:var(--c);color:#fff}
+
+/* === 预览区 - 剪映风格 === */
+.pv{height:230px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;background:#000}
+.pv-frame{width:90%;aspect-ratio:16/9;border-radius:var(--r);position:relative;overflow:hidden;background:linear-gradient(155deg,#14141C,#0A0E16,#100A16);box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.pv-frame .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.06);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,.05)}
+.pv-frame .play svg{width:18px;height:18px;fill:rgba(255,255,255,.35);margin-left:2px}
+.pv .tl{position:absolute;top:8px;left:24px;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,.5);font-family:'IBM Plex Mono',monospace;font-size:7px;color:var(--t3)}
+.pv .tr{position:absolute;top:8px;right:24px;display:flex;gap:4px}
+.pv .tag{padding:2px 6px;border-radius:4px;font-size:7px;font-weight:600}
+.pv .tag-info{background:rgba(0,0,0,.5);color:var(--t3);font-family:'IBM Plex Mono',monospace}
+.pv .tag-ai{background:rgba(45,212,168,.12);border:1px solid rgba(45,212,168,.15);color:var(--teal2);display:flex;align-items:center;gap:2px}
+.pv .tag-ai .dot{width:4px;height:4px;border-radius:50%;background:var(--teal);animation:p 2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* === 曲线叠加层 - Dula Auto Clip 风格 === */
+.curve-overlay{position:absolute;bottom:8px;left:5%;width:90%;height:60px;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);border-radius:8px;border:1px solid rgba(255,255,255,.06);display:none;flex-direction:column;padding:4px 8px;z-index:10}
+.curve-overlay.vis{display:flex}
+.curve-overlay .co-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.curve-overlay .co-title{font-size:7px;font-weight:600;color:var(--t2)}
+.curve-overlay .co-close{font-size:8px;color:var(--t3);cursor:pointer}
+.curve-canvas{flex:1;position:relative}
+.curve-grid{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between}
+.curve-grid-line{width:100%;height:1px;background:rgba(255,255,255,.04)}
+.curve-line{position:absolute;bottom:0;left:0;width:100%;height:100%}
+.curve-line svg{width:100%;height:100%}
+.curve-line svg path{fill:none;stroke:var(--c);stroke-width:1.5}
+.curve-line svg circle{fill:var(--c2);stroke:var(--bg);stroke-width:1.5}
+.curve-labels{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:6px;color:var(--t4);margin-top:1px}
+
+/* === 播放控制 - 剪映风格 === */
+.ctl{height:36px;padding:0 16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:2px;border-bottom:1px solid var(--bd)}
+.ctl-time{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t3);width:42px;text-align:center}
+.ctl-time.dim{color:var(--t4)}
+.ctl-b{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ctl-b:hover{background:var(--s2)}
+.ctl-b svg{width:13px;height:13px;fill:var(--t3)}
+.ctl-play{width:32px;height:32px;border-radius:50%;background:var(--c);display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 4px}
+.ctl-play:hover{background:var(--c2)}
+.ctl-play svg{width:14px;height:14px;fill:#fff;margin-left:1px}
+
+/* === 工具栏 - 剪映风格 === */
+.tb{height:48px;flex-shrink:0;display:flex;align-items:stretch;border-bottom:1px solid var(--bd);background:var(--s1);overflow-x:auto;scrollbar-width:none}
+.tb::-webkit-scrollbar{display:none}
+.tb-i{min-width:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;transition:all .2s}
+.tb-i::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:2px;border-radius:1px;background:var(--c);transition:width .25s cubic-bezier(.4,0,.2,1)}
+.tb-i.on::after{width:16px}
+.tb-i svg{width:18px;height:18px;stroke:var(--t3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
+.tb-i.on svg{stroke:var(--c2)}
+.tb-i span{font-size:8px;font-weight:500;color:var(--t4);transition:color .2s}
+.tb-i.on span{color:var(--c2);font-weight:600}
+
+/* === 底部区域 === */
+.bt{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* 时间轴 - 剪映风格 */
+.tl{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tl.hid{display:none}
+.tl-ruler{height:18px;background:var(--s1);border-bottom:1px solid var(--bd);position:relative;flex-shrink:0}
+.tl-rm{display:flex;align-items:flex-end;height:100%;padding-left:40px}
+.tl-rmk{font-family:'IBM Plex Mono',monospace;font-size:6px;color:var(--t4);width:60px;padding-bottom:2px;position:relative}
+.tl-rmk::before{content:'';position:absolute;bottom:0;left:0;width:1px;height:4px;background:var(--bd2)}
+.tl-ph{position:absolute;top:0;left:80px;width:1.5px;height:100%;background:#fff;z-index:5}
+.tl-ph::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);border-left:3px solid transparent;border-right:3px solid transparent;border-top:4px solid #fff}
+.tl-tracks{flex:1;overflow-y:auto;scrollbar-width:none}
+.tl-tracks::-webkit-scrollbar{display:none}
+.tl-row{display:flex;height:40px;border-bottom:1px solid var(--bd)}
+.tl-th{width:40px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--bd);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.tl-thn{font-size:6px;font-weight:700;color:var(--t3);letter-spacing:.5px}
+.tl-thb{display:flex;gap:1px}
+.tl-thbs{width:8px;height:8px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:5px;font-weight:800;cursor:pointer}
+.tl-thbs.on{background:var(--skyb);color:var(--sky2)}
+.tl-thbs.off{color:var(--t4)}
+.tl-tb{flex:1;position:relative;display:flex;align-items:center;padding:4px 0}
+.tl-c{position:absolute;height:30px;border-radius:4px;display:flex;align-items:center;padding:0 6px;cursor:pointer;transition:all .15s;overflow:hidden}
+.tl-c:hover{filter:brightness(1.15)}
+.tl-c.sel{box-shadow:0 0 0 1.5px #fff}
+.tl-cv{background:linear-gradient(90deg,rgba(56,189,248,.1),rgba(56,189,248,.2));border:1px solid rgba(56,189,248,.12)}
+.tl-ca{background:linear-gradient(90deg,rgba(45,212,168,.08),rgba(45,212,168,.15));border:1px solid rgba(45,212,168,.1)}
+.tl-cs{background:linear-gradient(90deg,rgba(251,191,36,.06),rgba(251,191,36,.12));border:1px solid rgba(251,191,36,.1)}
+.tl-cn{font-size:7px;font-weight:500;color:rgba(255,255,255,.3);white-space:nowrap}
+.tl-c .ait{position:absolute;top:1px;right:3px;font-size:5px;font-weight:700;color:var(--c2)}
+/* 速度曲线条 - Dula Auto Clip */
+.tl-c .speed-curve{position:absolute;bottom:2px;left:4px;right:4px;height:8px}
+.tl-c .speed-curve svg{width:100%;height:100%}
+.tl-c .speed-curve svg path{fill:none;stroke:rgba(255,107,53,.5);stroke-width:1}
+
+.tl-add{height:24px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:500;color:var(--t4);cursor:pointer}
+.ca-bar{height:36px;background:var(--s1);flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:4px;border-top:1px solid var(--bd)}
+.ca-b{padding:4px 12px;border-radius:var(--rx);font-size:9px;font-weight:600;color:var(--t2);background:var(--s2);cursor:pointer;transition:all .15s}
+.ca-b:hover{background:var(--s3);color:var(--t1)}
+.ca-b.red{color:var(--rose)}
+.ca-b.red:hover{background:var(--roseb)}
+
+/* === 面板 - NodeVideo 属性面板风格 === */
+.pn{display:none;flex-direction:column;height:100%}
+.pn.vis{display:flex}
+.pn-h{height:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:grab}
+.pn-h .bar{width:28px;height:2.5px;border-radius:2px;background:var(--bd2)}
+.pn-head{padding:0 14px 6px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.pn-title{font-size:12px;font-weight:700;color:var(--t1);letter-spacing:-.2px}
+.pn-mode{display:flex;background:var(--s3);border-radius:var(--rx);overflow:hidden}
+.pm{padding:3px 10px;font-size:9px;font-weight:600;color:var(--t4);cursor:pointer;transition:all .2s}
+.pm.on{background:var(--cb);color:var(--c2);border-radius:4px}
+.pn-scroll{flex:1;overflow-y:auto;padding:0 14px 12px;scrollbar-width:none}
+.pn-scroll::-webkit-scrollbar{display:none}
+
+/* NodeVideo 属性面板样式 */
+.nv-sec{margin-bottom:10px}
+.nv-sec-title{font-size:8px;font-weight:700;color:var(--t4);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid var(--bd)}
+.nv-row{display:flex;align-items:center;gap:6px;padding:4px 0;min-height:28px}
+.nv-label{font-size:9px;font-weight:500;color:var(--t3);min-width:36px}
+.nv-bar{flex:1;height:3px;background:var(--bd);border-radius:2px;position:relative;cursor:pointer}
+.nv-bar-fill{height:100%;border-radius:2px;position:relative}
+.nv-bar-fill.sky{background:var(--sky)}
+.nv-bar-fill.c{background:var(--c)}
+.nv-bar-fill.teal{background:var(--teal)}
+.nv-bar-fill.violet{background:var(--violet)}
+.nv-bar-fill.amber{background:var(--amber)}
+.nv-bar-fill.rose{background:var(--rose)}
+.nv-bar-fill.lime{background:var(--lime)}
+.nv-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;border:1.5px solid var(--bg)}
+.nv-thumb.sky{background:var(--sky2)}
+.nv-thumb.c{background:var(--c2)}
+.nv-thumb.teal{background:var(--teal2)}
+.nv-thumb.violet{background:var(--violet)}
+.nv-thumb.amber{background:var(--amber)}
+.nv-thumb.rose{background:var(--rose)}
+.nv-val{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:500;min-width:24px;text-align:right}
+.nv-val.sky{color:var(--sky2)}
+.nv-val.c{color:var(--c2)}
+.nv-val.teal{color:var(--teal2)}
+.nv-val.violet{color:var(--violet)}
+.nv-val.amber{color:var(--amber)}
+.nv-val.rose{color:var(--rose)}
+
+/* NodeVideo + 添加属性按钮 */
+.nv-add{display:flex;align-items:center;gap:4px;padding:6px 8px;border-radius:var(--rx);background:var(--s2);border:1px dashed var(--bd2);cursor:pointer;margin-top:4px}
+.nv-add span{font-size:9px;font-weight:500;color:var(--t4)}
+.nv-add .plus{width:14px;height:14px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--t3)}
+
+/* AE Lumetri 调色面板 */
+.lum-tabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:8px}
+.lum-tab{flex:1;padding:5px 0;text-align:center;font-size:8px;font-weight:600;color:var(--t4);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.lum-tab.on{color:var(--c2);border-bottom-color:var(--c)}
+
+/* 色轮 */
+.wheels{display:flex;gap:6px;justify-content:center;margin:8px 0}
+.wheel{display:flex;flex-direction:column;align-items:center;gap:3px}
+.wheel-circle{width:60px;height:60px;border-radius:50%;position:relative;overflow:hidden;border:1px solid var(--bd2)}
+.wheel-bg{width:100%;height:100%;background:conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);opacity:.3}
+.wheel-dot{position:absolute;width:8px;height:8px;border-radius:50%;background:#fff;border:1.5px solid var(--bg);top:50%;left:50%;transform:translate(-50%,-50%);cursor:grab;box-shadow:0 0 4px rgba(0,0,0,.5)}
+.wheel-label{font-size:7px;font-weight:600;color:var(--t3)}
+.wheel-val{font-family:'IBM Plex Mono',monospace;font-size:7px;color:var(--t4)}
+
+/* 曲线编辑器 - AE Lumetri 风格 */
+.curve-box{background:var(--s2);border-radius:var(--rs);border:1px solid var(--bd);padding:8px;margin:6px 0}
+.curve-box-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.curve-box-title{font-size:8px;font-weight:600;color:var(--t2)}
+.curve-ch-tabs{display:flex;gap:3px}
+.curve-ch{width:16px;height:16px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;cursor:pointer;border:1px solid var(--bd2)}
+.curve-ch.master{background:rgba(255,255,255,.08);color:var(--t2)}
+.curve-ch.r{background:rgba(255,80,80,.1);color:#FF5050}
+.curve-ch.g{background:rgba(80,255,80,.1);color:#50FF50}
+.curve-ch.b{background:rgba(80,80,255,.1);color:#5050FF}
+.curve-canvas{width:100%;aspect-ratio:1.6;background:var(--s1);border-radius:4px;position:relative;overflow:hidden}
+.curve-canvas svg{width:100%;height:100%}
+.curve-canvas svg line{stroke:rgba(255,255,255,.04);stroke-width:.5}
+.curve-canvas svg .curve-path{fill:none;stroke:rgba(255,255,255,.7);stroke-width:1.5}
+.curve-canvas svg .curve-path-r{fill:none;stroke:#FF5050;stroke-width:1;opacity:.6}
+.curve-canvas svg .curve-path-g{fill:none;stroke:#50FF50;stroke-width:1;opacity:.6}
+.curve-canvas svg .curve-path-b{fill:none;stroke:#5050FF;stroke-width:1;opacity:.6}
+.curve-canvas svg .ctrl-pt{fill:#fff;stroke:var(--bg);stroke-width:1.5;cursor:grab}
+
+/* HSL 曲线 - AE Lumetri */
+.hsl-curves{margin:6px 0}
+.hsl-row{display:flex;align-items:center;gap:4px;padding:3px 0}
+.hsl-label{font-size:7px;font-weight:600;color:var(--t3);min-width:28px}
+.hsl-bar{flex:1;height:16px;border-radius:3px;background:var(--s1);position:relative;overflow:hidden;border:1px solid var(--bd)}
+.hsl-bar-inner{width:100%;height:100%}
+.hsl-bar svg{width:100%;height:100%}
+.hsl-bar svg line{stroke:rgba(255,255,255,.03);stroke-width:.5}
+.hsl-bar svg .hsl-line{fill:none;stroke:var(--c);stroke-width:1.2}
+
+/* Scopes - AE */
+.scope-row{display:flex;gap:4px;margin:6px 0}
+.scope{flex:1;background:var(--s2);border-radius:4px;border:1px solid var(--bd);overflow:hidden}
+.scope canvas{width:100%;display:block}
+.scope-label{font-size:6px;font-weight:600;color:var(--t4);text-align:center;padding:2px 0}
+
+/* AI 卡片 */
+.ac{background:var(--s2);border-radius:var(--rs);padding:10px;margin-bottom:6px;border:1px solid var(--bd)}
+.ac-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.ac-ico{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center}
+.ac-ico svg{width:14px;height:14px;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.ac-ico.c1{background:var(--cb)}.ac-ico.c1 svg{stroke:var(--c2)}
+.ac-ico.t1{background:var(--tealb)}.ac-ico.t1 svg{stroke:var(--teal2)}
+.ac-ico.s1{background:var(--skyb)}.ac-ico.s1 svg{stroke:var(--sky2)}
+.ac-ico.v1{background:var(--violetb)}.ac-ico.v1 svg{stroke:var(--violet)}
+.ac-ico.a1{background:var(--amberb)}.ac-ico.a1 svg{stroke:var(--amber)}
+.ac-ico.r1{background:var(--roseb)}.ac-ico.r1 svg{stroke:var(--rose)}
+.ac-nm{font-size:10px;font-weight:700;color:var(--t1)}
+.ac-desc{font-size:8px;color:var(--t3);line-height:1.4;margin-bottom:6px}
+.ac-sl{display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.ac-sl-l{font-size:7px;font-weight:600;color:var(--t3);min-width:20px}
+.ac-sl-t{flex:1;height:2px;background:var(--bd);border-radius:1px;position:relative}
+.ac-sl-f{height:100%;border-radius:1px;background:var(--c)}
+.ac-sl-th{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;background:var(--c2);border:2px solid var(--bg)}
+.ac-sl-v{font-family:'IBM Plex Mono',monospace;font-size:7px;color:var(--c2);min-width:20px;text-align:right}
+.ac-acts{display:flex;gap:4px}
+.ac-prev{flex:1;height:28px;border-radius:5px;background:var(--s3);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;gap:3px;font-size:9px;font-weight:600;color:var(--t2);cursor:pointer}
+.ac-prev svg{width:9px;height:9px;fill:currentColor}
+.ac-apply{flex:1;height:28px;border-radius:5px;background:var(--c);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;cursor:pointer}
+.ac-live{display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:4px;background:var(--tealb);border:1px solid rgba(45,212,168,.1)}
+.ac-live .d{width:4px;height:4px;border-radius:50%;background:var(--teal);animation:p 2s infinite}
+.ac-live span{font-size:7px;font-weight:600;color:var(--teal)}
+
+/* 工具网格 */
+.tg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.tg-i{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:var(--rx);cursor:pointer}
+.tg-i:hover{background:var(--s2)}
+.tg-ic{width:32px;height:32px;border-radius:6px;background:var(--s2);display:flex;align-items:center;justify-content:center}
+.tg-i:hover .tg-ic{background:var(--s3)}
+.tg-ic svg{width:16px;height:16px;stroke:var(--t2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tg-l{font-size:7px;font-weight:500;color:var(--t3)}
+
+/* 压缩时间轴 */
+.mtl{height:40px;background:var(--s1);flex-shrink:0;border-top:1px solid var(--bd);overflow:hidden;display:flex;flex-direction:column;padding:3px 0}
+.mtl-r{height:10px;display:flex;align-items:center;padding:0 40px 0 6px}
+.mtl-c{height:7px;border-radius:2px}
+.mtl-v{background:rgba(56,189,248,.12)}.mtl-a{background:rgba(45,212,168,.08)}.mtl-s{background:rgba(251,191,36,.08)}
+
+.hi{height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hi .bar{width:134px;height:5px;border-radius:3px;background:var(--t4)}
+</style>
+</head>
+<body>
+<div class="d">
+  <!-- 顶栏 -->
+  <div class="hd">
+    <div class="hd-l">
+      <div class="hd-back"><svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></div>
+      <span class="hd-name">旅行Vlog</span>
+    </div>
+    <div class="hd-r">
+      <div class="hd-btn hd-undo"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 015 5v0a5 5 0 01-5 5H8"/><path d="M7 14L3 10l4-4"/></svg></div>
+      <div class="hd-btn hd-redo"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10H11a5 5 0 00-5 5v0a5 5 0 005 5h5"/><path d="M17 14l4-4-4-4"/></svg></div>
+      <div class="hd-btn hd-ai">AI</div>
+      <div class="hd-btn hd-exp">导出</div>
+    </div>
+  </div>
+
+  <!-- 预览区 -->
+  <div class="pv">
+    <span class="tl">1920×1080</span>
+    <div class="tr"><span class="tag tag-ai"><span class="dot"></span>AI</span><span class="tag tag-info">30fps</span></div>
+    <div class="pv-frame">
+      <div class="play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      <!-- Dula Auto Clip 曲线叠加层 -->
+      <div class="curve-overlay vis" id="curveOverlay">
+        <div class="co-head"><span class="co-title">速度曲线</span><span class="co-close" onclick="document.getElementById('curveOverlay').classList.remove('vis')">✕</span></div>
+        <div class="curve-canvas">
+          <div class="curve-grid"><div class="curve-grid-line"></div><div class="curve-grid-line"></div><div class="curve-grid-line"></div><div class="curve-grid-line"></div></div>
+          <div class="curve-line"><svg viewBox="0 0 200 50" preserveAspectRatio="none"><path d="M0,40 C30,40 50,10 80,10 C110,10 130,35 160,35 C180,35 190,20 200,20"/><circle cx="0" cy="40" r="3"/><circle cx="80" cy="10" r="3"/><circle cx="160" cy="35" r="3"/><circle cx="200" cy="20" r="3"/></svg></div>
+        </div>
+        <div class="curve-labels"><span>0.1x</span><span>1x</span><span>5x</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 播放控制 -->
+  <div class="ctl">
+    <span class="ctl-time">00:03</span>
+    <div class="ctl-b"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></div>
+    <div class="ctl-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    <div class="ctl-b"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></div>
+    <span class="ctl-time dim">00:12</span>
+  </div>
+
+  <!-- 工具栏 - 剪映风格 -->
+  <div class="tb">
+    <div class="tb-i on" onclick="st(this,'clip')"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>剪辑</span></div>
+    <div class="tb-i" onclick="st(this,'audio')"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13M9 18c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3zM21 16c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3 3 1.34 3 3z"/></svg><span>音频</span></div>
+    <div class="tb-i" onclick="st(this,'text')"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg><span>文字</span></div>
+    <div class="tb-i" onclick="st(this,'color')"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg><span>调色</span></div>
+    <div class="tb-i" onclick="st(this,'fx')"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-5.3 3.5L16 20l-4-3-4 3 1.3-6.5L4 10l6.1-1.2z"/></svg><span>特效</span></div>
+    <div class="tb-i" onclick="st(this,'more')"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg><span>更多</span></div>
+  </div>
+
+  <!-- 底部 -->
+  <div class="bt">
+    <!-- 时间轴 -->
+    <div class="tl" id="tl">
+      <div class="tl-ruler"><div class="tl-ph"></div><div class="tl-rm"><span class="tl-rmk">0:00</span><span class="tl-rmk">0:05</span><span class="tl-rmk">0:10</span><span class="tl-rmk">0:15</span></div></div>
+      <div class="tl-tracks">
+        <div class="tl-row"><div class="tl-th"><span class="tl-thn">V1</span><div class="tl-thb"><span class="tl-thbs on">S</span><span class="tl-thbs off">M</span><span class="tl-thbs on">E</span></div></div><div class="tl-tb"><div class="tl-c tl-cv sel" style="left:4px;width:110px"><span class="tl-cn">Scene_01</span><span class="ait">AI</span><div class="speed-curve"><svg viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,8 C20,8 30,2 50,2 C70,2 80,6 100,6"/></svg></div></div><div class="tl-c tl-cv" style="left:120px;width:80px"><span class="tl-cn">Scene_02</span></div></div></div>
+        <div class="tl-row"><div class="tl-th"><span class="tl-thn">A1</span><div class="tl-thb"><span class="tl-thbs off">S</span><span class="tl-thbs off">M</span><span class="tl-thbs on">E</span></div></div><div class="tl-tb"><div class="tl-c tl-ca" style="left:4px;width:196px"><span class="tl-cn">bgm.mp3</span><span class="ait">AI</span></div></div></div>
+        <div class="tl-row"><div class="tl-th"><span class="tl-thn">S1</span><div class="tl-thb"><span class="tl-thbs off">S</span><span class="tl-thbs off">M</span><span class="tl-thbs on">E</span></div></div><div class="tl-tb"><div class="tl-c tl-cs" style="left:4px;width:44px"><span class="tl-cn">字幕1</span></div><div class="tl-c tl-cs" style="left:52px;width:52px"><span class="tl-cn">字幕2</span></div><div class="tl-c tl-cs" style="left:110px;width:36px"><span class="tl-cn">字幕3</span></div></div></div>
+        <div class="tl-add">+ 添加轨道</div>
+      </div>
+      <div class="ca-bar"><span class="ca-b">分割</span><span class="ca-b">变速</span><span class="ca-b">复制</span><span class="ca-b">音量</span><span class="ca-b red">删除</span></div>
+    </div>
+
+    <!-- 剪辑面板 - NodeVideo 属性面板风格 -->
+    <div class="pn" id="pn-clip">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">剪辑</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="clip-m">
+          <div class="nv-sec">
+            <div class="nv-sec-title">变换</div>
+            <div class="nv-row"><span class="nv-label">位置 X</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:50%"></div><div class="nv-thumb sky" style="left:50%"></div></div><span class="nv-val sky">960</span></div>
+            <div class="nv-row"><span class="nv-label">位置 Y</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:50%"></div><div class="nv-thumb sky" style="left:50%"></div></div><span class="nv-val sky">540</span></div>
+            <div class="nv-row"><span class="nv-label">缩放</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:100%"></div><div class="nv-thumb sky" style="left:100%"></div></div><span class="nv-val sky">100%</span></div>
+            <div class="nv-row"><span class="nv-label">旋转</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:50%"></div><div class="nv-thumb sky" style="left:50%"></div></div><span class="nv-val sky">0°</span></div>
+            <div class="nv-row"><span class="nv-label">不透明</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:100%"></div><div class="nv-thumb sky" style="left:100%"></div></div><span class="nv-val sky">100%</span></div>
+          </div>
+          <div class="nv-sec">
+            <div class="nv-sec-title">速度 · 曲线</div>
+            <div class="nv-row"><span class="nv-label">速度</span><div class="nv-bar"><div class="nv-bar-fill c" style="width:20%"></div><div class="nv-thumb c" style="left:20%"></div></div><span class="nv-val c">1.0x</span></div>
+            <div class="nv-row"><span class="nv-label">曲线</span><div style="flex:1;display:flex;gap:3px"><span style="padding:2px 6px;border-radius:3px;background:var(--cb);font-size:7px;font-weight:600;color:var(--c2)">自定义</span><span style="padding:2px 6px;border-radius:3px;background:var(--s3);font-size:7px;color:var(--t4)">线性</span><span style="padding:2px 6px;border-radius:3px;background:var(--s3);font-size:7px;color:var(--t4)">缓入</span><span style="padding:2px 6px;border-radius:3px;background:var(--s3);font-size:7px;color:var(--t4)">缓出</span></div></div>
+          </div>
+          <div class="nv-sec">
+            <div class="nv-sec-title">操作</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">分割</span>
+              <span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">倒放</span>
+              <span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">定格</span>
+              <span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">裁剪</span>
+              <span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">复制</span>
+              <span style="padding:4px 10px;border-radius:4px;background:var(--roseb);font-size:8px;font-weight:500;color:var(--rose);cursor:pointer">删除</span>
+            </div>
+          </div>
+          <div class="nv-add"><span class="plus">+</span><span>添加属性</span></div>
+        </div>
+        <div id="clip-a" style="display:none">
+          <div class="ac"><div class="ac-top"><div class="ac-ico c1"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div><span class="ac-nm">AI Auto Clip</span></div><div class="ac-desc">智能识别高光片段，自动剪辑成片</div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico r1"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><span class="ac-nm">AI 智能分割</span></div><div class="ac-desc">自动检测场景切换点分割片段</div><div class="ac-sl"><span class="ac-sl-l">灵敏度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:50%"></div><div class="ac-sl-th" style="left:50%"></div></div><span class="ac-sl-v">中</span></div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico a1"><svg viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></div><span class="ac-nm">AI 删静音</span></div><div class="ac-desc">自动删除无声片段和停顿</div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+        </div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div><div class="mtl-c mtl-v" style="width:34%;margin-left:2%"></div></div><div class="mtl-r"><div class="mtl-c mtl-a" style="width:86%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 音频面板 -->
+    <div class="pn" id="pn-audio">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">音频</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="audio-m">
+          <div class="nv-sec"><div class="nv-sec-title">音量</div><div class="nv-row"><span class="nv-label">主音量</span><div class="nv-bar"><div class="nv-bar-fill teal" style="width:80%"></div><div class="nv-thumb teal" style="left:80%"></div></div><span class="nv-val teal">80</span></div><div class="nv-row"><span class="nv-label">淡入</span><div class="nv-bar"><div class="nv-bar-fill teal" style="width:0%"></div><div class="nv-thumb teal" style="left:0%"></div></div><span class="nv-val teal">0ms</span></div><div class="nv-row"><span class="nv-label">淡出</span><div class="nv-bar"><div class="nv-bar-fill teal" style="width:0%"></div><div class="nv-thumb teal" style="left:0%"></div></div><span class="nv-val teal">0ms</span></div></div>
+          <div class="nv-sec"><div class="nv-sec-title">素材</div><div style="display:flex;gap:4px;flex-wrap:wrap"><span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">音乐</span><span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">录音</span><span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">音效</span><span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">提取</span></div></div>
+          <div class="nv-add"><span class="plus">+</span><span>添加属性</span></div>
+        </div>
+        <div id="audio-a" style="display:none">
+          <div class="ac"><div class="ac-top"><div class="ac-ico t1"><svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div><span class="ac-nm">AI 实时降噪</span></div><div class="ac-desc">去除环境噪音，保留清晰人声</div><div class="ac-sl"><span class="ac-sl-l">强度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:60%"></div><div class="ac-sl-th" style="left:60%"></div></div><span class="ac-sl-v">60%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico v1"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><span class="ac-nm">AI 音频分离</span></div><div class="ac-desc">分离人声和伴奏为独立轨道</div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div>
+        </div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div><div class="mtl-r"><div class="mtl-c mtl-a" style="width:86%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 文字面板 -->
+    <div class="pn" id="pn-text">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">文字</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="text-m"><div style="display:flex;gap:4px;flex-wrap:wrap"><span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">新建</span><span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">模板</span><span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">花字</span><span style="padding:4px 10px;border-radius:4px;background:var(--s2);font-size:8px;font-weight:500;color:var(--t2);cursor:pointer">贴纸</span></div></div>
+        <div id="text-a" style="display:none"><div class="ac"><div class="ac-top"><div class="ac-ico s1"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div><span class="ac-nm">AI 自动字幕</span></div><div class="ac-desc">语音转文字，实时生成字幕轨道</div><div class="ac-acts"><div class="ac-prev"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>预览</div><div class="ac-apply">应用</div></div></div></div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div><div class="mtl-r"><div class="mtl-c mtl-s" style="width:18%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 调色面板 - AE Lumetri 风格 -->
+    <div class="pn" id="pn-color">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">调色</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="color-m">
+          <!-- Lumetri Tabs -->
+          <div class="lum-tabs">
+            <div class="lum-tab on" onclick="lumTab(this,0)">基础</div>
+            <div class="lum-tab" onclick="lumTab(this,1)">曲线</div>
+            <div class="lum-tab" onclick="lumTab(this,2)">色轮</div>
+            <div class="lum-tab" onclick="lumTab(this,3)">HSL</div>
+            <div class="lum-tab" onclick="lumTab(this,4)">示波器</div>
+          </div>
+
+          <!-- 基础校正 -->
+          <div class="lum-sec" id="lum-0">
+            <div class="nv-row"><span class="nv-label">色温</span><div class="nv-bar"><div class="nv-bar-fill amber" style="width:45%"></div><div class="nv-thumb amber" style="left:45%"></div></div><span class="nv-val amber">-5</span></div>
+            <div class="nv-row"><span class="nv-label">色调</span><div class="nv-bar"><div class="nv-bar-fill violet" style="width:50%"></div><div class="nv-thumb violet" style="left:50%"></div></div><span class="nv-val violet">0</span></div>
+            <div class="nv-row"><span class="nv-label">曝光</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:52%"></div><div class="nv-thumb sky" style="left:52%"></div></div><span class="nv-val sky">+0.2</span></div>
+            <div class="nv-row"><span class="nv-label">对比度</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:55%"></div><div class="nv-thumb sky" style="left:55%"></div></div><span class="nv-val sky">+10</span></div>
+            <div class="nv-row"><span class="nv-label">高光</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:48%"></div><div class="nv-thumb sky" style="left:48%"></div></div><span class="nv-val sky">-5</span></div>
+            <div class="nv-row"><span class="nv-label">阴影</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:53%"></div><div class="nv-thumb sky" style="left:53%"></div></div><span class="nv-val sky">+8</span></div>
+            <div class="nv-row"><span class="nv-label">白色</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:50%"></div><div class="nv-thumb sky" style="left:50%"></div></div><span class="nv-val sky">0</span></div>
+            <div class="nv-row"><span class="nv-label">黑色</span><div class="nv-bar"><div class="nv-bar-fill sky" style="width:50%"></div><div class="nv-thumb sky" style="left:50%"></div></div><span class="nv-val sky">0</span></div>
+            <div class="nv-row"><span class="nv-label">饱和度</span><div class="nv-bar"><div class="nv-bar-fill c" style="width:55%"></div><div class="nv-thumb c" style="left:55%"></div></div><span class="nv-val c">+10</span></div>
+          </div>
+
+          <!-- RGB 曲线 - AE Lumetri -->
+          <div class="lum-sec" id="lum-1" style="display:none">
+            <div class="curve-box">
+              <div class="curve-box-head"><span class="curve-box-title">RGB 曲线</span><div class="curve-ch-tabs"><span class="curve-ch master" style="border-color:rgba(255,255,255,.3)">M</span><span class="curve-ch r">R</span><span class="curve-ch g">G</span><span class="curve-ch b">B</span></div></div>
+              <div class="curve-canvas"><svg viewBox="0 0 160 100"><line x1="0" y1="25" x2="160" y2="25"/><line x1="0" y1="50" x2="160" y2="50"/><line x1="0" y1="75" x2="160" y2="75"/><line x1="40" y1="0" x2="40" y2="100"/><line x1="80" y1="0" x2="80" y2="100"/><line x1="120" y1="0" x2="120" y2="100"/><path class="curve-path" d="M0,100 C30,100 40,60 80,40 C120,20 130,10 160,0"/><circle class="ctrl-pt" cx="0" cy="100" r="3"/><circle class="ctrl-pt" cx="80" cy="40" r="3"/><circle class="ctrl-pt" cx="160" cy="0" r="3"/></svg></div>
+            </div>
+            <div class="curve-box">
+              <div class="curve-box-head"><span class="curve-box-title">色相饱和度曲线</span></div>
+              <div class="hsl-curves">
+                <div class="hsl-row"><span class="hsl-label">H-H</span><div class="hsl-bar"><svg viewBox="0 0 160 20" preserveAspectRatio="none"><line x1="0" y1="10" x2="160" y2="10"/><path class="hsl-line" d="M0,10 L160,10"/></svg></div></div>
+                <div class="hsl-row"><span class="hsl-label">H-S</span><div class="hsl-bar"><svg viewBox="0 0 160 20" preserveAspectRatio="none"><line x1="0" y1="10" x2="160" y2="10"/><path class="hsl-line" d="M0,10 C40,4 80,16 120,8 C140,4 160,10 160,10"/></svg></div></div>
+                <div class="hsl-row"><span class="hsl-label">H-L</span><div class="hsl-bar"><svg viewBox="0 0 160 20" preserveAspectRatio="none"><line x1="0" y1="10" x2="160" y2="10"/><path class="hsl-line" d="M0,10 L160,10"/></svg></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 色轮 - AE Lumetri / 达芬奇 -->
+          <div class="lum-sec" id="lum-2" style="display:none">
+            <div class="wheels">
+              <div class="wheel"><div class="wheel-circle"><div class="wheel-bg"></div><div class="wheel-dot" style="top:45%;left:48%"></div></div><span class="wheel-label">阴影</span><span class="wheel-val">Lift</span></div>
+              <div class="wheel"><div class="wheel-circle"><div class="wheel-bg"></div><div class="wheel-dot" style="top:48%;left:52%"></div></div><span class="wheel-label">中间调</span><span class="wheel-val">Gamma</span></div>
+              <div class="wheel"><div class="wheel-circle"><div class="wheel-bg"></div><div class="wheel-dot" style="top:50%;left:55%"></div></div><span class="wheel-label">高光</span><span class="wheel-val">Gain</span></div>
+            </div>
+          </div>
+
+          <!-- HSL - AE Lumetri -->
+          <div class="lum-sec" id="lum-3" style="display:none">
+            <div class="nv-sec-title">HSL 辅助</div>
+            <div class="nv-row"><span class="nv-label">色相</span><div class="nv-bar"><div class="nv-bar-fill c" style="width:50%"></div><div class="nv-thumb c" style="left:50%"></div></div><span class="nv-val c">0</span></div>
+            <div class="nv-row"><span class="nv-label">饱和度</span><div class="nv-bar"><div class="nv-bar-fill c" style="width:50%"></div><div class="nv-thumb c" style="left:50%"></div></div><span class="nv-val c">0</span></div>
+            <div class="nv-row"><span class="nv-label">亮度</span><div class="nv-bar"><div class="nv-bar-fill c" style="width:50%"></div><div class="nv-thumb c" style="left:50%"></div></div><span class="nv-val c">0</span></div>
+          </div>
+
+          <!-- 示波器 - AE Lumetri Scopes -->
+          <div class="lum-sec" id="lum-4" style="display:none">
+            <div class="scope-row">
+              <div class="scope"><canvas id="scopeWave" width="160" height="80"></canvas><span class="scope-label">波形</span></div>
+              <div class="scope"><canvas id="scopeVector" width="160" height="80"></canvas><span class="scope-label">矢量</span></div>
+            </div>
+            <div class="scope-row">
+              <div class="scope"><canvas id="scopeParade" width="160" height="80"></canvas><span class="scope-label">检阅</span></div>
+              <div class="scope"><canvas id="scopeHist" width="160" height="80"></canvas><span class="scope-label">直方图</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="color-a" style="display:none">
+          <div class="ac"><div class="ac-top"><div class="ac-ico c1"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div><span class="ac-nm">AI 一键调色</span></div><div class="ac-desc">自动分析画面并优化色彩</div><div class="ac-sl"><span class="ac-sl-l">强度</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:70%"></div><div class="ac-sl-th" style="left:70%"></div></div><span class="ac-sl-v">70%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico v1"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><span class="ac-nm">AI 风格迁移</span></div><div class="ac-desc">将电影/胶片风格应用到画面</div><div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px"><span style="padding:2px 6px;border-radius:3px;background:var(--cb);font-size:7px;font-weight:600;color:var(--c2)">赛博朋克</span><span style="padding:2px 6px;border-radius:3px;background:var(--s3);font-size:7px;color:var(--t4)">胶片复古</span><span style="padding:2px 6px;border-radius:3px;background:var(--s3);font-size:7px;color:var(--t4)">日系清新</span><span style="padding:2px 6px;border-radius:3px;background:var(--s3);font-size:7px;color:var(--t4)">暖阳</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+        </div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 特效面板 -->
+    <div class="pn" id="pn-fx">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">特效</span><div class="pn-mode"><div class="pm on" onclick="sm(this,'m')">手动</div><div class="pm" onclick="sm(this,'a')">AI</div></div></div>
+      <div class="pn-scroll">
+        <div id="fx-m"><div class="tg"><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/></svg></div><span class="tg-l">画面</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div><span class="tg-l">转场</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div><span class="tg-l">滤镜</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div><span class="tg-l">粒子</span></div></div></div>
+        <div id="fx-a" style="display:none">
+          <div class="ac"><div class="ac-top"><div class="ac-ico c1"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><span class="ac-nm">AI 抠图</span></div><div class="ac-desc">一键分离前景和背景</div><div class="ac-sl"><span class="ac-sl-l">羽化</span><div class="ac-sl-t"><div class="ac-sl-f" style="width:20%"></div><div class="ac-sl-th" style="left:20%"></div></div><span class="ac-sl-v">20%</span></div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico s1"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div><span class="ac-nm">AI 超分辨率</span></div><div class="ac-desc">画质增强 2x</div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico r1"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div><span class="ac-nm">AI 插帧</span></div><div class="ac-desc">30fps → 60fps 智能补帧</div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico v1"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><span class="ac-nm">AI 风格化</span></div><div class="ac-desc">将画面转换为动漫/漫画风格</div><div class="ac-live"><span class="d"></span><span>已启用 · 实时预览中</span></div></div>
+          <div class="ac"><div class="ac-top"><div class="ac-ico a1"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div><span class="ac-nm">AI 物体消除</span></div><div class="ac-desc">涂抹画面中不需要的物体自动消除</div><div class="ac-acts"><div class="ac-prev">进入涂抹模式</div><div class="ac-apply">应用</div></div></div>
+        </div>
+      </div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div></div>
+    </div>
+
+    <!-- 更多面板 -->
+    <div class="pn" id="pn-more">
+      <div class="pn-h"><div class="bar"></div></div>
+      <div class="pn-head"><span class="pn-title">更多</span></div>
+      <div class="pn-scroll"><div class="tg"><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg></div><span class="tg-l">画中画</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></div><span class="tg-l">绿幕</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8l4 4-4 4"/></svg></div><span class="tg-l">运动追踪</span></div><div class="tg-i"><div class="tg-ic"><svg viewBox="0 0 24 24"><rect x="1" y="6" width="22" height="12" rx="2"/></svg></div><span class="tg-l">稳定器</span></div></div></div>
+      <div class="mtl"><div class="mtl-r"><div class="mtl-c mtl-v" style="width:48%;margin-left:2%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="hi"><div class="bar"></div></div>
+</div>
+
+<script>
+let cur='clip';
+function st(el,n){if(cur===n){cur=null;document.querySelectorAll('.tb-i').forEach(t=>t.classList.remove('on'));document.getElementById('tl').classList.remove('hid');document.querySelectorAll('.pn').forEach(p=>p.classList.remove('vis'));return}cur=n;document.querySelectorAll('.tb-i').forEach(t=>t.classList.remove('on'));el.classList.add('on');document.getElementById('tl').classList.add('hid');document.querySelectorAll('.pn').forEach(p=>p.classList.remove('vis'));document.getElementById('pn-'+n).classList.add('vis')}
+function sm(el,m){const p=el.closest('.pn-mode');p.querySelectorAll('.pm').forEach(b=>b.classList.remove('on'));el.classList.add('on');const pa=el.closest('.pn');const ma=pa.querySelector('[id$="-m"]');const ai=pa.querySelector('[id$="-a"]');if(m==='a'){if(ma)ma.style.display='none';if(ai)ai.style.display='block'}else{if(ma)ma.style.display='block';if(ai)ai.style.display='none'}}
+function lumTab(el,idx){document.querySelectorAll('.lum-tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');for(let i=0;i<5;i++){const s=document.getElementById('lum-'+i);if(s)s.style.display=i===idx?'block':'none'}}
+
+// 绘制示波器
+function drawScopes(){
+  const canvases=[
+    {id:'scopeWave',fn:drawWave},
+    {id:'scopeVector',fn:drawVector},
+    {id:'scopeParade',fn:drawParade},
+    {id:'scopeHist',fn:drawHist}
+  ];
+  canvases.forEach(c=>{const cv=document.getElementById(c.id);if(cv){const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);c.fn(ctx,cv.width,cv.height)}});
+}
+function drawWave(ctx,w,h){ctx.strokeStyle='rgba(56,189,248,.4)';ctx.lineWidth=1;ctx.beginPath();for(let x=0;x<w;x++){const y=h/2+Math.sin(x*.08)*15+Math.sin(x*.03)*10+Math.random()*3;ctx.lineTo(x,y)}ctx.stroke()}
+function drawVector(ctx,w,h){const cx=w/2,cy=h/2;ctx.strokeStyle='rgba(56,189,248,.15)';ctx.lineWidth=.5;for(let r=10;r<Math.min(w,h)/2;r+=12){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke()}ctx.strokeStyle='rgba(56,189,248,.5)';ctx.lineWidth=1;ctx.beginPath();for(let a=0;a<Math.PI*2;a+=.05){const r=15+Math.random()*20;ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r)}ctx.closePath();ctx.stroke()}
+function drawParade(ctx,w){const sw=w/3;[['rgba(255,80,80,.4)',0],['rgba(80,255,80,.4)',sw],['rgba(80,80,255,.4)',sw*2]].forEach(([c,ox])=>{ctx.strokeStyle=c;ctx.lineWidth=1;ctx.beginPath();for(let x=0;x<sw;x++){const y=20+Math.random()*40;ctx.lineTo(ox+x,y)}ctx.stroke()})}
+function drawHist(ctx,w,h){ctx.fillStyle='rgba(56,189,248,.3)';for(let x=0;x<w;x+=2){const bh=Math.random()*h*.6;ctx.fillRect(x,h-bh,2,bh)}}
+setTimeout(drawScopes,100);
+</script>
+</body>
+</html>
