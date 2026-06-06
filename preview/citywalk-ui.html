@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wander — City Walk Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --clay:#C27B5C;--clay-lt:#D4956F;--clay-dk:#8A5240;
+  --cream:#F7F2EB;--cream-2:#EDE5D8;--cream-3:#E0D5C4;
+  --sage:#7A8B6F;--sage-lt:#9BAE8E;
+  --bark:#4A3F37;--bark-lt:#6B5F52;
+  --sand:#D9CDB5;--sand-lt:#E8DFCC;
+  --moss:#3D4F35;--ochre:#C4A265;
+  --radius:16px;--radius-sm:10px;--radius-xs:6px;
+}
+body{
+  font-family:'DM Sans',sans-serif;background:#B8AE9A;color:var(--bark);
+  display:flex;justify-content:center;align-items:center;min-height:100vh;
+  padding:20px;
+  background-image:
+    radial-gradient(circle at 30% 40%,rgba(194,123,92,0.08),transparent 50%),
+    radial-gradient(circle at 70% 60%,rgba(122,139,111,0.08),transparent 50%);
+}
+.phone{
+  width:393px;height:852px;background:var(--cream);position:relative;overflow:hidden;
+  border-radius:48px;box-shadow:0 24px 80px rgba(74,63,55,0.25),0 0 0 3px rgba(74,63,55,0.08);
+}
+.page{position:absolute;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .35s}
+.page.active{display:flex;opacity:1}
+
+/* STATUS */
+.status{display:flex;justify-content:space-between;align-items:center;padding:16px 24px 10px;font-size:14px;font-weight:600;flex-shrink:0}
+.status .time{font-size:15px}
+.status .icons{display:flex;gap:6px;align-items:center}
+.status .icons svg{width:16px;height:16px;fill:var(--bark)}
+
+/* HOME */
+.h-greeting{padding:8px 24px 0;flex-shrink:0}
+.h-greet-sub{font-size:12px;color:var(--bark-lt);font-weight:400;letter-spacing:1px;margin-bottom:4px}
+.h-greet-name{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-height:1.1}
+.h-greet-name em{font-style:italic;color:var(--clay)}
+.h-greet-row{display:flex;justify-content:space-between;align-items:center}
+.h-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--clay),var(--ochre));display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:600}
+.h-bell{width:40px;height:40px;border-radius:50%;background:var(--cream-2);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer}
+.h-bell::after{content:'';position:absolute;top:10px;right:12px;width:6px;height:6px;border-radius:50%;background:var(--clay);border:2px solid var(--cream-2)}
+
+.h-search{margin:16px 24px;position:relative;flex-shrink:0}
+.h-search input{width:100%;height:48px;border-radius:24px;background:var(--cream-2);border:1.5px solid transparent;color:var(--bark);padding:0 20px 0 46px;font-family:inherit;font-size:14px;outline:none;transition:all .3s}
+.h-search input::placeholder{color:var(--bark-lt);font-weight:400}
+.h-search input:focus{border-color:var(--clay-lt);background:var(--cream)}
+.h-search .s-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--bark-lt)}
+
+.h-cats{display:flex;gap:8px;padding:0 24px 16px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.h-cats::-webkit-scrollbar{display:none}
+.h-cat{padding:8px 16px;border-radius:20px;font-size:13px;font-weight:500;background:var(--cream-2);color:var(--bark-lt);white-space:nowrap;cursor:pointer;border:none;font-family:inherit;transition:all .25s}
+.h-cat.on{background:var(--clay);color:#fff}
+.h-cat:active{transform:scale(.95)}
+
+.h-section{padding:0 24px 12px;display:flex;justify-content:space-between;align-items:flex-end;flex-shrink:0}
+.h-section h2{font-family:'Playfair Display',serif;font-size:20px;font-weight:700}
+.h-section h2 span{font-style:italic;font-weight:400;color:var(--clay)}
+.h-section a{font-size:13px;color:var(--clay);text-decoration:none;font-weight:500}
+
+.h-scroll{flex:1;overflow-y:auto;padding-bottom:80px;scrollbar-width:none}
+.h-scroll::-webkit-scrollbar{display:none}
+
+/* Featured Card */
+.feat-card{margin:4px 24px 16px;border-radius:var(--radius);overflow:hidden;height:200px;position:relative;cursor:pointer;transition:transform .25s}
+.feat-card:active{transform:scale(.97)}
+.feat-bg{position:absolute;inset:0}
+.feat-bg.bg1{background:linear-gradient(135deg,#8B6F5C 0%,#C4A265 40%,#7A8B6F 100%)}
+.feat-bg.bg2{background:linear-gradient(135deg,#5C7B8B 0%,#A2B8C4 40%,#6F8B7A 100%)}
+.feat-overlay{position:absolute;inset:0;background:linear-gradient(transparent 30%,rgba(74,63,55,0.7))}
+.feat-content{position:absolute;bottom:0;left:0;right:0;padding:20px;color:#fff}
+.feat-tag{display:inline-block;padding:4px 10px;border-radius:12px;background:rgba(255,255,255,0.2);backdrop-filter:blur(8px);font-size:11px;font-weight:600;letter-spacing:.5px;margin-bottom:8px}
+.feat-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;margin-bottom:4px}
+.feat-meta{font-size:12px;opacity:.8;display:flex;gap:12px}
+
+/* Route Cards */
+.route-h{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 24px 16px}
+.route-card{border-radius:var(--radius);overflow:hidden;background:var(--cream-2);cursor:pointer;transition:transform .25s}
+.route-card:active{transform:scale(.96)}
+.route-thumb{height:100px;position:relative}
+.route-thumb .rt{position:absolute;inset:0}
+.route-thumb .rt.r1{background:linear-gradient(135deg,#C4A265,#D4956F)}
+.route-thumb .rt.r2{background:linear-gradient(135deg,#7A8B6F,#9BAE8E)}
+.route-thumb .rt.r3{background:linear-gradient(135deg,#5C7B8B,#8B6F5C)}
+.route-thumb .rt.r4{background:linear-gradient(135deg,#8A5240,#C27B5C)}
+.route-thumb .dur{position:absolute;bottom:6px;left:8px;background:rgba(74,63,55,0.6);backdrop-filter:blur(6px);color:#fff;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600}
+.route-thumb .badge{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.2);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-size:11px}
+.route-info{padding:10px 12px}
+.route-info .rt-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;margin-bottom:3px}
+.route-info .rt-desc{font-size:11px;color:var(--bark-lt);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* Place Cards */
+.place-h{display:flex;flex-direction:column;gap:10px;padding:0 24px 16px}
+.place-card{display:grid;grid-template-columns:80px 1fr;gap:12px;padding:10px;background:var(--cream-2);border-radius:var(--radius-sm);cursor:pointer;transition:background .2s}
+.place-card:active{background:var(--cream-3)}
+.place-img{width:80px;height:80px;border-radius:var(--radius-xs);overflow:hidden}
+.place-img .pi{width:100%;height:100%;object-fit:cover}
+.place-img .pi.p1{background:linear-gradient(135deg,#D4956F,#C4A265)}
+.place-img .pi.p2{background:linear-gradient(135deg,#7A8B6F,#5C7B8B)}
+.place-img .pi.p3{background:linear-gradient(135deg,#8B6F5C,#A2B8C4)}
+.place-info{display:flex;flex-direction:column;justify-content:center}
+.place-info .pn{font-weight:600;font-size:15px;margin-bottom:2px}
+.place-info .pc{font-size:12px;color:var(--bark-lt);margin-bottom:4px}
+.place-info .pr{display:flex;gap:4px;align-items:center}
+.place-info .star{color:var(--ochre);font-size:12px}
+.place-info .rat{font-size:12px;font-weight:600}
+.place-info .rd{font-size:11px;color:var(--bark-lt);margin-left:4px}
+
+/* EXPLORE PAGE */
+.explore-map{flex:1;margin:0 24px;border-radius:var(--radius);position:relative;overflow:hidden;cursor:pointer}
+.map-bg{position:absolute;inset:0;background:var(--cream-3)}
+.map-grid{position:absolute;inset:0;background:
+  linear-gradient(rgba(74,63,55,0.05) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(74,63,55,0.05) 1px,transparent 1px);
+  background-size:40px 40px}
+.map-roads{position:absolute;inset:0}
+.map-road{position:absolute;background:var(--sand-lt);border-radius:2px}
+.map-road.h{height:3px}
+.map-road.v{width:3px}
+.map-pin{position:absolute;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);cursor:pointer;transition:transform .2s}
+.map-pin:active{transform:rotate(-45deg) scale(1.2)}
+.map-pin::after{content:'';position:absolute;inset:6px;border-radius:50%;background:#fff}
+.map-pin.clay{background:var(--clay)}
+.map-pin.sage{background:var(--sage)}
+.map-pin.ochre{background:var(--ochre)}
+.map-user{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--clay);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.map-user::after{content:'';position:absolute;inset:-8px;border-radius:50%;background:rgba(194,123,92,0.2)}
+
+.explore-bottom{padding:16px 24px 84px}
+.explore-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:12px}
+.explore-chips::-webkit-scrollbar{display:none}
+.exp-chip{padding:6px 14px;border-radius:16px;background:var(--cream-2);font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;border:none;font-family:inherit}
+.exp-chip.on{background:var(--sage);color:#fff}
+
+/* DISCOVER PAGE */
+.disc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 24px 16px}
+.disc-card{border-radius:var(--radius);overflow:hidden;position:relative;cursor:pointer;transition:transform .25s}
+.disc-card:active{transform:scale(.97)}
+.disc-card.tall{grid-row:span 2}
+.disc-card .dc{position:absolute;inset:0}
+.disc-card .dc.d1{background:linear-gradient(180deg,#D4956F,#8B6F5C)}
+.disc-card .dc.d2{background:linear-gradient(180deg,#7A8B6F,#3D4F35)}
+.disc-card .dc.d3{background:linear-gradient(180deg,#C4A265,#8A5240)}
+.disc-card .dc.d4{background:linear-gradient(180deg,#5C7B8B,#4A3F37)}
+.disc-card .dc.d5{background:linear-gradient(180deg,#9BAE8E,#7A8B6F)}
+.disc-card .d-overlay{position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(74,63,55,0.6))}
+.disc-card .d-content{position:absolute;bottom:0;left:0;right:0;padding:12px;color:#fff}
+.disc-card .d-author{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.disc-card .d-avatar{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,0.3)}
+.disc-card .d-name{font-size:11px;font-weight:500}
+.disc-card .d-title{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;line-height:1.2;margin-bottom:4px}
+.disc-card .d-stats{font-size:10px;opacity:.7;display:flex;gap:8px}
+
+/* PROFILE PAGE */
+.prof-header{text-align:center;padding:12px 24px 20px;flex-shrink:0}
+.prof-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--clay),var(--ochre));margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;font-weight:600;box-shadow:0 4px 16px rgba(194,123,92,0.3)}
+.prof-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;margin-bottom:2px}
+.prof-loc{font-size:13px;color:var(--bark-lt);margin-bottom:12px}
+.prof-stats{display:flex;justify-content:center;gap:32px}
+.prof-stat{text-align:center}
+.prof-stat .num{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700}
+.prof-stat .lbl{font-size:11px;color:var(--bark-lt);margin-top:2px}
+
+.prof-tabs{display:flex;border-bottom:1.5px solid var(--cream-3);padding:0 24px;flex-shrink:0}
+.prof-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:500;color:var(--bark-lt);cursor:pointer;border:none;background:none;font-family:inherit;position:relative}
+.prof-tab.on{color:var(--clay)}
+.prof-tab.on::after{content:'';position:absolute;bottom:-1.5px;left:20%;right:20%;height:2px;background:var(--clay);border-radius:1px}
+
+.prof-grid{flex:1;overflow-y:auto;padding:12px 24px 80px;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;align-content:start;scrollbar-width:none}
+.prof-grid::-webkit-scrollbar{display:none}
+.prof-item{aspect-ratio:1;border-radius:4px;overflow:hidden;cursor:pointer;transition:opacity .2s}
+.prof-item:active{opacity:.7}
+.prof-item .pi2{width:100%;height:100%}
+.prof-item .pi2.g1{background:linear-gradient(135deg,#C27B5C,#C4A265)}
+.prof-item .pi2.g2{background:linear-gradient(135deg,#7A8B6F,#5C7B8B)}
+.prof-item .pi2.g3{background:linear-gradient(135deg,#8B6F5C,#D4956F)}
+.prof-item .pi2.g4{background:linear-gradient(135deg,#C4A265,#8A5240)}
+.prof-item .pi2.g5{background:linear-gradient(135deg,#5C7B8B,#7A8B6F)}
+.prof-item .pi2.g6{background:linear-gradient(135deg,#D4956F,#9BAE8E)}
+.prof-item .pi2.g7{background:linear-gradient(135deg,#8A5240,#5C7B8B)}
+.prof-item .pi2.g8{background:linear-gradient(135deg,#9BAE8E,#C27B5C)}
+
+/* NAV */
+.nav{position:absolute;bottom:0;left:0;right:0;display:flex;background:rgba(247,242,235,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--cream-3);padding-bottom:24px;z-index:50}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 6px;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--bark-lt);transition:color .25s}
+.nav-btn svg{width:24px;height:24px;fill:currentColor}
+.nav-btn span{font-size:10px;font-weight:500}
+.nav-btn.on{color:var(--clay)}
+.nav-btn.on svg{fill:var(--clay)}
+
+/* DETAIL OVERLAY */
+.detail-overlay{position:absolute;inset:0;z-index:60;display:none;flex-direction:column;opacity:0;transition:opacity .3s}
+.detail-overlay.show{display:flex;opacity:1}
+.detail-hero{flex:1.2;position:relative}
+.detail-hero .dh-bg{position:absolute;inset:0}
+.detail-hero .dh-bg.dh1{background:linear-gradient(135deg,#8B6F5C 0%,#C4A265 40%,#7A8B6F 100%)}
+.detail-hero .dh-back{position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;background:rgba(74,63,55,0.3);backdrop-filter:blur(8px);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.detail-hero .dh-bookmark{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(74,63,55,0.3);backdrop-filter:blur(8px);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.detail-sheet{background:var(--cream);border-radius:24px 24px 0 0;flex:2.5;padding:20px 24px;overflow-y:auto;position:relative;margin-top:-24px}
+.detail-sheet::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--cream-3)}
+.dh-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;line-height:1.1;margin-bottom:6px}
+.dh-sub{font-size:13px;color:var(--bark-lt);margin-bottom:16px}
+.dh-meta{display:flex;gap:16px;margin-bottom:20px}
+.dh-meta-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--bark-lt)}
+.dh-meta-item .ic{width:24px;height:24px;border-radius:50%;background:var(--cream-2);display:flex;align-items:center;justify-content:center;font-size:11px}
+.dh-desc{font-size:14px;line-height:1.7;color:var(--bark-lt);margin-bottom:20px}
+.dh-start{width:100%;padding:16px;border-radius:var(--radius);background:var(--clay);border:none;color:#fff;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s}
+.dh-start:active{background:var(--clay-dk)}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <!-- HOME PAGE -->
+  <div class="page active" id="p-home">
+    <div class="status">
+      <span class="time">9:41</span>
+      <div class="icons">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="h-greet-row">
+      <div class="h-greeting">
+        <div class="h-greet-sub">GOOD MORNING</div>
+        <div class="h-greet-name">Explore, <em>Wanderer</em></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="h-bell" onclick="go('explore')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <div class="h-avatar">E</div>
+      </div>
+    </div>
+
+    <div class="h-search">
+      <span class="s-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </span>
+      <input type="text" placeholder="Search places, routes, stories...">
+    </div>
+
+    <div class="h-cats">
+      <button class="h-cat on">All</button>
+      <button class="h-cat">☕ Cafés</button>
+      <button class="h-cat">🏛 History</button>
+      <button class="h-cat">🌿 Nature</button>
+      <button class="h-cat">🎨 Art</button>
+      <button class="h-cat">🌅 Views</button>
+    </div>
+
+    <div class="h-scroll">
+      <div class="h-section"><h2>Featured <span>Route</span></h2><a href="#" onclick="openDetail(event)">View All</a></div>
+      <div class="feat-card" onclick="openDetail(event)">
+        <div class="feat-bg bg1"></div>
+        <div class="feat-overlay"></div>
+        <div class="feat-content">
+          <span class="feat-tag">☀️ POPULAR TODAY</span>
+          <div class="feat-title">Sunset Along the River</div>
+          <div class="feat-meta"><span>2.4 km</span><span>45 min</span><span>⭐ 4.8</span></div>
+        </div>
+      </div>
+
+      <div class="h-section"><h2>Popular <span>Routes</span></h2><a href="#" onclick="go('explore')">Explore</a></div>
+      <div class="route-h">
+        <div class="route-card" onclick="openDetail(event)">
+          <div class="route-thumb"><div class="rt r1"></div><span class="dur">32 min</span><span class="badge">❤</span></div>
+          <div class="route-info"><div class="rt-name">Old Town Alley</div><div class="rt-desc">Winding through cobblestone streets</div></div>
+        </div>
+        <div class="route-card" onclick="openDetail(event)">
+          <div class="route-thumb"><div class="rt r2"></div><span class="dur">28 min</span><span class="badge">🌿</span></div>
+          <div class="route-info"><div class="rt-name">Park Trail</div><div class="rt-desc">Green paths and hidden gardens</div></div>
+        </div>
+        <div class="route-card" onclick="openDetail(event)">
+          <div class="route-thumb"><div class="rt r3"></div><span class="dur">45 min</span><span class="badge">📸</span></div>
+          <div class="route-info"><div class="rt-name">Harbor Walk</div><div class="rt-desc">Sea breeze and lighthouse views</div></div>
+        </div>
+        <div class="route-card" onclick="openDetail(event)">
+          <div class="route-thumb"><div class="rt r4"></div><span class="dur">18 min</span><span class="badge">☕</span></div>
+          <div class="route-info"><div class="rt-name">Market Street</div><div class="rt-desc">Local flavors and artisan shops</div></div>
+        </div>
+      </div>
+
+      <div class="h-section"><h2>Nearby <span>Gems</span></h2><a href="#">See Map</a></div>
+      <div class="place-h">
+        <div class="place-card">
+          <div class="place-img"><div class="pi p1"></div></div>
+          <div class="place-info">
+            <div class="pn">The Rustic Bean Café</div>
+            <div class="pc">☕ 0.3 km · Artisan coffee</div>
+            <div class="pr"><span class="star">★★★★★</span><span class="rat">4.9</span><span class="rd">· 324 reviews</span></div>
+          </div>
+        </div>
+        <div class="place-card">
+          <div class="place-img"><div class="pi p2"></div></div>
+          <div class="place-info">
+            <div class="pn">Botanical Garden Gate</div>
+            <div class="pc">🌿 0.8 km · Nature walk</div>
+            <div class="pr"><span class="star">★★★★☆</span><span class="rat">4.6</span><span class="rd">· 187 reviews</span></div>
+          </div>
+        </div>
+        <div class="place-card">
+          <div class="place-img"><div class="pi p3"></div></div>
+          <div class="place-info">
+            <div class="pn">Riverside Bookshop</div>
+            <div class="pc">📚 1.2 km · Independent</div>
+            <div class="pr"><span class="star">★★★★★</span><span class="rat">4.8</span><span class="rd">· 512 reviews</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn on" onclick="go('home')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" fill="none" stroke-width="2"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" onclick="go('explore')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor"/></svg>
+        <span>Explore</span>
+      </button>
+      <button class="nav-btn" onclick="go('discover')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>Discover</span>
+      </button>
+      <button class="nav-btn" onclick="go('profile')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 21a8 8 0 1 0-16 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- EXPLORE PAGE -->
+  <div class="page" id="p-explore">
+    <div class="status">
+      <span class="time">9:41</span>
+      <div class="icons">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div style="padding:4px 24px 8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600">Explore</div>
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--cream-2);display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
+      </div>
+    </div>
+    <div class="explore-map">
+      <div class="map-bg">
+        <div class="map-grid"></div>
+        <div class="map-roads">
+          <div class="map-road h" style="top:25%;left:10%;width:80%"></div>
+          <div class="map-road h" style="top:45%;left:5%;width:90%"></div>
+          <div class="map-road h" style="top:65%;left:15%;width:70%"></div>
+          <div class="map-road h" style="top:85%;left:10%;width:60%"></div>
+          <div class="map-road v" style="left:30%;top:10%;height:80%"></div>
+          <div class="map-road v" style="left:50%;top:15%;height:70%"></div>
+          <div class="map-road v" style="left:70%;top:5%;height:90%"></div>
+          <div class="map-road v" style="left:85%;top:20%;height:60%"></div>
+          <div style="position:absolute;top:15%;left:20%;width:35%;height:25%;background:rgba(122,139,111,0.12);border-radius:8px"></div>
+          <div style="position:absolute;top:50%;left:55%;width:30%;height:20%;background:rgba(92,123,139,0.12);border-radius:8px"></div>
+          <div style="position:absolute;top:30%;left:60%;width:15%;height:15%;background:rgba(196,162,101,0.15);border-radius:50%"></div>
+        </div>
+        <div class="map-pin clay" style="top:20%;left:25%"></div>
+        <div class="map-pin sage" style="top:35%;left:55%"></div>
+        <div class="map-pin ochre" style="top:50%;left:40%"></div>
+        <div class="map-pin clay" style="top:60%;left:70%"></div>
+        <div class="map-pin sage" style="top:75%;left:30%"></div>
+        <div class="map-pin ochre" style="top:45%;left:80%"></div>
+        <div class="map-user" style="top:42%;left:48%"></div>
+      </div>
+    </div>
+    <div class="explore-bottom">
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:10px">Around You</div>
+      <div class="explore-chips">
+        <button class="exp-chip on">📍 Nearby</button>
+        <button class="exp-chip">☕ Cafés</button>
+        <button class="exp-chip">🏛 Museums</button>
+        <button class="exp-chip">🌿 Parks</button>
+        <button class="exp-chip">📸 Photo Spots</button>
+      </div>
+      <div class="place-h" style="padding:0">
+        <div class="place-card">
+          <div class="place-img"><div class="pi p1"></div></div>
+          <div class="place-info">
+            <div class="pn">The Rustic Bean</div>
+            <div class="pc">☕ 0.3 km · Open now</div>
+            <div class="pr"><span class="star">★★★★★</span><span class="rat">4.9</span></div>
+          </div>
+        </div>
+        <div class="place-card">
+          <div class="place-img"><div class="pi p2"></div></div>
+          <div class="place-info">
+            <div class="pn">Botanical Garden</div>
+            <div class="pc">🌿 0.8 km · Open until 6pm</div>
+            <div class="pr"><span class="star">★★★★☆</span><span class="rat">4.6</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn" onclick="go('home')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" fill="none" stroke-width="2"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn on" onclick="go('explore')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor"/></svg>
+        <span>Explore</span>
+      </button>
+      <button class="nav-btn" onclick="go('discover')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>Discover</span>
+      </button>
+      <button class="nav-btn" onclick="go('profile')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 21a8 8 0 1 0-16 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- DISCOVER PAGE -->
+  <div class="page" id="p-discover">
+    <div class="status">
+      <span class="time">9:41</span>
+      <div class="icons">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div style="padding:4px 24px 12px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600">Discover</div>
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--cream-2);display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+    </div>
+    <div class="h-scroll" style="padding-bottom:80px">
+      <div class="h-section"><h2>Trending <span>Stories</span></h2></div>
+      <div class="disc-grid">
+        <div class="disc-card tall">
+          <div class="dc d1"></div>
+          <div class="d-overlay"></div>
+          <div class="d-content">
+            <div class="d-author"><div class="d-avatar"></div><span class="d-name">Maya Chen</span></div>
+            <div class="d-title">Hidden alleys of the old quarter</div>
+            <div class="d-stats"><span>♡ 847</span><span>💬 32</span></div>
+          </div>
+        </div>
+        <div class="disc-card">
+          <div class="dc d2"></div>
+          <div class="d-overlay"></div>
+          <div class="d-content">
+            <div class="d-author"><div class="d-avatar"></div><span class="d-name">Leo Park</span></div>
+            <div class="d-title">Morning light at the garden</div>
+            <div class="d-stats"><span>♡ 523</span><span>💬 18</span></div>
+          </div>
+        </div>
+        <div class="disc-card">
+          <div class="dc d3"></div>
+          <div class="d-overlay"></div>
+          <div class="d-content">
+            <div class="d-author"><div class="d-avatar"></div><span class="d-name">Ava Lin</span></div>
+            <div class="d-title">Best cafés for reading</div>
+            <div class="d-stats"><span>♡ 1.2k</span><span>💬 67</span></div>
+          </div>
+        </div>
+        <div class="disc-card">
+          <div class="dc d4"></div>
+          <div class="d-overlay"></div>
+          <div class="d-content">
+            <div class="d-author"><div class="d-avatar"></div><span class="d-name">Sam Wu</span></div>
+            <div class="d-title">Harbor at golden hour</div>
+            <div class="d-stats"><span>♡ 934</span><span>💬 45</span></div>
+          </div>
+        </div>
+        <div class="disc-card">
+          <div class="dc d5"></div>
+          <div class="d-overlay"></div>
+          <div class="d-content">
+            <div class="d-author"><div class="d-avatar"></div><span class="d-name">Kira Tan</span></div>
+            <div class="d-title">Street art walking tour</div>
+            <div class="d-stats"><span>♡ 412</span><span>💬 21</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn" onclick="go('home')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" fill="none" stroke-width="2"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" onclick="go('explore')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor"/></svg>
+        <span>Explore</span>
+      </button>
+      <button class="nav-btn on" onclick="go('discover')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>Discover</span>
+      </button>
+      <button class="nav-btn" onclick="go('profile')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 21a8 8 0 1 0-16 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div class="page" id="p-profile">
+    <div class="status">
+      <span class="time">9:41</span>
+      <div class="icons">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="prof-header">
+      <div class="prof-avatar">E</div>
+      <div class="prof-name">Emma Walker</div>
+      <div class="prof-loc">📍 Portland, Oregon</div>
+      <div class="prof-stats">
+        <div class="prof-stat"><div class="num">42</div><div class="lbl">Walks</div></div>
+        <div class="prof-stat"><div class="num">128</div><div class="lbl">Places</div></div>
+        <div class="prof-stat"><div class="num">1.2k</div><div class="lbl">Followers</div></div>
+      </div>
+    </div>
+    <div class="prof-tabs">
+      <button class="prof-tab on" onclick="setPTab(this)">📸 Photos</button>
+      <button class="prof-tab" onclick="setPTab(this)">🗺 Routes</button>
+      <button class="prof-tab" onclick="setPTab(this)">❤ Saved</button>
+    </div>
+    <div class="prof-grid">
+      <div class="prof-item"><div class="pi2 g1"></div></div>
+      <div class="prof-item"><div class="pi2 g2"></div></div>
+      <div class="prof-item"><div class="pi2 g3"></div></div>
+      <div class="prof-item"><div class="pi2 g4"></div></div>
+      <div class="prof-item"><div class="pi2 g5"></div></div>
+      <div class="prof-item"><div class="pi2 g6"></div></div>
+      <div class="prof-item"><div class="pi2 g7"></div></div>
+      <div class="prof-item"><div class="pi2 g8"></div></div>
+      <div class="prof-item"><div class="pi2 g1"></div></div>
+      <div class="prof-item"><div class="pi2 g3"></div></div>
+      <div class="prof-item"><div class="pi2 g5"></div></div>
+      <div class="prof-item"><div class="pi2 g2"></div></div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn" onclick="go('home')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" fill="none" stroke-width="2"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" onclick="go('explore')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor"/></svg>
+        <span>Explore</span>
+      </button>
+      <button class="nav-btn" onclick="go('discover')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>Discover</span>
+      </button>
+      <button class="nav-btn on" onclick="go('profile')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 21a8 8 0 1 0-16 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- DETAIL OVERLAY -->
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-hero">
+      <div class="dh-bg dh1"></div>
+      <button class="dh-back" onclick="closeDetail()">←</button>
+      <button class="dh-bookmark">♡</button>
+    </div>
+    <div class="detail-sheet">
+      <div style="padding-top:8px">
+        <span style="display:inline-block;padding:4px 10px;border-radius:12px;background:var(--clay-lt);color:#fff;font-size:11px;font-weight:600;margin-bottom:10px">☀️ POPULAR</span>
+        <div class="dh-title">Sunset Along the River</div>
+        <div class="dh-sub">A peaceful evening walk along the riverside trail</div>
+        <div class="dh-meta">
+          <div class="dh-meta-item"><span class="ic">📍</span>2.4 km</div>
+          <div class="dh-meta-item"><span class="ic">⏱</span>45 min</div>
+          <div class="dh-meta-item"><span class="ic">⭐</span>4.8</div>
+        </div>
+        <div class="dh-desc">Start your walk from the old bridge and follow the winding path downstream. Along the way, you'll discover hidden viewpoints, artisan cafés, and the city's most beautiful sunset spots. The trail is mostly flat and suitable for all walking levels.</div>
+        <button class="dh-start">Start Walking →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function go(name) {
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+  const p = document.getElementById('p-' + name);
+  p.style.display = 'flex';
+  requestAnimationFrame(() => p.classList.add('active'));
+  closeDetail();
+}
+function setHTab(el) {
+  el.parentElement.querySelectorAll('.h-cat').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+}
+function setPTab(el) {
+  el.parentElement.querySelectorAll('.prof-tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+}
+function openDetail(e) {
+  e.preventDefault();
+  const o = document.getElementById('detailOverlay');
+  o.style.display = 'flex';
+  requestAnimationFrame(() => o.classList.add('show'));
+}
+function closeDetail() {
+  const o = document.getElementById('detailOverlay');
+  o.classList.remove('show');
+  setTimeout(() => { o.style.display = 'none'; }, 300);
+}
+</script>
+</body>
+</html>
