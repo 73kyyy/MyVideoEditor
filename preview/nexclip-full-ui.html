@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexClip - UI Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#08080A;--bg2:#111114;--bg3:#1A1A1F;--bg4:#222228;
+  --accent:#E04E2A;--accent2:#FF6B45;--accent-dim:rgba(224,78,42,.12);
+  --text:#F0F0F2;--text2:#9A9AA0;--text3:#5A5A62;
+  --border:#2A2A30;--radius:12px;--radius-sm:8px;
+  --green:#34C759;--blue:#0A84FF;--purple:#BF5AF2;--yellow:#FFD60A;--cyan:#64D2FF;--pink:#FF375F;
+}
+body{font-family:'Outfit',sans-serif;background:#000;color:var(--text);display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
+.phone{width:393px;height:852px;background:var(--bg);border-radius:44px;overflow:hidden;position:relative;box-shadow:0 0 0 3px #333,0 40px 80px rgba(0,0,0,.6)}
+.page{position:absolute;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .3s ease}
+.page.active{display:flex;opacity:1}
+
+/* ===== STATUS BAR ===== */
+.statusbar{height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 8px;font-size:14px;font-weight:600;flex-shrink:0}
+.statusbar .time{font-size:15px}
+.statusbar .icons{display:flex;gap:6px;align-items:center}
+.statusbar .icons svg{width:16px;height:16px;fill:var(--text)}
+
+/* ===== HOME PAGE ===== */
+.home-header{padding:8px 20px 12px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.home-header h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.home-header h1 span{color:var(--accent)}
+.home-actions{display:flex;gap:8px}
+.home-actions button{width:40px;height:40px;border-radius:50%;background:var(--bg3);border:none;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s}
+.home-actions button:active{background:var(--bg4)}
+
+.home-search{margin:4px 20px 16px;position:relative;flex-shrink:0}
+.home-search input{width:100%;height:44px;border-radius:22px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:0 16px 0 44px;font-family:inherit;font-size:15px;outline:none;transition:border-color .2s}
+.home-search input::placeholder{color:var(--text3)}
+.home-search input:focus{border-color:var(--accent)}
+.home-search .search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text3)}
+
+.home-tabs{display:flex;gap:4px;padding:0 20px;margin-bottom:16px;flex-shrink:0}
+.home-tabs .tab{padding:8px 18px;border-radius:20px;font-size:14px;font-weight:500;color:var(--text2);background:transparent;border:none;cursor:pointer;transition:all .2s;font-family:inherit}
+.home-tabs .tab.active{background:var(--accent);color:#fff}
+
+.projects-grid{flex:1;overflow-y:auto;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start;scrollbar-width:none}
+.projects-grid::-webkit-scrollbar{display:none}
+.project-card{border-radius:var(--radius);overflow:hidden;background:var(--bg2);cursor:pointer;transition:transform .2s}
+.project-card:active{transform:scale(.96)}
+.project-thumb{width:100%;aspect-ratio:9/12;position:relative;overflow:hidden}
+.project-thumb .gradient{position:absolute;inset:0;background:linear-gradient(135deg,var(--bg3),var(--bg4))}
+.project-thumb .overlay{position:absolute;bottom:0;left:0;right:0;padding:8px 10px;background:linear-gradient(transparent,rgba(0,0,0,.7))}
+.project-thumb .duration{font-size:11px;color:rgba(255,255,255,.8);font-weight:500}
+.project-thumb .ai-badge{position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:3px 7px;border-radius:10px;letter-spacing:.3px}
+.project-info{padding:10px}
+.project-info .name{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.project-info .meta{font-size:11px;color:var(--text3)}
+
+.new-project{border-radius:var(--radius);border:2px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;min-height:200px}
+.new-project:active{border-color:var(--accent);background:var(--accent-dim)}
+.new-project .plus{width:44px;height:44px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:24px;color:var(--accent);font-weight:300}
+.new-project span{font-size:13px;color:var(--text2);font-weight:500}
+
+.home-nav{height:84px;display:flex;align-items:center;justify-content:space-around;padding-bottom:20px;flex-shrink:0;border-top:1px solid var(--border);background:var(--bg)}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;border:none;background:none;font-family:inherit}
+.nav-item svg{width:24px;height:24px;fill:var(--text3);transition:fill .2s}
+.nav-item span{font-size:10px;color:var(--text3);font-weight:500;transition:color .2s}
+.nav-item.active svg{fill:var(--accent)}
+.nav-item.active span{color:var(--accent)}
+
+/* ===== EDITOR PAGE ===== */
+.editor-top{display:flex;align-items:center;justify-content:space-between;padding:6px 16px;flex-shrink:0}
+.editor-top .back{width:36px;height:36px;border-radius:50%;background:var(--bg3);border:none;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}
+.editor-top .project-name{font-size:15px;font-weight:600}
+.editor-top .export{height:34px;padding:0 16px;border-radius:17px;background:var(--accent);border:none;color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s}
+.editor-top .export:active{background:var(--accent2)}
+
+.editor-preview{flex:1;margin:8px 16px;border-radius:var(--radius);background:var(--bg2);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:0}
+.editor-preview .preview-content{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative}
+.editor-preview .preview-gradient{position:absolute;inset:0;background:linear-gradient(145deg,#1a1520,#0d1520,#101518)}
+.editor-preview .play-big{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;z-index:2;transition:transform .2s}
+.editor-preview .play-big:active{transform:scale(.9)}
+.editor-preview .play-big svg{width:24px;height:24px;fill:#fff;margin-left:3px}
+.editor-preview .preview-label{position:absolute;top:12px;left:12px;font-size:10px;color:rgba(255,255,255,.5);font-weight:500;letter-spacing:.5px;z-index:2}
+.editor-preview .ai-indicator{position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:5px;background:rgba(224,78,42,.2);border:1px solid rgba(224,78,42,.3);padding:4px 10px;border-radius:12px;z-index:2}
+.editor-preview .ai-indicator .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite}
+.editor-preview .ai-indicator span{font-size:10px;color:var(--accent2);font-weight:600}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.editor-progress{padding:0 16px;margin:4px 0;flex-shrink:0}
+.progress-bar{height:3px;background:var(--bg4);border-radius:2px;position:relative;cursor:pointer}
+.progress-bar .fill{height:100%;background:var(--accent);border-radius:2px;width:35%;position:relative}
+.progress-bar .fill::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(224,78,42,.4)}
+.progress-time{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text3);font-weight:400}
+
+.editor-controls{display:flex;align-items:center;justify-content:center;gap:20px;padding:8px 0;flex-shrink:0}
+.ctrl-btn{width:36px;height:36px;border-radius:50%;background:transparent;border:none;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.ctrl-btn:active{transform:scale(.85)}
+.ctrl-btn.play{width:44px;height:44px;background:var(--accent);color:#fff}
+.ctrl-btn.play:active{background:var(--accent2)}
+.ctrl-btn svg{width:20px;height:20px;fill:currentColor}
+.ctrl-btn.play svg{width:22px;height:22px}
+
+.editor-timeline{height:140px;background:var(--bg2);border-top:1px solid var(--border);position:relative;flex-shrink:0;overflow:hidden}
+.timeline-ruler{height:20px;background:var(--bg3);display:flex;align-items:flex-end;padding:0 12px;border-bottom:1px solid var(--border)}
+.ruler-mark{font-size:8px;color:var(--text3);position:absolute;bottom:4px}
+.timeline-tracks{padding:8px 12px;display:flex;flex-direction:column;gap:6px}
+.track{height:28px;border-radius:6px;display:flex;align-items:center;position:relative;overflow:hidden}
+.track-video{background:linear-gradient(90deg,#2A1F2E,#3A2535,#2E2030);border:1px solid #3A2A40}
+.track-audio{background:linear-gradient(90deg,#1A2530,#1E3040,#1A2530);border:1px solid #1E3545}
+.track-clip{height:100%;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;color:rgba(255,255,255,.7);position:relative}
+.track-clip.v1{width:65%;background:linear-gradient(90deg,var(--accent-dim),rgba(224,78,42,.08));border:1px solid rgba(224,78,42,.25)}
+.track-clip.v2{width:30%;background:linear-gradient(90deg,rgba(10,132,255,.1),rgba(10,132,255,.05));border:1px solid rgba(10,132,255,.2);margin-left:10%}
+.track-clip.a1{width:55%;background:linear-gradient(90deg,rgba(52,199,89,.08),rgba(52,199,89,.04));border:1px solid rgba(52,199,89,.2)}
+.track-label{position:absolute;left:-28px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--text3);font-weight:600}
+.playhead{position:absolute;top:0;bottom:0;left:35%;width:2px;background:var(--accent);z-index:5}
+.playhead::before{content:'';position:absolute;top:-2px;left:-5px;width:12px;height:8px;background:var(--accent);border-radius:2px;clip-path:polygon(0 0,100% 0,50% 100%)}
+
+.editor-toolbar{display:flex;align-items:center;justify-content:space-around;padding:10px 8px 28px;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0}
+.tool-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;border:none;background:none;padding:4px 6px;position:relative;font-family:inherit}
+.tool-btn svg{width:22px;height:22px;fill:var(--text2);transition:fill .2s}
+.tool-btn span{font-size:9px;color:var(--text3);font-weight:500;transition:color .2s;white-space:nowrap}
+.tool-btn.active svg{fill:var(--accent)}
+.tool-btn.active span{color:var(--accent)}
+.tool-btn.active::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:20px;height:3px;border-radius:2px;background:var(--accent)}
+
+/* Panel overlay */
+.editor-panel{position:absolute;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);z-index:10;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:55%;display:flex;flex-direction:column}
+.editor-panel.show{transform:translateY(0)}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.panel-header h3{font-size:15px;font-weight:700}
+.panel-close{width:28px;height:28px;border-radius:50%;background:var(--bg4);border:none;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.panel-body{flex:1;overflow-y:auto;padding:16px;scrollbar-width:none}
+.panel-body::-webkit-scrollbar{display:none}
+
+/* Color grading panel */
+.cg-tabs{display:flex;gap:2px;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:16px}
+.cg-tab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.cg-tab.active{background:var(--bg4);color:var(--text)}
+.slider-group{margin-bottom:14px}
+.slider-label{display:flex;justify-content:space-between;margin-bottom:6px}
+.slider-label span{font-size:12px;color:var(--text2);font-weight:500}
+.slider-label .val{color:var(--text);font-weight:600}
+.slider-track{height:4px;background:var(--bg);border-radius:2px;position:relative;cursor:pointer}
+.slider-fill{height:100%;border-radius:2px;position:absolute;left:0}
+.slider-fill.warm{background:linear-gradient(90deg,#4A3020,var(--accent));width:60%}
+.slider-fill.cool{background:linear-gradient(90deg,#203040,var(--blue));width:30%}
+.slider-fill.exp{background:linear-gradient(90deg,#202020,#fff);width:45%}
+.slider-fill.con{background:linear-gradient(90deg,#404040,var(--text));width:55%}
+.slider-fill.sat{background:linear-gradient(90deg,#404040,var(--accent));width:70%}
+.slider-fill.vib{background:linear-gradient(90deg,#303040,var(--purple));width:50%}
+.slider-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--bg);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+
+/* Speed curve */
+.speed-curve{background:var(--bg);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px}
+.speed-curve canvas{width:100%;height:100px;display:block}
+.speed-presets{display:flex;gap:8px;flex-wrap:wrap}
+.speed-preset{padding:6px 14px;border-radius:16px;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s}
+.speed-preset.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+
+/* AI panel */
+.ai-cards{display:flex;flex-direction:column;gap:10px}
+.ai-card{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border);cursor:pointer;transition:all .2s}
+.ai-card:active{border-color:var(--accent)}
+.ai-card .icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ai-card .icon.interp{background:rgba(224,78,42,.12);color:var(--accent)}
+.ai-card .icon.enhance{background:rgba(10,132,255,.12);color:var(--blue)}
+.ai-card .icon.denoise{background:rgba(52,199,89,.12);color:var(--green)}
+.ai-card .icon.separate{background:rgba(191,90,242,.12);color:var(--purple)}
+.ai-card .icon.caption{background:rgba(255,214,10,.12);color:var(--yellow)}
+.ai-card .icon.track{background:rgba(100,210,255,.12);color:var(--cyan)}
+.ai-card .info{flex:1;min-width:0}
+.ai-card .info .name{font-size:13px;font-weight:600;margin-bottom:2px}
+.ai-card .info .desc{font-size:11px;color:var(--text3)}
+.ai-card .toggle{width:44px;height:26px;border-radius:13px;background:var(--bg4);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.ai-card .toggle.on{background:var(--accent)}
+.ai-card .toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.ai-card .toggle.on::after{transform:translateX(18px)}
+
+/* ===== SETTINGS PAGE ===== */
+.settings-scroll{flex:1;overflow-y:auto;padding:0 20px;scrollbar-width:none}
+.settings-scroll::-webkit-scrollbar{display:none}
+.settings-header{padding:8px 20px 16px;flex-shrink:0}
+.settings-header h1{font-size:26px;font-weight:800}
+
+.settings-profile{display:flex;align-items:center;gap:14px;padding:16px;background:var(--bg2);border-radius:var(--radius);margin-bottom:20px}
+.settings-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;flex-shrink:0}
+.settings-profile .info .name{font-size:16px;font-weight:700;margin-bottom:2px}
+.settings-profile .info .email{font-size:12px;color:var(--text3)}
+.settings-profile .edit{margin-left:auto;width:32px;height:32px;border-radius:50%;background:var(--bg4);border:none;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+.settings-section{margin-bottom:20px}
+.settings-section .title{font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-left:4px}
+.settings-group{background:var(--bg2);border-radius:var(--radius);overflow:hidden}
+.setting-item{display:flex;align-items:center;padding:14px 16px;gap:12px;cursor:pointer;transition:background .15s;border:none;background:none;width:100%;text-align:left;font-family:inherit;color:var(--text)}
+.setting-item:active{background:var(--bg3)}
+.setting-item+.setting-item{border-top:1px solid var(--border)}
+.setting-item .icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.setting-item .icon.quality{background:rgba(224,78,42,.12);color:var(--accent)}
+.setting-item .icon.storage{background:rgba(10,132,255,.12);color:var(--blue)}
+.setting-item .icon.gpu{background:rgba(52,199,89,.12);color:var(--green)}
+.setting-item .icon.ai{background:rgba(191,90,242,.12);color:var(--purple)}
+.setting-item .icon.format{background:rgba(255,214,10,.12);color:var(--yellow)}
+.setting-item .icon.watermark{background:rgba(100,210,255,.12);color:var(--cyan)}
+.setting-item .icon.about{background:rgba(255,55,95,.12);color:var(--pink)}
+.setting-item .icon.theme{background:rgba(224,78,42,.12);color:var(--accent)}
+.setting-item .icon.cache{background:rgba(10,132,255,.12);color:var(--blue)}
+.setting-item .icon.feedback{background:rgba(52,199,89,.12);color:var(--green)}
+.setting-item .label{flex:1;font-size:14px;font-weight:500}
+.setting-item .value{font-size:13px;color:var(--text3);font-weight:400}
+.setting-item .arrow{color:var(--text3);font-size:14px}
+
+/* Toggle switch in settings */
+.setting-item .switch{width:44px;height:26px;border-radius:13px;background:var(--bg4);position:relative;flex-shrink:0;transition:background .2s}
+.setting-item .switch.on{background:var(--accent)}
+.setting-item .switch::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.setting-item .switch.on::after{transform:translateX(18px)}
+
+.settings-version{text-align:center;padding:20px;font-size:12px;color:var(--text3)}
+.settings-version span{color:var(--accent);font-weight:600}
+
+/* ===== PAGE SWITCHER (bottom) ===== */
+.page-switcher{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:100}
+.page-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);cursor:pointer;transition:all .3s}
+.page-dot.active{width:24px;border-radius:4px;background:var(--accent)}
+
+/* ===== TRANSITIONS ===== */
+.page-enter{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== CURVE EDITOR ===== */
+.curve-editor{background:var(--bg);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px}
+.curve-editor svg{width:100%;height:120px}
+.curve-editor .grid-line{stroke:var(--bg4);stroke-width:.5}
+.curve-editor .curve-line{fill:none;stroke:var(--accent);stroke-width:2}
+.curve-editor .curve-point{fill:#fff;stroke:var(--accent);stroke-width:2}
+
+/* ===== WHEEL ===== */
+.color-wheel-wrap{display:flex;gap:16px;justify-content:center;margin-bottom:16px}
+.color-wheel{width:80px;text-align:center}
+.color-wheel .wheel{width:80px;height:80px;border-radius:50%;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);position:relative;margin-bottom:6px;border:2px solid var(--border)}
+.color-wheel .wheel::after{content:'';position:absolute;inset:20%;border-radius:50%;background:var(--bg)}
+.color-wheel .wheel .marker{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.5);top:25%;left:60%;z-index:2}
+.color-wheel label{font-size:10px;color:var(--text3);font-weight:600}
+
+/* ===== SCOPE ===== */
+.scope-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.scope{background:var(--bg);border-radius:6px;overflow:hidden}
+.scope canvas{width:100%;height:60px;display:block}
+.scope label{display:block;text-align:center;font-size:9px;color:var(--text3);padding:4px 0;font-weight:500}
+
+/* ===== HSL SLIDERS ===== */
+.hsl-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.hsl-row .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.hsl-row .hsl-track{flex:1;height:4px;border-radius:2px;position:relative}
+.hsl-row .hsl-track.r{background:linear-gradient(90deg,#400,#f00)}
+.hsl-row .hsl-track.g{background:linear-gradient(90deg,#040,#0f0)}
+.hsl-row .hsl-track.b{background:linear-gradient(90deg,#004,#00f)}
+.hsl-row .hsl-val{font-size:11px;color:var(--text2);width:28px;text-align:right;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <!-- ===== HOME PAGE ===== -->
+  <div class="page active" id="page-home">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <div class="icons">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="home-header">
+      <h1>Nex<span>Clip</span></h1>
+      <div class="home-actions">
+        <button><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
+        <button><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+      </div>
+    </div>
+    <div class="home-tabs">
+      <button class="tab active">全部</button>
+      <button class="tab">视频</button>
+      <button class="tab">AI增强</button>
+      <button class="tab">草稿</button>
+    </div>
+    <div class="projects-grid">
+      <div class="project-card" onclick="switchPage('editor')">
+        <div class="project-thumb">
+          <div class="gradient" style="background:linear-gradient(135deg,#2A1F2E,#1A2535)"></div>
+          <div class="overlay"><span class="duration">02:34</span></div>
+          <span class="ai-badge">AI</span>
+        </div>
+        <div class="project-info">
+          <div class="name">城市夜景 Vlog</div>
+          <div class="meta">今天 14:30</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="project-thumb">
+          <div class="gradient" style="background:linear-gradient(135deg,#1A2520,#1A2035)"></div>
+          <div class="overlay"><span class="duration">05:12</span></div>
+        </div>
+        <div class="project-info">
+          <div class="name">旅行记录</div>
+          <div class="meta">昨天 09:15</div>
+        </div>
+      </div>
+      <div class="project-card">
+        <div class="project-thumb">
+          <div class="gradient" style="background:linear-gradient(135deg,#2A2015,#1A1520)"></div>
+          <div class="overlay"><span class="duration">01:48</span></div>
+          <span class="ai-badge">AI</span>
+        </div>
+        <div class="project-info">
+          <div class="name">产品展示</div>
+          <div class="meta">3天前</div>
+        </div>
+      </div>
+      <div class="new-project" onclick="switchPage('editor')">
+        <div class="plus">+</div>
+        <span>新建项目</span>
+      </div>
+    </div>
+    <div class="home-nav">
+      <button class="nav-item active" onclick="switchPage('home')">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>首页</span>
+      </button>
+      <button class="nav-item" onclick="switchPage('editor')">
+        <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+        <span>剪辑</span>
+      </button>
+      <button class="nav-item" onclick="switchPage('settings')">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1112 8.4a3.6 3.6 0 010 7.2z"/></svg>
+        <span>设置</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== EDITOR PAGE ===== -->
+  <div class="page" id="page-editor">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <div class="icons">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="editor-top">
+      <button class="back" onclick="switchPage('home')">&#8592;</button>
+      <span class="project-name">城市夜景 Vlog</span>
+      <button class="export">导出</button>
+    </div>
+    <div class="editor-preview">
+      <div class="preview-gradient"></div>
+      <span class="preview-label">1080p · 30fps</span>
+      <div class="ai-indicator"><div class="dot"></div><span>AI 就绪</span></div>
+      <div class="play-big"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+    </div>
+    <div class="editor-progress">
+      <div class="progress-bar">
+        <div class="fill"></div>
+      </div>
+      <div class="progress-time"><span>00:08.12</span><span>00:24.00</span></div>
+    </div>
+    <div class="editor-controls">
+      <button class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="ctrl-btn play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+      <button class="ctrl-btn"><svg viewBox="0 0 24 24"><path d="M17.77 3.77l-1.77-1.77-1.54 1.54-1.54-1.54-1.77 1.77 1.54 1.54-1.54 1.54 1.77 1.77 1.54-1.54 1.54 1.54 1.77-1.77-1.54-1.54z"/></svg></button>
+    </div>
+    <div class="editor-timeline" id="timelineArea">
+      <div class="timeline-ruler">
+        <span class="ruler-mark" style="left:12px">0s</span>
+        <span class="ruler-mark" style="left:30%">8s</span>
+        <span class="ruler-mark" style="left:55%">16s</span>
+        <span class="ruler-mark" style="left:80%">24s</span>
+      </div>
+      <div class="timeline-tracks">
+        <div class="track track-video">
+          <div class="track-clip v1">主视频</div>
+          <div class="track-clip v2">画中画</div>
+        </div>
+        <div class="track track-audio">
+          <div class="track-clip a1">背景音乐</div>
+        </div>
+      </div>
+      <div class="playhead"></div>
+    </div>
+    <div class="editor-toolbar" id="editorToolbar">
+      <button class="tool-btn" onclick="togglePanel('clip')"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><span>剪辑</span></button>
+      <button class="tool-btn" onclick="togglePanel('speed')"><svg viewBox="0 0 24 24"><path d="M20.38 8.57l-1.23 1.85a8 8 0 01-.22 7.58H5.07A8 8 0 0115.58 6.85l1.85-1.23A10 10 0 003.35 19a2 2 0 001.72 1h13.85a2 2 0 001.74-1 10 10 0 00-.27-10.44zm-9.79 6.84a2 2 0 002.83 0l5.66-8.49-8.49 5.66a2 2 0 000 2.83z"/></svg><span>速度</span></button>
+      <button class="tool-btn" onclick="togglePanel('color')"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-1 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg><span>调色</span></button>
+      <button class="tool-btn" onclick="togglePanel('audio')"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg><span>音频</span></button>
+      <button class="tool-btn" onclick="togglePanel('effects')"><svg viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg><span>特效</span></button>
+      <button class="tool-btn" onclick="togglePanel('ai')"><svg viewBox="0 0 24 24"><path d="M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58s9.14-3.49 12.65 0L21 3v7.12z"/></svg><span>AI</span></button>
+    </div>
+
+    <!-- Panels -->
+    <div class="editor-panel" id="panel-clip">
+      <div class="panel-header"><h3>剪辑</h3><button class="panel-close" onclick="closePanel()">✕</button></div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="padding:14px;background:var(--bg);border-radius:8px;text-align:center;cursor:pointer"><div style="font-size:20px;margin-bottom:6px">✂</div><div style="font-size:12px;font-weight:600">分割</div></div>
+          <div style="padding:14px;background:var(--bg);border-radius:8px;text-align:center;cursor:pointer"><div style="font-size:20px;margin-bottom:6px">⌫</div><div style="font-size:12px;font-weight:600">删除</div></div>
+          <div style="padding:14px;background:var(--bg);border-radius:8px;text-align:center;cursor:pointer"><div style="font-size:20px;margin-bottom:6px">↔</div><div style="font-size:12px;font-weight:600">裁剪</div></div>
+          <div style="padding:14px;background:var(--bg);border-radius:8px;text-align:center;cursor:pointer"><div style="font-size:20px;margin-bottom:6px">⤴</div><div style="font-size:12px;font-weight:600">旋转</div></div>
+          <div style="padding:14px;background:var(--bg);border-radius:8px;text-align:center;cursor:pointer"><div style="font-size:20px;margin-bottom:6px">⊞</div><div style="font-size:12px;font-weight:600">画中画</div></div>
+          <div style="padding:14px;background:var(--bg);border-radius:8px;text-align:center;cursor:pointer"><div style="font-size:20px;margin-bottom:6px">⏎</div><div style="font-size:12px;font-weight:600">倒放</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-panel" id="panel-speed">
+      <div class="panel-header"><h3>速度曲线</h3><button class="panel-close" onclick="closePanel()">✕</button></div>
+      <div class="panel-body">
+        <div class="speed-curve"><canvas id="speedCanvas" width="320" height="100"></canvas></div>
+        <div class="speed-presets">
+          <button class="speed-preset active">线性</button>
+          <button class="speed-preset">缓入</button>
+          <button class="speed-preset">缓出</button>
+          <button class="speed-preset">缓入出</button>
+          <button class="speed-preset">弹性</button>
+          <button class="speed-preset">自定义</button>
+        </div>
+        <div style="margin-top:16px">
+          <div class="slider-group"><div class="slider-label"><span>播放速度</span><span class="val">1.0x</span></div><div class="slider-track"><div class="slider-fill exp" style="background:linear-gradient(90deg,var(--bg4),var(--accent));width:50%"></div><div class="slider-thumb" style="left:50%"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-panel" id="panel-color">
+      <div class="panel-header"><h3>调色</h3><button class="panel-close" onclick="closePanel()">✕</button></div>
+      <div class="panel-body">
+        <div class="cg-tabs">
+          <button class="cg-tab active" onclick="switchCGTab(this,'cg-basic')">基础</button>
+          <button class="cg-tab" onclick="switchCGTab(this,'cg-curves')">曲线</button>
+          <button class="cg-tab" onclick="switchCGTab(this,'cg-wheels')">色轮</button>
+          <button class="cg-tab" onclick="switchCGTab(this,'cg-hsl')">HSL</button>
+        </div>
+        <div id="cg-basic">
+          <div class="slider-group"><div class="slider-label"><span>色温</span><span class="val">+12</span></div><div class="slider-track"><div class="slider-fill warm"></div><div class="slider-thumb" style="left:60%"></div></div></div>
+          <div class="slider-group"><div class="slider-label"><span>色调</span><span class="val">-5</span></div><div class="slider-track"><div class="slider-fill cool"></div><div class="slider-thumb" style="left:30%"></div></div></div>
+          <div class="slider-group"><div class="slider-label"><span>曝光</span><span class="val">+0.3</span></div><div class="slider-track"><div class="slider-fill exp"></div><div class="slider-thumb" style="left:45%"></div></div></div>
+          <div class="slider-group"><div class="slider-label"><span>对比度</span><span class="val">+15</span></div><div class="slider-track"><div class="slider-fill con"></div><div class="slider-thumb" style="left:55%"></div></div></div>
+          <div class="slider-group"><div class="slider-label"><span>饱和度</span><span class="val">+20</span></div><div class="slider-track"><div class="slider-fill sat"></div><div class="slider-thumb" style="left:70%"></div></div></div>
+          <div class="slider-group"><div class="slider-label"><span>自然饱和度</span><span class="val">+10</span></div><div class="slider-track"><div class="slider-fill vib"></div><div class="slider-thumb" style="left:50%"></div></div></div>
+        </div>
+        <div id="cg-curves" style="display:none">
+          <div class="curve-editor">
+            <svg viewBox="0 0 200 120" id="curveSVG">
+              <line x1="0" y1="30" x2="200" y2="30" class="grid-line"/>
+              <line x1="0" y1="60" x2="200" y2="60" class="grid-line"/>
+              <line x1="0" y1="90" x2="200" y2="90" class="grid-line"/>
+              <line x1="50" y1="0" x2="50" y2="120" class="grid-line"/>
+              <line x1="100" y1="0" x2="100" y2="120" class="grid-line"/>
+              <line x1="150" y1="0" x2="150" y2="120" class="grid-line"/>
+              <path d="M0,120 C40,120 60,80 100,60 C140,40 160,20 200,0" class="curve-line"/>
+              <circle cx="0" cy="120" r="4" class="curve-point"/>
+              <circle cx="60" cy="80" r="4" class="curve-point"/>
+              <circle cx="100" cy="60" r="4" class="curve-point"/>
+              <circle cx="140" cy="40" r="4" class="curve-point"/>
+              <circle cx="200" cy="0" r="4" class="curve-point"/>
+            </svg>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button style="flex:1;padding:6px;border-radius:6px;background:var(--accent);border:none;color:#fff;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">RGB</button>
+            <button style="flex:1;padding:6px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">R</button>
+            <button style="flex:1;padding:6px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">G</button>
+            <button style="flex:1;padding:6px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">B</button>
+          </div>
+        </div>
+        <div id="cg-wheels" style="display:none">
+          <div class="color-wheel-wrap">
+            <div class="color-wheel"><div class="wheel"><div class="marker"></div></div><label>阴影</label></div>
+            <div class="color-wheel"><div class="wheel"><div class="marker" style="top:35%;left:45%"></div></div><label>中间调</label></div>
+            <div class="color-wheel"><div class="wheel"><div class="marker" style="top:30%;left:55%"></div></div><label>高光</label></div>
+          </div>
+          <div class="scope-wrap">
+            <div class="scope"><canvas id="scopeWave" width="160" height="60"></canvas><label>波形</label></div>
+            <div class="scope"><canvas id="scopeVect" width="160" height="60"></canvas><label>矢量</label></div>
+            <div class="scope"><canvas id="scopeParade" width="160" height="60"></canvas><label>检阅</label></div>
+            <div class="scope"><canvas id="scopeHist" width="160" height="60"></canvas><label>直方图</label></div>
+          </div>
+        </div>
+        <div id="cg-hsl" style="display:none">
+          <div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:10px">色相</div>
+          <div class="hsl-row"><div class="dot" style="background:#f44"></div><div class="hsl-track r"></div><span class="hsl-val">0°</span></div>
+          <div class="hsl-row"><div class="dot" style="background:#fa0"></div><div class="hsl-track" style="background:linear-gradient(90deg,#420,#f90)"></div><span class="hsl-val">+5°</span></div>
+          <div class="hsl-row"><div class="dot" style="background:#ff0"></div><div class="hsl-track" style="background:linear-gradient(90deg,#440,#ff0)"></div><span class="hsl-val">0°</span></div>
+          <div class="hsl-row"><div class="dot" style="background:#0f0"></div><div class="hsl-track g"></div><span class="hsl-val">-3°</span></div>
+          <div class="hsl-row"><div class="dot" style="background:#0af"></div><div class="hsl-track" style="background:linear-gradient(90deg,#024,#0af)"></div><span class="hsl-val">0°</span></div>
+          <div class="hsl-row"><div class="dot" style="background:#a0f"></div><div class="hsl-track" style="background:linear-gradient(90deg,#204,#a0f)"></div><span class="hsl-val">+8°</span></div>
+          <div style="font-size:12px;color:var(--text2);font-weight:600;margin:14px 0 10px">饱和度</div>
+          <div class="hsl-row"><div class="dot" style="background:#f44"></div><div class="hsl-track r"></div><span class="hsl-val">+10</span></div>
+          <div class="hsl-row"><div class="dot" style="background:#0f0"></div><div class="hsl-track g"></div><span class="hsl-val">-5</span></div>
+          <div class="hsl-row"><div class="dot" style="background:#a0f"></div><div class="hsl-track" style="background:linear-gradient(90deg,#204,#a0f)"></div><span class="hsl-val">+15</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-panel" id="panel-audio">
+      <div class="panel-header"><h3>音频</h3><button class="panel-close" onclick="closePanel()">✕</button></div>
+      <div class="panel-body">
+        <div class="slider-group"><div class="slider-label"><span>音量</span><span class="val">80%</span></div><div class="slider-track"><div class="slider-fill" style="background:linear-gradient(90deg,var(--bg4),var(--green));width:80%"></div><div class="slider-thumb" style="left:80%"></div></div></div>
+        <div class="slider-group"><div class="slider-label"><span>淡入</span><span class="val">0.5s</span></div><div class="slider-track"><div class="slider-fill" style="background:linear-gradient(90deg,var(--bg4),var(--blue));width:25%"></div><div class="slider-thumb" style="left:25%"></div></div></div>
+        <div class="slider-group"><div class="slider-label"><span>淡出</span><span class="val">1.0s</span></div><div class="slider-track"><div class="slider-fill" style="background:linear-gradient(90deg,var(--bg4),var(--blue));width:40%"></div><div class="slider-thumb" style="left:40%"></div></div></div>
+        <div style="margin-top:12px">
+          <div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:8px">降噪</div>
+          <div style="display:flex;gap:8px">
+            <button style="flex:1;padding:8px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:inherit;font-size:12px;cursor:pointer">关闭</button>
+            <button style="flex:1;padding:8px;border-radius:8px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-family:inherit;font-size:12px;cursor:pointer;font-weight:600">轻度</button>
+            <button style="flex:1;padding:8px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:inherit;font-size:12px;cursor:pointer">深度</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-panel" id="panel-effects">
+      <div class="panel-header"><h3>特效</h3><button class="panel-close" onclick="closePanel()">✕</button></div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div style="text-align:center;cursor:pointer"><div style="height:64px;border-radius:8px;background:linear-gradient(135deg,#2A1F2E,#1A1520);margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎬</div><div style="font-size:11px;color:var(--text2)">转场</div></div>
+          <div style="text-align:center;cursor:pointer"><div style="height:64px;border-radius:8px;background:linear-gradient(135deg,#1A2530,#1A2035);margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:22px">✨</div><div style="font-size:11px;color:var(--text2)">光效</div></div>
+          <div style="text-align:center;cursor:pointer"><div style="height:64px;border-radius:8px;background:linear-gradient(135deg,#1A2520,#1A2035);margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:22px">🌫</div><div style="font-size:11px;color:var(--text2)">模糊</div></div>
+          <div style="text-align:center;cursor:pointer"><div style="height:64px;border-radius:8px;background:linear-gradient(135deg,#2A2015,#1A1520);margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:22px">📺</div><div style="font-size:11px;color:var(--text2)">故障</div></div>
+          <div style="text-align:center;cursor:pointer"><div style="height:64px;border-radius:8px;background:linear-gradient(135deg,#201A2A,#1A1520);margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎨</div><div style="font-size:11px;color:var(--text2)">风格化</div></div>
+          <div style="text-align:center;cursor:pointer"><div style="height:64px;border-radius:8px;background:linear-gradient(135deg,#1A2020,#1A1520);margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:22px">📐</div><div style="font-size:11px;color:var(--text2)">变形</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-panel" id="panel-ai">
+      <div class="panel-header"><h3>AI 工具</h3><button class="panel-close" onclick="closePanel()">✕</button></div>
+      <div class="panel-body">
+        <div class="ai-cards">
+          <div class="ai-card">
+            <div class="icon interp">⇶</div>
+            <div class="info"><div class="name">智能补帧</div><div class="desc">RIFE · 30fps → 60fps</div></div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="ai-card">
+            <div class="icon enhance">⬆</div>
+            <div class="info"><div class="name">超分辨率</div><div class="desc">RealESRGAN · 1080p → 4K</div></div>
+            <div class="toggle"></div>
+          </div>
+          <div class="ai-card">
+            <div class="icon denoise">🔇</div>
+            <div class="info"><div class="name">音频降噪</div><div class="desc">RNNoise · 实时人声分离</div></div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="ai-card">
+            <div class="icon separate">🎵</div>
+            <div class="info"><div class="name">音源分离</div><div class="desc">Demucs · 人声/鼓/贝斯/其他</div></div>
+            <div class="toggle"></div>
+          </div>
+          <div class="ai-card">
+            <div class="icon caption">💬</div>
+            <div class="info"><div class="name">智能字幕</div><div class="desc">Whisper · 自动语音识别</div></div>
+            <div class="toggle on"></div>
+          </div>
+          <div class="ai-card">
+            <div class="icon track">◎</div>
+            <div class="info"><div class="name">目标追踪</div><div class="desc">SAM2 · 自动蒙版追踪</div></div>
+            <div class="toggle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SETTINGS PAGE ===== -->
+  <div class="page" id="page-settings">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <div class="icons">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+      </div>
+    </div>
+    <div class="settings-header"><h1>设置</h1></div>
+    <div class="settings-scroll">
+      <div class="settings-profile">
+        <div class="settings-avatar">N</div>
+        <div class="info"><div class="name">NexClip 用户</div><div class="email">user@nexclip.app</div></div>
+        <button class="edit">✎</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="title">项目</div>
+        <div class="settings-group">
+          <div class="setting-item"><div class="icon quality">⚙</div><span class="label">默认画质</span><span class="value">1080p</span><span class="arrow">›</span></div>
+          <div class="setting-item"><div class="icon format">📁</div><span class="label">导出格式</span><span class="value">MP4 H.265</span><span class="arrow">›</span></div>
+          <div class="setting-item"><div class="icon watermark">💧</div><span class="label">水印</span><div class="switch"></div></div>
+          <div class="setting-item"><div class="icon storage">💾</div><span class="label">存储位置</span><span class="value">内部存储</span><span class="arrow">›</span></div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="title">性能</div>
+        <div class="settings-group">
+          <div class="setting-item"><div class="icon gpu">🖥</div><span class="label">GPU 加速</span><div class="switch on"></div></div>
+          <div class="setting-item"><div class="icon ai">🤖</div><span class="label">AI 推理精度</span><span class="value">FP16</span><span class="arrow">›</span></div>
+          <div class="setting-item"><div class="icon cache">🗑</div><span class="label">缓存管理</span><span class="value">1.2 GB</span><span class="arrow">›</span></div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="title">外观</div>
+        <div class="settings-group">
+          <div class="setting-item"><div class="icon theme">🌙</div><span class="label">深色模式</span><div class="switch on"></div></div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="title">关于</div>
+        <div class="settings-group">
+          <div class="setting-item"><div class="icon about">ℹ</div><span class="label">版本</span><span class="value">1.0.0</span></div>
+          <div class="setting-item"><div class="icon feedback">💬</div><span class="label">反馈与帮助</span><span class="arrow">›</span></div>
+        </div>
+      </div>
+
+      <div class="settings-version">Nex<span>Clip</span> v1.0.0</div>
+    </div>
+
+    <div class="home-nav">
+      <button class="nav-item" onclick="switchPage('home')">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>首页</span>
+      </button>
+      <button class="nav-item" onclick="switchPage('editor')">
+        <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+        <span>剪辑</span>
+      </button>
+      <button class="nav-item active" onclick="switchPage('settings')">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1112 8.4a3.6 3.6 0 010 7.2z"/></svg>
+        <span>设置</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Page switching
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+  const page = document.getElementById('page-' + name);
+  page.style.display = 'flex';
+  requestAnimationFrame(() => page.classList.add('active'));
+  closePanel();
+}
+
+// Panel toggle
+let currentPanel = null;
+function togglePanel(name) {
+  const panel = document.getElementById('panel-' + name);
+  const btns = document.querySelectorAll('.tool-btn');
+  if (currentPanel === name) { closePanel(); return; }
+  closePanel();
+  panel.classList.add('show');
+  currentPanel = name;
+  btns.forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+function closePanel() {
+  document.querySelectorAll('.editor-panel').forEach(p => p.classList.remove('show'));
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  currentPanel = null;
+}
+
+// Color grading tabs
+function switchCGTab(el, id) {
+  el.parentElement.querySelectorAll('.cg-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['cg-basic','cg-curves','cg-wheels','cg-hsl'].forEach(t => {
+    document.getElementById(t).style.display = t === id ? 'block' : 'none';
+  });
+  if (id === 'cg-wheels') drawScopes();
+}
+
+// AI toggle
+document.querySelectorAll('.ai-card .toggle').forEach(t => {
+  t.addEventListener('click', () => t.classList.toggle('on'));
+});
+
+// Settings toggle
+document.querySelectorAll('.setting-item .switch').forEach(s => {
+  s.addEventListener('click', () => s.classList.toggle('on'));
+});
+
+// Speed presets
+document.querySelectorAll('.speed-preset').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.speed-preset').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    drawSpeedCurve(p.textContent);
+  });
+});
+
+// Draw speed curve
+function drawSpeedCurve(type) {
+  const c = document.getElementById('speedCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = '#2A2A30';
+  ctx.lineWidth = .5;
+  for (let i = 0; i <= 4; i++) { ctx.beginPath(); ctx.moveTo(0,h*i/4); ctx.lineTo(w,h*i/4); ctx.stroke(); }
+  for (let i = 0; i <= 6; i++) { ctx.beginPath(); ctx.moveTo(w*i/6,0); ctx.lineTo(w*i/6,h); ctx.stroke(); }
+  ctx.strokeStyle = '#E04E2A';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  const curves = {
+    '线性': [[0,h],[w,0]],
+    '缓入': [[0,h],[w*.3,h],[w,0]],
+    '缓出': [[0,h],[w*.7,0],[w,0]],
+    '缓入出': [[0,h],[w*.3,h*.5],[w*.7,h*.5],[w,0]],
+    '弹性': [[0,h],[w*.2,h*.6],[w*.35,h*.2],[w*.5,h*.4],[w*.65,h*.1],[w*.8,h*.15],[w,0]],
+    '自定义': [[0,h],[w*.2,h*.8],[w*.5,h*.3],[w*.8,h*.1],[w,0]]
+  };
+  const pts = curves[type] || curves['线性'];
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  if (pts.length === 2) {
+    ctx.lineTo(pts[1][0], pts[1][1]);
+  } else {
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  }
+  ctx.stroke();
+  // Points
+  ctx.fillStyle = '#fff';
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p[0],p[1],4,0,Math.PI*2); ctx.fill(); });
+}
+
+// Draw scopes
+function drawScopes() {
+  // Waveform
+  const wc = document.getElementById('scopeWave');
+  if (wc) {
+    const ctx = wc.getContext('2d');
+    ctx.clearRect(0,0,160,60);
+    ctx.fillStyle = '#08080A';
+    ctx.fillRect(0,0,160,60);
+    for (let x = 0; x < 160; x += 2) {
+      const h = 20 + Math.random() * 30;
+      const g = ctx.createLinearGradient(x,60-h,x,60);
+      g.addColorStop(0,'rgba(224,78,42,0.1)');
+      g.addColorStop(0.5,'rgba(224,78,42,0.6)');
+      g.addColorStop(1,'rgba(224,78,42,0.1)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x,60-h,2,h);
+    }
+  }
+  // Vectorscope
+  const vc = document.getElementById('scopeVect');
+  if (vc) {
+    const ctx = vc.getContext('2d');
+    ctx.clearRect(0,0,160,60);
+    ctx.fillStyle = '#08080A';
+    ctx.fillRect(0,0,160,60);
+    ctx.strokeStyle = 'rgba(224,78,42,0.3)';
+    ctx.beginPath(); ctx.arc(80,30,25,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(80,30,15,0,Math.PI*2); ctx.stroke();
+    for (let i = 0; i < 60; i++) {
+      const a = Math.random()*Math.PI*2, r = Math.random()*22;
+      ctx.fillStyle = `rgba(224,78,42,${0.3+Math.random()*0.5})`;
+      ctx.fillRect(80+Math.cos(a)*r, 30+Math.sin(a)*r, 1.5, 1.5);
+    }
+  }
+  // Parade
+  const pc = document.getElementById('scopeParade');
+  if (pc) {
+    const ctx = pc.getContext('2d');
+    ctx.clearRect(0,0,160,60);
+    ctx.fillStyle = '#08080A';
+    ctx.fillRect(0,0,160,60);
+    ['rgba(255,60,60,','rgba(60,255,60,','rgba(60,100,255,'].forEach((c,i) => {
+      for (let x = i*53; x < (i+1)*53; x += 2) {
+        const h = 15 + Math.random() * 35;
+        ctx.fillStyle = c + (0.2+Math.random()*0.4) + ')';
+        ctx.fillRect(x,60-h,2,h);
+      }
+    });
+  }
+  // Histogram
+  const hc = document.getElementById('scopeHist');
+  if (hc) {
+    const ctx = hc.getContext('2d');
+    ctx.clearRect(0,0,160,60);
+    ctx.fillStyle = '#08080A';
+    ctx.fillRect(0,0,160,60);
+    for (let x = 0; x < 160; x++) {
+      const v = Math.sin(x/25)*15 + 25 + Math.random()*10;
+      ctx.fillStyle = `rgba(224,78,42,${0.15+v/80})`;
+      ctx.fillRect(x,60-v,1,v);
+    }
+  }
+}
+
+// Init
+drawSpeedCurve('线性');
+</script>
+</body>
+</html>
