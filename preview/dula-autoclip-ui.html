@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>朵拉快剪</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#f0f0f0;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.phone{width:393px;height:852px;background:#f5f5f5;position:relative;overflow:hidden;border-radius:40px;box-shadow:0 20px 60px rgba(0,0,0,0.15)}
+.page{position:absolute;inset:0;display:none;flex-direction:column;background:#f5f5f5}
+.page.active{display:flex}
+
+/* Status Bar */
+.status{display:flex;justify-content:space-between;align-items:center;padding:14px 24px 8px;font-size:14px;font-weight:600;color:#333;flex-shrink:0;background:#fff}
+.status .r{display:flex;gap:4px;align-items:center;font-size:12px}
+.status .r svg{width:16px;height:16px;fill:#333}
+
+/* Tab Bar */
+.tabs{display:flex;background:#fff;border-bottom:1px solid #eee;flex-shrink:0}
+.tab{flex:1;padding:12px 0;text-align:center;font-size:15px;color:#999;cursor:pointer;border:none;background:none;font-family:inherit;position:relative;transition:color .2s}
+.tab.on{color:#333;font-weight:600}
+.tab.on::after{content:'';position:absolute;bottom:0;left:30%;right:30%;height:3px;background:#FF6B35;border-radius:2px}
+
+/* Banner */
+.banner{margin:12px 16px;border-radius:12px;overflow:hidden;height:130px;position:relative;flex-shrink:0;cursor:pointer}
+.banner-bg{position:absolute;inset:0;background:linear-gradient(135deg,#FF6B35,#FF8F5E,#FFB088)}
+.banner-content{position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;justify-content:center;color:#fff}
+.banner-title{font-size:22px;font-weight:700;margin-bottom:4px}
+.banner-sub{font-size:13px;opacity:.9;margin-bottom:10px}
+.banner-btn{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.25);backdrop-filter:blur(6px);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;width:fit-content;border:none;color:#fff;cursor:pointer}
+.banner-dots{position:absolute;bottom:10px;right:16px;display:flex;gap:4px}
+.banner-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.4)}
+.banner-dot.on{background:#fff;width:16px;border-radius:3px}
+
+/* Section */
+.section{padding:16px 16px 8px;flex-shrink:0}
+.section-title{font-size:16px;font-weight:600;color:#333;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.section-more{font-size:13px;color:#999;font-weight:400}
+
+/* Tool Grid */
+.tool-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:#fff;border-radius:12px;overflow:hidden;margin:0 16px;flex-shrink:0}
+.tool-item{display:flex;flex-direction:column;align-items:center;padding:16px 8px 12px;cursor:pointer;transition:background .15s;border:none;background:none;font-family:inherit}
+.tool-item:active{background:#f5f5f5}
+.tool-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:8px;position:relative}
+.tool-icon.orange{background:linear-gradient(135deg,#FF6B35,#FF8F5E)}
+.tool-icon.blue{background:linear-gradient(135deg,#4A90D9,#6BA8E8)}
+.tool-icon.green{background:linear-gradient(135deg,#34C759,#5ED87B)}
+.tool-icon.purple{background:linear-gradient(135deg,#AF52DE,#C77DEB)}
+.tool-icon.red{background:linear-gradient(135deg,#FF3B30,#FF6961)}
+.tool-icon.teal{background:linear-gradient(135deg,#5AC8FA,#7DD6FB)}
+.tool-icon.pink{background:linear-gradient(135deg,#FF2D55,#FF5E7E)}
+.tool-icon.yellow{background:linear-gradient(135deg,#FFCC00,#FFD633)}
+.tool-icon.indigo{background:linear-gradient(135deg,#5856D6,#7B79E0)}
+.tool-icon.mint{background:linear-gradient(135deg,#00C7BE,#33D4CC)}
+.tool-icon.coral{background:linear-gradient(135deg,#FF6B6B,#FF8E8E)}
+.tool-icon.sky{background:linear-gradient(135deg,#007AFF,#3395FF)}
+.tool-icon .badge{position:absolute;top:-4px;right:-4px;background:#FF3B30;color:#fff;font-size:9px;padding:1px 4px;border-radius:6px;font-weight:600;white-space:nowrap}
+.tool-name{font-size:12px;color:#333;font-weight:500;text-align:center;line-height:1.3}
+
+/* Hot Tag */
+.hot-tag{display:inline-block;background:#FF3B30;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;font-weight:600;margin-left:2px;vertical-align:top}
+
+/* Scroll */
+.scroll{flex:1;overflow-y:auto;padding-bottom:80px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+
+/* Bottom Nav */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid #eee;padding-bottom:20px;z-index:50}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 4px;border:none;background:none;cursor:pointer;font-family:inherit;color:#999;transition:color .2s}
+.nav-item svg{width:24px;height:24px;fill:currentColor}
+.nav-item span{font-size:11px;font-weight:500}
+.nav-item.on{color:#FF6B35}
+
+/* ===== TOOL PAGE ===== */
+.tool-page{position:absolute;inset:0;display:none;flex-direction:column;background:#f5f5f5;z-index:60}
+.tool-page.active{display:flex}
+.tool-header{display:flex;align-items:center;padding:14px 16px;background:#fff;border-bottom:1px solid #eee;flex-shrink:0}
+.tool-back{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:none;font-size:20px;color:#333}
+.tool-header-title{flex:1;text-align:center;font-size:17px;font-weight:600;color:#333;margin-right:32px}
+
+.tool-content{flex:1;overflow-y:auto;padding:16px;scrollbar-width:none}
+.tool-content::-webkit-scrollbar{display:none}
+
+/* Upload Area */
+.upload-area{background:#fff;border-radius:12px;padding:40px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;margin-bottom:16px;border:2px dashed #ddd;transition:border-color .2s}
+.upload-area:active{border-color:#FF6B35}
+.upload-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#FF8F5E);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.upload-icon svg{width:28px;height:28px;fill:#fff}
+.upload-text{font-size:15px;color:#333;font-weight:500;margin-bottom:4px}
+.upload-hint{font-size:13px;color:#999}
+
+/* Recent Files */
+.recent-title{font-size:15px;font-weight:600;color:#333;margin-bottom:12px}
+.recent-list{display:flex;flex-direction:column;gap:10px}
+.recent-item{display:flex;align-items:center;gap:12px;background:#fff;border-radius:10px;padding:12px;cursor:pointer}
+.recent-item:active{background:#fafafa}
+.recent-thumb{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,#ddd,#eee);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;position:relative}
+.recent-thumb .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.15)}
+.recent-thumb .play svg{width:20px;height:20px;fill:#fff}
+.recent-info{flex:1;min-width:0}
+.recent-name{font-size:14px;font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-meta{font-size:12px;color:#999;margin-top:2px}
+.recent-arrow{color:#ccc;font-size:16px}
+
+/* Speed Page */
+.speed-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.speed-preset{background:#fff;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.speed-preset:active,.speed-preset.on{border-color:#FF6B35;background:#FFF5F0}
+.speed-preset .val{font-size:20px;font-weight:700;color:#333;margin-bottom:2px}
+.speed-preset.on .val{color:#FF6B35}
+.speed-preset .lbl{font-size:11px;color:#999}
+
+.speed-slider{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px}
+.speed-slider-label{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px;color:#333}
+.speed-slider-label .v{color:#FF6B35;font-weight:600}
+.slider-track{height:6px;background:#eee;border-radius:3px;position:relative}
+.slider-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#FF6B35,#FF8F5E);border-radius:3px;width:50%}
+.slider-thumb{position:absolute;top:50%;width:22px;height:22px;background:#fff;border:3px solid #FF6B35;border-radius:50%;transform:translate(-50%,-50%);left:50%;box-shadow:0 2px 6px rgba(255,107,53,0.3)}
+
+/* Crop Page */
+.crop-preview{background:#000;border-radius:12px;aspect-ratio:16/9;margin-bottom:16px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.crop-preview .inner{width:70%;height:70%;border:2px dashed rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);font-size:13px}
+.crop-ratios{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.crop-ratio{background:#fff;border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.crop-ratio.on{border-color:#FF6B35;background:#FFF5F0}
+.crop-ratio .shape{width:32px;height:32px;margin:0 auto 6px;border:2px solid #999;border-radius:2px}
+.crop-ratio.on .shape{border-color:#FF6B35}
+.crop-ratio .lbl{font-size:12px;color:#666}
+.crop-ratio.on .lbl{color:#FF6B35;font-weight:600}
+
+/* Watermark Page */
+.wm-preview{background:#222;border-radius:12px;aspect-ratio:16/9;margin-bottom:16px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.wm-preview .wm-box{border:2px dashed #FF6B35;padding:8px 16px;position:relative}
+.wm-preview .wm-text{color:rgba(255,255,255,0.6);font-size:14px}
+.wm-actions{display:flex;flex-direction:column;gap:10px}
+.wm-action{background:#fff;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.wm-action:active{background:#fafafa}
+.wm-action .ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.wm-action .ic.orange{background:#FFF5F0;color:#FF6B35}
+.wm-action .ic.blue{background:#EBF5FF;color:#007AFF}
+.wm-action .info{flex:1}
+.wm-action .info .t{font-size:14px;font-weight:500;color:#333}
+.wm-action .info .d{font-size:12px;color:#999;margin-top:2px}
+.wm-action .arrow{color:#ccc}
+
+/* Extract Page */
+.extract-area{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px}
+.extract-input{display:flex;gap:10px;margin-bottom:16px}
+.extract-input input{flex:1;height:44px;border-radius:10px;border:1.5px solid #ddd;padding:0 14px;font-size:14px;outline:none;font-family:inherit}
+.extract-input input:focus{border-color:#FF6B35}
+.extract-input button{height:44px;padding:0 20px;background:linear-gradient(135deg,#FF6B35,#FF8F5E);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.extract-input button:active{opacity:.8}
+.extract-tips{font-size:12px;color:#999;line-height:1.6}
+.extract-tips b{color:#666}
+.extract-supported{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.extract-supported span{font-size:11px;padding:3px 8px;background:#f5f5f5;border-radius:4px;color:#666}
+
+/* Merge Page */
+.merge-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.merge-item{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:12px}
+.merge-item .num{width:24px;height:24px;border-radius:50%;background:#FF6B35;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.merge-item .thumb{width:48px;height:48px;border-radius:6px;background:#eee;flex-shrink:0}
+.merge-item .info{flex:1;font-size:13px;color:#333}
+.merge-item .del{width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#ccc;cursor:pointer;font-size:18px}
+.merge-add{background:#fff;border-radius:10px;padding:14px;display:flex;align-items:center;justify-content:center;gap:6px;color:#FF6B35;font-size:14px;font-weight:500;cursor:pointer;border:2px dashed #FF6B35}
+.merge-add:active{background:#FFF5F0}
+
+/* Action Button */
+.action-btn{position:sticky;bottom:0;padding:12px 16px;background:#f5f5f5}
+.action-btn button{width:100%;height:50px;background:linear-gradient(135deg,#FF6B35,#FF8F5E);border:none;border-radius:25px;color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(255,107,53,0.3)}
+.action-btn button:active{opacity:.8}
+.action-btn button:disabled{background:#ccc;box-shadow:none;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <!-- HOME PAGE -->
+  <div class="page active" id="p-home">
+    <div class="status">
+      <span>9:41</span>
+      <div class="r">
+        <span>●●●●</span>
+        <span>5G</span>
+        <span>87%</span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on">首页</button>
+      <button class="tab">模板</button>
+      <button class="tab">发现</button>
+      <button class="tab">我的</button>
+    </div>
+
+    <div class="scroll">
+      <!-- Banner -->
+      <div class="banner">
+        <div class="banner-bg"></div>
+        <div class="banner-content">
+          <div class="banner-title">视频无痕提取</div>
+          <div class="banner-sub">智能识别，一键去除视频水印</div>
+          <button class="banner-btn" onclick="goTool('extract')">立即体验 →</button>
+        </div>
+        <div class="banner-dots">
+          <div class="banner-dot on"></div>
+          <div class="banner-dot"></div>
+          <div class="banner-dot"></div>
+        </div>
+      </div>
+
+      <!-- Core Tools -->
+      <div class="section">
+        <div class="section-title">核心功能</div>
+      </div>
+      <div class="tool-grid">
+        <button class="tool-item" onclick="goTool('extract')">
+          <div class="tool-icon orange"><span class="badge">HOT</span>🔍</div>
+          <div class="tool-name">视频无痕提取</div>
+        </button>
+        <button class="tool-item" onclick="goTool('wm-remove')">
+          <div class="tool-icon blue">🚫</div>
+          <div class="tool-name">视频去水印</div>
+        </button>
+        <button class="tool-item" onclick="goTool('img-wm')">
+          <div class="tool-icon green">🖼</div>
+          <div class="tool-name">图片去水印</div>
+        </button>
+        <button class="tool-item" onclick="goTool('trim')">
+          <div class="tool-icon purple">✂️</div>
+          <div class="tool-name">时长剪辑</div>
+        </button>
+      </div>
+
+      <!-- More Tools -->
+      <div class="section" style="margin-top:16px">
+        <div class="section-title">更多工具</div>
+      </div>
+      <div class="tool-grid">
+        <button class="tool-item" onclick="goTool('merge')">
+          <div class="tool-icon teal">🔗</div>
+          <div class="tool-name">视频拼接</div>
+        </button>
+        <button class="tool-item" onclick="goTool('crop')">
+          <div class="tool-icon pink">📐</div>
+          <div class="tool-name">自由剪裁</div>
+        </button>
+        <button class="tool-item" onclick="goTool('cover')">
+          <div class="tool-icon yellow">📷</div>
+          <div class="tool-name">更改封面</div>
+        </button>
+        <button class="tool-item" onclick="goTool('audio')">
+          <div class="tool-icon indigo">🎵</div>
+          <div class="tool-name">音频提取</div>
+        </button>
+        <button class="tool-item" onclick="goTool('wm-add')">
+          <div class="tool-icon red">©️</div>
+          <div class="tool-name">添加水印</div>
+        </button>
+        <button class="tool-item" onclick="goTool('mirror')">
+          <div class="tool-icon mint">🪞</div>
+          <div class="tool-name">视频镜像</div>
+        </button>
+        <button class="tool-item" onclick="goTool('reverse')">
+          <div class="tool-icon coral">⏪</div>
+          <div class="tool-name">视频倒放</div>
+        </button>
+        <button class="tool-item" onclick="goTool('compress')">
+          <div class="tool-icon sky">📦</div>
+          <div class="tool-name">视频压缩</div>
+        </button>
+        <button class="tool-item" onclick="goTool('rotate')">
+          <div class="tool-icon orange">🔄</div>
+          <div class="tool-name">视频旋转</div>
+        </button>
+        <button class="tool-item" onclick="goTool('speed')">
+          <div class="tool-icon purple">⚡</div>
+          <div class="tool-name">视频变速</div>
+        </button>
+      </div>
+
+      <div style="height:20px"></div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-item on">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>首页</span>
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>模板</span>
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88" fill="currentColor"/></svg>
+        <span>发现</span>
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 21a8 8 0 1 0-16 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <span>我的</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- TOOL: Video Extract -->
+  <div class="tool-page" id="t-extract">
+    <div class="tool-header">
+      <button class="tool-back" onclick="goHome()">←</button>
+      <div class="tool-header-title">视频无痕提取</div>
+    </div>
+    <div class="tool-content">
+      <div class="extract-area">
+        <div class="extract-input">
+          <input type="text" placeholder="粘贴视频链接...">
+          <button>解析</button>
+        </div>
+        <div class="extract-tips">
+          <b>支持平台：</b>粘贴各大平台视频链接，智能解析提取无水印视频<br>
+          <b>使用方法：</b>复制视频分享链接 → 粘贴到上方 → 点击解析
+        </div>
+        <div class="extract-supported">
+          <span>抖音</span><span>快手</span><span>小红书</span><span>B站</span><span>微博</span><span>皮皮虾</span><span>西瓜视频</span><span>更多</span>
+        </div>
+      </div>
+      <div class="recent-title">最近提取</div>
+      <div class="recent-list">
+        <div class="recent-item">
+          <div class="recent-thumb"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21"/></svg></div></div>
+          <div class="recent-info"><div class="recent-name">夏日Vlog_无水印.mp4</div><div class="recent-meta">1080P · 23.5MB · 今天 14:30</div></div>
+          <span class="recent-arrow">›</span>
+        </div>
+        <div class="recent-item">
+          <div class="recent-thumb"><div class="play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21"/></svg></div></div>
+          <div class="recent-info"><div class="recent-name">产品展示_无水印.mp4</div><div class="recent-meta">720P · 8.2MB · 昨天 09:15</div></div>
+          <span class="recent-arrow">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOL: Speed -->
+  <div class="tool-page" id="t-speed">
+    <div class="tool-header">
+      <button class="tool-back" onclick="goHome()">←</button>
+      <div class="tool-header-title">视频变速</div>
+    </div>
+    <div class="tool-content">
+      <div class="upload-area">
+        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="upload-text">选择视频</div>
+        <div class="upload-hint">从相册中选择需要变速的视频</div>
+      </div>
+      <div class="speed-presets">
+        <div class="speed-preset" onclick="setSpeed(this)"><div class="val">0.25x</div><div class="lbl">超慢</div></div>
+        <div class="speed-preset" onclick="setSpeed(this)"><div class="val">0.5x</div><div class="lbl">慢速</div></div>
+        <div class="speed-preset" onclick="setSpeed(this)"><div class="val">0.75x</div><div class="lbl">较慢</div></div>
+        <div class="speed-preset on" onclick="setSpeed(this)"><div class="val">1.0x</div><div class="lbl">原速</div></div>
+        <div class="speed-preset" onclick="setSpeed(this)"><div class="val">1.5x</div><div class="lbl">较快</div></div>
+        <div class="speed-preset" onclick="setSpeed(this)"><div class="val">2.0x</div><div class="lbl">快速</div></div>
+      </div>
+      <div class="speed-slider">
+        <div class="speed-slider-label"><span>播放速度</span><span class="v">1.0x</span></div>
+        <div class="slider-track">
+          <div class="slider-fill"></div>
+          <div class="slider-thumb"></div>
+        </div>
+      </div>
+    </div>
+    <div class="action-btn"><button>开始变速</button></div>
+  </div>
+
+  <!-- TOOL: Trim -->
+  <div class="tool-page" id="t-trim">
+    <div class="tool-header">
+      <button class="tool-back" onclick="goHome()">←</button>
+      <div class="tool-header-title">时长剪辑</div>
+    </div>
+    <div class="tool-content">
+      <div class="upload-area">
+        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="upload-text">选择视频</div>
+        <div class="upload-hint">从相册中选择需要剪辑的视频</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:500;color:#333;margin-bottom:12px">剪辑范围</div>
+        <div style="height:60px;background:#000;border-radius:8px;position:relative;margin-bottom:12px;overflow:hidden">
+          <div style="position:absolute;left:20%;right:30%;top:0;bottom:0;border:2px solid #FF6B35;background:rgba(255,107,53,0.15)"></div>
+          <div style="position:absolute;left:20%;top:0;bottom:0;width:2px;background:#FF6B35"></div>
+          <div style="position:absolute;right:30%;top:0;bottom:0;width:2px;background:#FF6B35"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#999">
+          <span>00:03</span>
+          <span>00:12 / 00:20</span>
+          <span>00:14</span>
+        </div>
+      </div>
+    </div>
+    <div class="action-btn"><button>开始剪辑</button></div>
+  </div>
+
+  <!-- TOOL: Crop -->
+  <div class="tool-page" id="t-crop">
+    <div class="tool-header">
+      <button class="tool-back" onclick="goHome()">←</button>
+      <div class="tool-header-title">自由剪裁</div>
+    </div>
+    <div class="tool-content">
+      <div class="crop-preview">
+        <div class="inner">拖动调整剪裁区域</div>
+      </div>
+      <div class="crop-ratios">
+        <div class="crop-ratio on" onclick="setCrop(this)"><div class="shape" style="width:28px;height:28px"></div><div class="lbl">1:1</div></div>
+        <div class="crop-ratio" onclick="setCrop(this)"><div class="shape" style="width:32px;height:24px"></div><div class="lbl">4:3</div></div>
+        <div class="crop-ratio" onclick="setCrop(this)"><div class="shape" style="width:32px;height:18px"></div><div class="lbl">16:9</div></div>
+        <div class="crop-ratio" onclick="setCrop(this)"><div class="shape" style="width:22px;height:32px"></div><div class="lbl">9:16</div></div>
+      </div>
+    </div>
+    <div class="action-btn"><button>开始剪裁</button></div>
+  </div>
+
+  <!-- TOOL: Watermark Remove -->
+  <div class="tool-page" id="t-wm-remove">
+    <div class="tool-header">
+      <button class="tool-back" onclick="goHome()">←</button>
+      <div class="tool-header-title">视频去水印</div>
+    </div>
+    <div class="tool-content">
+      <div class="upload-area">
+        <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+        <div class="upload-text">选择视频</div>
+        <div class="upload-hint">从相册中选择需要去水印的视频</div>
+      </div>
+      <div class="wm-actions">
+        <div class="wm-action">
+          <div class="ic orange">🔲</div>
+          <div class="info"><div class="t">框选去水印</div><div class="d">手动框选水印区域，智能去除</div></div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="wm-action">
+          <div class="ic blue">🤖</div>
+          <div class="info"><div class="t">AI智能识别</div><div class="d">自动检测水印位置，一键去除</div></div>
+          <span class="arrow">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOL: Merge -->
+  <div class="tool-page" id="t-merge">
+    <div class="tool-header">
+      <button class="tool-back" onclick="goHome()">←</button>
+      <div class="tool-header-title">视频拼接</div>
+    </div>
+    <div class="tool-content">
+      <div class="merge-list">
+        <div class="merge-item">
+          <div class="num">1</div>
+          <div class="thumb"></div>
+          <div class="info">视频1.mp4 · 00:15</div>
+          <div class="del">×</div>
+        </div>
+        <div class="merge-item">
+          <div class="num">2</div>
+          <div class="thumb"></div>
+          <div class="info">视频2.mp4 · 00:23</div>
+          <div class="del">×</div>
+        </div>
+      </div>
+      <div class="merge-add">+ 添加视频</div>
+      <div style="background:#fff;border-radius:12px;padding:16px;margin-top:16px">
+        <div style="font-size:14px;font-weight:500;color:#333;margin-bottom:12px">拼接方式</div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;padding:12px;background:#FFF5F0;border:2px solid #FF6B35;border-radius:10px;text-align:center;font-size:13px;color:#FF6B35;font-weight:500;cursor:pointer">顺序拼接</div>
+          <div style="flex:1;padding:12px;background:#fff;border:2px solid #eee;border-radius:10px;text-align:center;font-size:13px;color:#666;cursor:pointer">左右同框</div>
+          <div style="flex:1;padding:12px;background:#fff;border:2px solid #eee;border-radius:10px;text-align:center;font-size:13px;color:#666;cursor:pointer">上下同框</div>
+        </div>
+      </div>
+    </div>
+    <div class="action-btn"><button>开始拼接</button></div>
+  </div>
+
+  <!-- Generic tool pages for others -->
+  <div class="tool-page" id="t-img-wm">
+    <div class="tool-header"><button class="tool-back" onclick="goHome()">←</button><div class="tool-header-title">图片去水印</div></div>
+    <div class="tool-content">
+      <div class="upload-area"><div class="upload-icon">🖼</div><div class="upload-text">选择图片</div><div class="upload-hint">从相册中选择需要去水印的图片</div></div>
+      <div class="wm-actions">
+        <div class="wm-action"><div class="ic orange">🔲</div><div class="info"><div class="t">框选去水印</div><div class="d">手动框选水印区域，智能填充去除</div></div><span class="arrow">›</span></div>
+        <div class="wm-action"><div class="ic blue">🤖</div><div class="info"><div class="t">AI智能识别</div><div class="d">自动检测水印位置，一键去除</div></div><span class="arrow">›</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-page" id="t-cover">
+    <div class="tool-header"><button class="tool-back" onclick="goHome()">←</button><div class="tool-header-title">更改封面</div></div>
+    <div class="tool-content">
+      <div class="upload-area"><div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div><div class="upload-text">选择视频</div><div class="upload-hint">从相册中选择需要更改封面的视频</div></div>
+      <div style="background:#fff;border-radius:12px;padding:16px">
+        <div style="font-size:14px;font-weight:500;color:#333;margin-bottom:12px">选择封面帧</div>
+        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px">
+          <div style="width:64px;height:64px;border-radius:6px;background:#eee;flex-shrink:0;border:2px solid #FF6B35;cursor:pointer"></div>
+          <div style="width:64px;height:64px;border-radius:6px;background:#ddd;flex-shrink:0;cursor:pointer"></div>
+          <div style="width:64px;height:64px;border-radius:6px;background:#ddd;flex-shrink:0;cursor:pointer"></div>
+          <div style="width:64px;height:64px;border-radius:6px;background:#ddd;flex-shrink:0;cursor:pointer"></div>
+          <div style="width:64px;height:64px;border-radius:6px;background:#ddd;flex-shrink:0;cursor:pointer"></div>
+        </div>
+      </div>
+    </div>
+    <div class="action-btn"><button>保存封面</button></div>
+  </div>
+
+  <div class="tool-page" id="t-audio">
+    <div class="tool-header"><button class="tool-back" onclick="goHome()">←</button><div class="tool-header-title">音频提取</div></div>
+    <div class="tool-content">
+      <div class="upload-area"><div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div><div class="upload-text">选择视频</div><div class="upload-hint">从视频中提取音频文件</div></div>
+      <div style="background:#fff;border-radius:12px;padding:16px">
+        <div style="font-size:14px;font-weight:500;color:#333;margin-bottom:12px">输出格式</div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;padding:12px;background:#FFF5F0;border:2px solid #FF6B35;border-radius:10px;text-align:center;font-size:13px;color:#FF6B35;font-weight:500">MP3</div>
+          <div style="flex:1;padding:12px;background:#fff;border:2px solid #eee;border-radius:10px;text-align:center;font-size:13px;color:#666">AAC</div>
+          <div style="flex:1;padding:12px;background:#fff;border:2px solid #eee;border-radius:10px;text-align:center;font-size:13px;color:#666">WAV</div>
+        </div>
+      </div>
+    </div>
+    <div class="action-btn"><button>提取音频</button></div>
+  </div>
+
+  <div class="tool-page" id="t-wm-add">
+    <div class="tool-header"><button class="tool-back" onclick="goHome()">←</button><div class="tool-header-title">添加水印</div></div>
+    <div class="tool-content">
+      <div class="upload-area"><div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div><div class="upload-text">选择视频</div><div class="upload-hint">为视频添加文字或图片水印</div></div>
+      <div class="wm-actions">
+        <div class="wm-action"><div class="ic orange">T</div><div class="info"><div class="t">文字水印</div><div class="d">自定义文字内容、颜色和位置</div></div><span class="arrow">›</span></div>
+        <div class="wm-action"><div class="ic blue">🖼</div><div class="info"><div class="t">图片水印</div><div class="d">从相册选择图片作为水印</div></div><span class="arrow">›</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-page" id="t-mirror">
+    <div class="tool-header"><button class="tool-back" onclick="goHome()">←</button><div class="tool-header-title">视频镜像</div></div>
+    <div class="tool-content">
+      <div class="upload-area"><div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div><div class="upload-text">选择视频</div><div class="upload-hint">一键水平翻转视频画面</div></div>
+    </div>
+    <div class="action-btn"><button>开始镜像</button></div>
+  </div>
+
+  <div class="tool-page" id="t-reverse">
+    <div class="tool-header"><button class="tool-back" onclick="goHome()">←</button><div class="tool-header-title">视频倒放</div></div>
+    <div class="tool-content">
+      <div class="upload-area"><div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div><div class="upload-text">选择视频</div><div class="upload-hint">将视频画面倒序播放</div></div>
+    </div>
+    <div class="action-btn"><button>开始倒放</button></div>
+  </div>
+
+  <div class="tool-page" id="t-compress">
+    <div class="tool-header"><button class="tool-back" onclick="goHome()">←</button><div class="tool-header-title">视频压缩</div></div>
+    <div class="tool-content">
+      <div class="upload-area"><div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div><div class="upload-text">选择视频</div><div class="upload-hint">压缩视频文件大小</div></div>
+      <div style="background:#fff;border-radius:12px;padding:16px">
+        <div style="font-size:14px;font-weight:500;color:#333;margin-bottom:12px">压缩质量</div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;padding:12px;background:#fff;border:2px solid #eee;border-radius:10px;text-align:center;font-size:13px;color:#666;cursor:pointer">低质量<br><span style="font-size:11px;color:#999">体积最小</span></div>
+          <div style="flex:1;padding:12px;background:#FFF5F0;border:2px solid #FF6B35;border-radius:10px;text-align:center;font-size:13px;color:#FF6B35;font-weight:500;cursor:pointer">均衡<br><span style="font-size:11px">推荐</span></div>
+          <div style="flex:1;padding:12px;background:#fff;border:2px solid #eee;border-radius:10px;text-align:center;font-size:13px;color:#666;cursor:pointer">高质量<br><span style="font-size:11px;color:#999">体积较大</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="action-btn"><button>开始压缩</button></div>
+  </div>
+
+  <div class="tool-page" id="t-rotate">
+    <div class="tool-header"><button class="tool-back" onclick="goHome()">←</button><div class="tool-header-title">视频旋转</div></div>
+    <div class="tool-content">
+      <div class="upload-area"><div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div><div class="upload-text">选择视频</div><div class="upload-hint">旋转视频画面角度</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        <div style="background:#fff;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;border:2px solid #FF6B35"><div style="font-size:20px;margin-bottom:4px">↻</div><div style="font-size:12px;color:#FF6B35;font-weight:500">90°</div></div>
+        <div style="background:#fff;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;border:2px solid #eee"><div style="font-size:20px;margin-bottom:4px">↺</div><div style="font-size:12px;color:#666">-90°</div></div>
+        <div style="background:#fff;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;border:2px solid #eee"><div style="font-size:20px;margin-bottom:4px">↕</div><div style="font-size:12px;color:#666">180°</div></div>
+        <div style="background:#fff;border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;border:2px solid #eee"><div style="font-size:20px;margin-bottom:4px">⇄</div><div style="font-size:12px;color:#666">翻转</div></div>
+      </div>
+    </div>
+    <div class="action-btn"><button>开始旋转</button></div>
+  </div>
+</div>
+
+<script>
+function goTool(id) {
+  document.getElementById('p-home').classList.remove('active');
+  const t = document.getElementById('t-' + id);
+  if (t) t.classList.add('active');
+}
+function goHome() {
+  document.querySelectorAll('.tool-page').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-home').classList.add('active');
+}
+function setSpeed(el) {
+  el.parentElement.querySelectorAll('.speed-preset').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+}
+function setCrop(el) {
+  el.parentElement.querySelectorAll('.crop-ratio').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+}
+</script>
+</body>
+</html>
