@@ -22,27 +22,33 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Free disk space
         run: |
           sudo rm -rf /usr/local/lib/android/sdk/ndk 2>/dev/null || true
           sudo rm -rf /usr/share/dotnet 2>/dev/null || true
           sudo apt-get clean 2>/dev/null || true
+
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
       - name: Install NDK
         run: |
           sdkmanager "ndk;${{ env.ANDROID_NDK_VERSION }}"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> $GITHUB_ENV
+
       - name: Create local.properties
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "ndk.dir=$ANDROID_HOME/ndk/${{ env.ANDROID_NDK_VERSION }}" >> local.properties
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -51,12 +57,14 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}
           restore-keys: gradle-${{ runner.os }}-
+
       - name: Cache third-party libs
         uses: actions/cache@v4
         with:
           path: app/src/main/cpp/third_party
           key: tp-v3-${{ runner.os }}
           restore-keys: tp-v3-${{ runner.os }}-
+
       - name: Link security Kotlin files
         run: |
           mkdir -p app/src/main/java/com/myvideo/editor/security
@@ -68,12 +76,13 @@ jobs:
               fi
             done
           fi
+
       - name: Build OpenSSL for Android
         run: |
           set -e
           if [ -f "app/src/main/cpp/openssl/include/openssl/ssl.h" ] && \
              [ -f "app/src/main/cpp/openssl/arm64-v8a/libcrypto.a" ]; then
-            echo "OpenSSL已存在，跳过"
+            echo "OpenSSL already exists, skipping"
             exit 0
           fi
           wget -q https://github.com/openssl/openssl/releases/download/openssl-3.2.1/openssl-3.2.1.tar.gz
@@ -104,7 +113,7 @@ jobs:
           cd ..
           echo "=== Verify OpenSSL ==="
           echo "Header count: $(find app/src/main/cpp/openssl/include/openssl -name '*.h' | wc -l)"
-          for f in ssl.h evp.h sha.h; do
+          for f in ssl.h evp.h sha.h hkdf.h; do
             if [ -f "app/src/main/cpp/openssl/include/openssl/$f" ]; then
               echo "OK: $f"
             else
@@ -112,12 +121,6 @@ jobs:
               exit 1
             fi
           done
-          if [ -f "app/src/main/cpp/openssl/include/openssl/hkdf.h" ]; then
-            echo "OK: hkdf.h"
-          else
-            echo "FAIL: hkdf.h missing"
-            exit 1
-          fi
           for f in arm64-v8a/libcrypto.a arm64-v8a/libssl.a armeabi-v7a/libcrypto.a armeabi-v7a/libssl.a; do
             if [ -f "app/src/main/cpp/openssl/$f" ]; then
               echo "OK: $f ($(du -h app/src/main/cpp/openssl/$f | cut -f1))"
@@ -126,6 +129,7 @@ jobs:
               exit 1
             fi
           done
+
       - name: Download opencv-mobile
         run: |
           mkdir -p app/src/main/cpp/third_party/opencv-mobile
@@ -137,17 +141,18 @@ jobs:
               if curl -L -f -o cv.zip "$U" --connect-timeout 15 --max-time 120 2>/dev/null; then
                 if unzip -t cv.zip >/dev/null 2>&1; then
                   unzip -q cv.zip -d app/src/main/cpp/third_party/opencv-mobile/
-            mv app/src/main/cpp/third_party/opencv-mobile/opencv-mobile-*-android-sdk/sdk app/src/main/cpp/third_party/opencv-mobile/sdk 2>/dev/null || true
-                  D=1; break 2
+                  mv app/src/main/cpp/third_party/opencv-mobile/opencv-mobile-*-android-sdk/sdk app/src/main/cpp/third_party/opencv-mobile/sdk 2>/dev/null || true
+                  D=1
+                  break 2
                 fi
               fi
               rm -f cv.zip
             done
           done
           if [ "$D" -eq 0 ]; then
-            echo "opencv-mobile 下载失败，跳过"
-
+            echo "opencv-mobile download failed, skipping"
           fi
+
       - name: Download ncnn
         run: |
           if [ -d "app/src/main/cpp/third_party/ncnn/arm64-v8a/include" ]; then exit 0; fi
@@ -160,6 +165,7 @@ jobs:
           else
             mkdir -p app/src/main/cpp/third_party/ncnn/arm64-v8a/include app/src/main/cpp/third_party/ncnn/armeabi-v7a/include
           fi
+
       - name: Build FFmpeg
         run: |
           NDK=/usr/local/lib/android/sdk/ndk/26.1.10909125
@@ -213,7 +219,7 @@ jobs:
           make install
           cd ..
           rm -rf ffmpeg_src
-          echo "FFmpeg build complete:"
+          echo "FFmpeg build complete"
           ls -la $PREFIX/lib/*.a 2>/dev/null || echo "WARNING: No .a files found!"
 
       - name: Download MNN
@@ -232,7 +238,8 @@ jobs:
                   cp "$MD/armeabi-v7a/libMNN.so" app/src/main/cpp/third_party/mnn/armeabi-v7a/lib/
                 fi
                 if [ -d "$MD/include" ]; then cp -r "$MD/include/"* app/src/main/cpp/third_party/mnn/include/; fi
-                D=1; break
+                D=1
+                break
               fi
             fi
             rm -f MNN.zip
@@ -240,6 +247,7 @@ jobs:
           if [ "$D" -eq 0 ]; then
             mkdir -p app/src/main/cpp/third_party/mnn/arm64-v8a/lib app/src/main/cpp/third_party/mnn/armeabi-v7a/lib app/src/main/cpp/third_party/mnn/include
           fi
+
       - name: Build RNNoise
         run: |
           if [ -f "app/src/main/cpp/third_party/rnnoise/arm64-v8a/lib/librnnoise.a" ]; then exit 0; fi
@@ -251,13 +259,13 @@ jobs:
             TC=$NDK/toolchains/llvm/prebuilt/linux-x86_64
             for A in "arm64-v8a aarch64-linux-android" "armeabi-v7a armv7a-linux-androideabi"; do
               ABI=$(echo $A | awk '{print $1}')
-              CC=$(echo $A | awk '{print $2}')
-              export CC="$TC/bin/${CC}26-clang"
-              export CXX="$TC/bin/${CC}26-clang++"
+              CC_PREFIX=$(echo $A | awk '{print $2}')
+              export CC="$TC/bin/${CC_PREFIX}26-clang"
+              export CXX="$TC/bin/${CC_PREFIX}26-clang++"
               export AR="$TC/bin/llvm-ar"
               export RANLIB="$TC/bin/llvm-ranlib"
               mkdir -p b_$ABI && cd b_$ABI
-              ../configure --host=$CC --disable-shared --enable-static CFLAGS="-O2" 2>/dev/null || true
+              ../configure --host=$CC_PREFIX --disable-shared --enable-static CFLAGS="-O2" 2>/dev/null || true
               make -j$(nproc) 2>/dev/null || true
               cd ..
               mkdir -p $GITHUB_WORKSPACE/app/src/main/cpp/third_party/rnnoise/$ABI/lib $GITHUB_WORKSPACE/app/src/main/cpp/third_party/rnnoise/include
@@ -272,16 +280,139 @@ jobs:
           else
             mkdir -p app/src/main/cpp/third_party/rnnoise/arm64-v8a/lib app/src/main/cpp/third_party/rnnoise/armeabi-v7a/lib app/src/main/cpp/third_party/rnnoise/include
           fi
+
       - name: Install huggingface_hub
         run: pip3 install huggingface_hub
 
       - name: Download AI Models (mandatory - build fails if any model missing)
         run: |
-          set -e
           mkdir -p app/src/main/assets/ai_models
           FAIL=0
           
-          # 每个模型的最小合法大小（字节）
+          verify_file() {
+            local f="$1"
+            local min="$2"
+            if [ ! -f "$f" ]; then
+              echo "FAIL: $(basename $f) does not exist"
+              return 1
+            fi
+            local size
+            size=$(stat -c%s "$f" 2>/dev/null || echo 0)
+            if [ "$size" -lt "$min" ]; then
+              echo "FAIL: $(basename $f) too small (${size}B < ${min}B)"
+              rm -f "$f"
+              return 1
+            fi
+            echo "OK: $(basename $f) ($(du -h "$f" | cut -f1))"
+            return 0
+          }
+          
+          echo "=== 1/6 Download Whisper tiny ONNX ==="
+          curl -L --retry 5 --retry-delay 10 --connect-timeout 60 --max-time 900 \
+            -o whisper-tiny.tar.bz2 "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2"
+          if verify_file whisper-tiny.tar.bz2 1000000; then
+            tar xjf whisper-tiny.tar.bz2
+            cp sherpa-onnx-whisper-tiny/encoder.onnx app/src/main/assets/ai_models/whisper_encoder.onnx
+            cp sherpa-onnx-whisper-tiny/decoder.onnx app/src/main/assets/ai_models/whisper_decoder.onnx
+            cp sherpa-onnx-whisper-tiny/tokens.txt app/src/main/assets/ai_models/whisper_tokens.txt
+            rm -rf sherpa-onnx-whisper-tiny whisper-tiny.tar.bz2
+          else
+            echo "Whisper download FAILED"
+            FAIL=1
+          fi
+          
+          echo "=== 2/6 Download MobileSAM ONNX ==="
+          python3 << 'PYEOF' || FAIL=1
+          from huggingface_hub import hf_hub_download
+          import shutil, sys
+          try:
+              f1 = hf_hub_download('vietanhdev/segment-anything-onnx-models', 'mobile_sam_20230629/mobile_sam.encoder.onnx')
+              shutil.copy2(f1, 'app/src/main/assets/ai_models/sam_encoder.onnx')
+              f2 = hf_hub_download('vietanhdev/segment-anything-onnx-models', 'mobile_sam_20230629/sam_vit_h_4b8939.decoder.onnx')
+              shutil.copy2(f2, 'app/src/main/assets/ai_models/sam_decoder.onnx')
+              print('MobileSAM OK')
+          except Exception as e:
+              print(f'MobileSAM FAIL: {e}')
+              sys.exit(1)
+          PYEOF
+          
+          echo "=== 3/6 Download RealESRGAN x4plus ONNX ==="
+          python3 << 'PYEOF' || FAIL=1
+          from huggingface_hub import hf_hub_download
+          import shutil, sys
+          sources = [
+              ('aihao1984/RealESRGAN-onnx', 'realesrgan-x4plus.onnx'),
+              ('schuylertibbs/realesrgan-x4plus', 'realesrgan-x4plus.onnx'),
+          ]
+          for repo, fname in sources:
+              try:
+                  f = hf_hub_download(repo, fname)
+                  shutil.copy2(f, 'app/src/main/assets/ai_models/realesrgan_x4plus.onnx')
+                  print(f'RealESRGAN OK from {repo}')
+                  sys.exit(0)
+              except Exception as e:
+                  print(f'RealESRGAN {repo} failed: {e}')
+                  continue
+          print('RealESRGAN ALL SOURCES FAILED')
+          sys.exit(1)
+          PYEOF
+          
+          echo "=== 4/6 Download RIFE v4 ONNX ==="
+          python3 << 'PYEOF' || FAIL=1
+          from huggingface_hub import hf_hub_download
+          import shutil, sys
+          try:
+              f = hf_hub_download('AXERA-TECH/RIFE.axera', 'model/rife_x2_720p.onnx')
+              shutil.copy2(f, 'app/src/main/assets/ai_models/rife_v4.onnx')
+              print('RIFE OK')
+          except Exception as e:
+              print(f'RIFE FAIL: {e}')
+              sys.exit(1)
+          PYEOF
+          
+          echo "=== 5/6 Download Demucs htdemucs_ft ONNX ==="
+          python3 << 'PYEOF' || FAIL=1
+          from huggingface_hub import hf_hub_download
+          import shutil, sys
+          sources = [
+              ('StemSplitio/htdemucs_ft_ort_v1', 'htdemucs_ft_ort_v1.onnx'),
+              ('StemSplitio/htdemucs_ort_v1', 'htdemucs_ort_v1.onnx'),
+          ]
+          for repo, fname in sources:
+              try:
+                  f = hf_hub_download(repo, fname)
+                  shutil.copy2(f, 'app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx')
+                  print(f'Demucs OK from {repo}')
+                  sys.exit(0)
+              except Exception as e:
+                  print(f'Demucs {repo} failed: {e}')
+                  continue
+          print('Demucs ALL SOURCES FAILED')
+          sys.exit(1)
+          PYEOF
+          
+          echo "=== 6/6 Download RNNoise ONNX ==="
+          python3 << 'PYEOF' || FAIL=1
+          from huggingface_hub import hf_hub_download
+          import shutil, sys
+          sources = [
+              ('niobures/RNNoise', 'rnnoise.onnx'),
+              ('onnx-community/rnnoise-denoising', 'onnx/model.onnx'),
+          ]
+          for repo, fname in sources:
+              try:
+                  f = hf_hub_download(repo, fname)
+                  shutil.copy2(f, 'app/src/main/assets/ai_models/rnnoise.onnx')
+                  print(f'RNNoise OK from {repo}')
+                  sys.exit(0)
+              except Exception as e:
+                  print(f'RNNoise {repo} failed: {e}')
+                  continue
+          print('RNNoise ALL SOURCES FAILED')
+          sys.exit(1)
+          PYEOF
+          
+          echo "=== Final verification: all models must be valid ==="
           declare -A MIN_SIZE
           MIN_SIZE[whisper_encoder.onnx]=30000000
           MIN_SIZE[whisper_decoder.onnx]=1000000
@@ -293,141 +424,6 @@ jobs:
           MIN_SIZE[demucs_htdemucs_ft.onnx]=50000000
           MIN_SIZE[rnnoise.onnx]=500000
           
-          verify_file() {
-            local f="$1"
-            local min="$2"
-            if [ ! -f "$f" ]; then
-              echo "FAIL: $(basename $f) 不存在"
-              return 1
-            fi
-            local size=$(stat -c%s "$f" 2>/dev/null || echo 0)
-            if [ "$size" -lt "$min" ]; then
-              echo "FAIL: $(basename $f) 太小 (${size}B < ${min}B)，不是合法模型文件"
-              rm -f "$f"
-              return 1
-            fi
-            echo "OK: $(basename $f) ($(du -h "$f" | cut -f1))"
-            return 0
-          }
-          
-          echo "============================================"
-          echo "=== 1/6 下载 Whisper tiny ONNX ==="
-          echo "============================================"
-          curl -L --retry 5 --retry-delay 10 --connect-timeout 60 --max-time 900 \
-            -o whisper-tiny.tar.bz2 "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2"
-          verify_file whisper-tiny.tar.bz2 1000000 || { FAIL=1; echo "Whisper下载失败"; }
-          if [ "$FAIL" -eq 0 ]; then
-            tar xjf whisper-tiny.tar.bz2
-            cp sherpa-onnx-whisper-tiny/encoder.onnx app/src/main/assets/ai_models/whisper_encoder.onnx
-            cp sherpa-onnx-whisper-tiny/decoder.onnx app/src/main/assets/ai_models/whisper_decoder.onnx
-            cp sherpa-onnx-whisper-tiny/tokens.txt app/src/main/assets/ai_models/whisper_tokens.txt
-            rm -rf sherpa-onnx-whisper-tiny whisper-tiny.tar.bz2
-          fi
-          
-          echo "============================================"
-          echo "=== 2/6 下载 MobileSAM ONNX ==="
-          echo "============================================"
-          python3 -c "
-from huggingface_hub import hf_hub_download
-import shutil, sys
-try:
-    f1 = hf_hub_download('vietanhdev/segment-anything-onnx-models', 'mobile_sam_20230629/mobile_sam.encoder.onnx')
-    shutil.copy2(f1, 'app/src/main/assets/ai_models/sam_encoder.onnx')
-    f2 = hf_hub_download('vietanhdev/segment-anything-onnx-models', 'mobile_sam_20230629/sam_vit_h_4b8939.decoder.onnx')
-    shutil.copy2(f2, 'app/src/main/assets/ai_models/sam_decoder.onnx')
-    print('MobileSAM OK')
-except Exception as e:
-    print(f'MobileSAM FAIL: {e}')
-    sys.exit(1)
-" || FAIL=1
-          
-          echo "============================================"
-          echo "=== 3/6 下载 RealESRGAN x4plus ONNX ==="
-          echo "============================================"
-          python3 -c "
-from huggingface_hub import hf_hub_download
-import shutil, sys
-sources = [
-    ('aihao1984/RealESRGAN-onnx', 'realesrgan-x4plus.onnx'),
-    ('schuylertibbs/realesrgan-x4plus', 'realesrgan-x4plus.onnx'),
-]
-for repo, file in sources:
-    try:
-        f = hf_hub_download(repo, file)
-        shutil.copy2(f, 'app/src/main/assets/ai_models/realesrgan_x4plus.onnx')
-        print(f'RealESRGAN OK from {repo}')
-        sys.exit(0)
-    except Exception as e:
-        print(f'RealESRGAN {repo} failed: {e}')
-        continue
-print('RealESRGAN ALL SOURCES FAILED')
-sys.exit(1)
-" || FAIL=1
-          
-          echo "============================================"
-          echo "=== 4/6 下载 RIFE v4 ONNX ==="
-          echo "============================================"
-          python3 -c "
-from huggingface_hub import hf_hub_download
-import shutil, sys
-try:
-    f = hf_hub_download('AXERA-TECH/RIFE.axera', 'model/rife_x2_720p.onnx')
-    shutil.copy2(f, 'app/src/main/assets/ai_models/rife_v4.onnx')
-    print('RIFE OK')
-except Exception as e:
-    print(f'RIFE FAIL: {e}')
-    sys.exit(1)
-" || FAIL=1
-          
-          echo "============================================"
-          echo "=== 5/6 下载 Demucs htdemucs_ft ONNX ==="
-          echo "============================================"
-          python3 -c "
-from huggingface_hub import hf_hub_download
-import shutil, sys
-sources = [
-    ('StemSplitio/htdemucs_ft_ort_v1', 'htdemucs_ft_ort_v1.onnx'),
-    ('StemSplitio/htdemucs_ort_v1', 'htdemucs_ort_v1.onnx'),
-]
-for repo, file in sources:
-    try:
-        f = hf_hub_download(repo, file)
-        shutil.copy2(f, 'app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx')
-        print(f'Demucs OK from {repo}')
-        sys.exit(0)
-    except Exception as e:
-        print(f'Demucs {repo} failed: {e}')
-        continue
-print('Demucs ALL SOURCES FAILED')
-sys.exit(1)
-" || FAIL=1
-          
-          echo "============================================"
-          echo "=== 6/6 下载 RNNoise ONNX ==="
-          echo "============================================"
-          python3 -c "
-from huggingface_hub import hf_hub_download
-import shutil, sys
-sources = [
-    ('niobures/RNNoise', 'rnnoise.onnx'),
-    ('onnx-community/rnnoise-denoising', 'onnx/model.onnx'),
-]
-for repo, file in sources:
-    try:
-        f = hf_hub_download(repo, file)
-        shutil.copy2(f, 'app/src/main/assets/ai_models/rnnoise.onnx')
-        print(f'RNNoise OK from {repo}')
-        sys.exit(0)
-    except Exception as e:
-        print(f'RNNoise {repo} failed: {e}')
-        continue
-print('RNNoise ALL SOURCES FAILED')
-sys.exit(1)
-" || FAIL=1
-          
-          echo "============================================"
-          echo "=== 最终验证：所有模型必须合法 ==="
-          echo "============================================"
           for m in whisper_encoder.onnx whisper_decoder.onnx whisper_tokens.txt sam_encoder.onnx sam_decoder.onnx realesrgan_x4plus.onnx rife_v4.onnx demucs_htdemucs_ft.onnx rnnoise.onnx; do
             min=${MIN_SIZE[$m]:-100000}
             if ! verify_file "app/src/main/assets/ai_models/$m" "$min"; then
@@ -437,19 +433,18 @@ sys.exit(1)
           
           if [ "$FAIL" -eq 1 ]; then
             echo ""
-            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            echo "!!! 构建失败：部分AI模型下载失败或文件无效 !!!"
-            echo "!!! 不允许用占位文件欺骗构建               !!!"
-            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            echo "!!! BUILD FAILED: AI model download failed     !!!"
+            echo "!!! No placeholder files allowed               !!!"
+            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
             exit 1
           fi
           
           echo ""
-          echo "============================================"
-          echo "=== 所有模型验证通过 ==="
-          echo "============================================"
+          echo "=== All models verified ==="
           TOTAL=$(du -sh app/src/main/assets/ai_models | cut -f1)
-          echo "模型总大小: $TOTAL"
+          echo "Total model size: $TOTAL"
+
       - name: Decode keystore
         run: |
           mkdir -p keystore
@@ -457,14 +452,9 @@ sys.exit(1)
           if [ ! -f keystore/debug.jks ]; then
             keytool -genkeypair -v -keystore keystore/debug.jks -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
           fi
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      - name: Create debug keystore
-        run: |
-          mkdir -p keystore
-          if [ ! -f keystore/debug.jks ]; then
-            keytool -genkeypair -v -keystore keystore/debug.jks -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
-          fi
 
       - name: Clean CMake caches
         run: find . -type d -name ".cxx" -exec rm -rf {} + 2>/dev/null || true
@@ -474,12 +464,14 @@ sys.exit(1)
           export KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
           export KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
           ./gradlew assemble${{ matrix.flavor }}Debug --stacktrace --no-daemon
+
       - name: Build Release APK
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           export KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
           export KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
           ./gradlew assemble${{ matrix.flavor }}Release --stacktrace --no-daemon
+
       - name: Check APK exists
         run: |
           find app/build/outputs/apk -name "*.apk" -type f 2>/dev/null | while read apk; do
@@ -487,7 +479,8 @@ sys.exit(1)
             echo "APK: $apk ($SIZE)"
           done
           APK_COUNT=$(find app/build/outputs/apk -name "*.apk" -type f 2>/dev/null | wc -l)
-          if [ "$APK_COUNT" -eq 0 ]; then echo "WARNING: 未找到APK"; fi
+          if [ "$APK_COUNT" -eq 0 ]; then echo "WARNING: No APK found"; fi
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
@@ -495,6 +488,7 @@ sys.exit(1)
           path: app/build/outputs/apk/${{ matrix.flavor }}/debug/*.apk
           if-no-files-found: warn
           retention-days: 30
+
       - name: Upload Release APK
         if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
@@ -503,6 +497,7 @@ sys.exit(1)
           path: app/build/outputs/apk/${{ matrix.flavor }}/release/*.apk
           if-no-files-found: warn
           retention-days: 90
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
