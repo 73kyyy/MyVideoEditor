@@ -359,12 +359,13 @@ jobs:
             cd ..
             touch app/src/main/assets/ai_models/demucs_ft_fp16.bin
           fi
-      - name: Create keystore
+      - name: Decode keystore
         run: |
           mkdir -p keystore
-          if [ -f "keystore/nexclip.jks" ]; then exit 0; fi
-          keytool -genkeypair -v -keystore keystore/nexclip.jks -alias nexclip -keyalg RSA -keysize 2048 -validity 10000 -storepass nexclip123 -keypass nexclip123 -dname "CN=NexClip,OU=Dev,O=NexClip,L=Shanghai,ST=Shanghai,C=CN"
-          keytool -genkeypair -v -keystore keystore/debug.jks -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,OU=Android,O=Android,L=Mountain View,ST=California,C=US"
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore/nexclip.jks
+          if [ ! -f keystore/debug.jks ]; then
+            keytool -genkeypair -v -keystore keystore/debug.jks -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+          fi
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Create debug keystore
@@ -379,14 +380,14 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          export KEYSTORE_PASSWORD=nexclip123
-          export KEY_PASSWORD=nexclip123
+          export KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
+          export KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
           ./gradlew assemble${{ matrix.flavor }}Debug --stacktrace --no-daemon
       - name: Build Release APK
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          export KEYSTORE_PASSWORD=nexclip123
-          export KEY_PASSWORD=nexclip123
+          export KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
+          export KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
           ./gradlew assemble${{ matrix.flavor }}Release --stacktrace --no-daemon
       - name: Check APK exists
         run: |

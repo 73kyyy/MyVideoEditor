@@ -12,8 +12,8 @@
     <domain-config>
         <domain includeSubdomains="true">api.nexclip.com</domain>
         <pin-set expiration="2027-01-01">
-            <pin digest="SHA-256">BUILD_TIME_PIN_CERT_1</pin>
-            <pin digest="SHA-256">BUILD_TIME_PIN_CERT_2</pin>
+            <pin digest="SHA-256">1AFF864D327A52F1585887D4F7AAE51ECA1FE38B9797B6037BF955758EDEC321</pin>
+            <pin digest="SHA-256">backup_pin_replace_before_release</pin>
         </pin-set>
         <trust-anchors>
             <certificates src="system" />
