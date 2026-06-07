@@ -284,45 +284,27 @@ jobs:
       - name: Install huggingface_hub
         run: pip3 install huggingface_hub
 
-      - name: Download AI Models (mandatory - build fails if any model missing)
+      - name: Download Whisper tiny ONNX
         run: |
           mkdir -p app/src/main/assets/ai_models
-          FAIL=0
-          
-          verify_file() {
-            local f="$1"
-            local min="$2"
-            if [ ! -f "$f" ]; then
-              echo "FAIL: $(basename $f) does not exist"
-              return 1
-            fi
-            local size
-            size=$(stat -c%s "$f" 2>/dev/null || echo 0)
-            if [ "$size" -lt "$min" ]; then
-              echo "FAIL: $(basename $f) too small (${size}B < ${min}B)"
-              rm -f "$f"
-              return 1
-            fi
-            echo "OK: $(basename $f) ($(du -h "$f" | cut -f1))"
-            return 0
-          }
-          
-          echo "=== 1/6 Download Whisper tiny ONNX ==="
           curl -L --retry 5 --retry-delay 10 --connect-timeout 60 --max-time 900 \
             -o whisper-tiny.tar.bz2 "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2"
-          if verify_file whisper-tiny.tar.bz2 1000000; then
-            tar xjf whisper-tiny.tar.bz2
-            cp sherpa-onnx-whisper-tiny/encoder.onnx app/src/main/assets/ai_models/whisper_encoder.onnx
-            cp sherpa-onnx-whisper-tiny/decoder.onnx app/src/main/assets/ai_models/whisper_decoder.onnx
-            cp sherpa-onnx-whisper-tiny/tokens.txt app/src/main/assets/ai_models/whisper_tokens.txt
-            rm -rf sherpa-onnx-whisper-tiny whisper-tiny.tar.bz2
-          else
-            echo "Whisper download FAILED"
-            FAIL=1
-          fi
-          
-          echo "=== 2/6 Download MobileSAM ONNX ==="
-          python3 << 'PYEOF' || FAIL=1
+          tar xjf whisper-tiny.tar.bz2
+          cp sherpa-onnx-whisper-tiny/encoder.onnx app/src/main/assets/ai_models/whisper_encoder.onnx
+          cp sherpa-onnx-whisper-tiny/decoder.onnx app/src/main/assets/ai_models/whisper_decoder.onnx
+          cp sherpa-onnx-whisper-tiny/tokens.txt app/src/main/assets/ai_models/whisper_tokens.txt
+          rm -rf sherpa-onnx-whisper-tiny whisper-tiny.tar.bz2
+          SIZE=$(stat -c%s app/src/main/assets/ai_models/whisper_encoder.onnx)
+          if [ "$SIZE" -lt 30000000 ]; then echo "FAIL: whisper_encoder.onnx too small (${SIZE}B)"; exit 1; fi
+          SIZE=$(stat -c%s app/src/main/assets/ai_models/whisper_decoder.onnx)
+          if [ "$SIZE" -lt 1000000 ]; then echo "FAIL: whisper_decoder.onnx too small (${SIZE}B)"; exit 1; fi
+          SIZE=$(stat -c%s app/src/main/assets/ai_models/whisper_tokens.txt)
+          if [ "$SIZE" -lt 1000 ]; then echo "FAIL: whisper_tokens.txt too small (${SIZE}B)"; exit 1; fi
+          echo "Whisper tiny OK"
+
+      - name: Download MobileSAM ONNX
+        run: |
+          python3 << 'PYEOF'
           from huggingface_hub import hf_hub_download
           import shutil, sys
           try:
@@ -335,9 +317,15 @@ jobs:
               print(f'MobileSAM FAIL: {e}')
               sys.exit(1)
           PYEOF
-          
-          echo "=== 3/6 Download RealESRGAN x4plus ONNX ==="
-          python3 << 'PYEOF' || FAIL=1
+          SIZE=$(stat -c%s app/src/main/assets/ai_models/sam_encoder.onnx)
+          if [ "$SIZE" -lt 30000000 ]; then echo "FAIL: sam_encoder.onnx too small (${SIZE}B)"; exit 1; fi
+          SIZE=$(stat -c%s app/src/main/assets/ai_models/sam_decoder.onnx)
+          if [ "$SIZE" -lt 1000000 ]; then echo "FAIL: sam_decoder.onnx too small (${SIZE}B)"; exit 1; fi
+          echo "MobileSAM verified"
+
+      - name: Download RealESRGAN x4plus ONNX
+        run: |
+          python3 << 'PYEOF'
           from huggingface_hub import hf_hub_download
           import shutil, sys
           sources = [
@@ -356,9 +344,13 @@ jobs:
           print('RealESRGAN ALL SOURCES FAILED')
           sys.exit(1)
           PYEOF
-          
-          echo "=== 4/6 Download RIFE v4 ONNX ==="
-          python3 << 'PYEOF' || FAIL=1
+          SIZE=$(stat -c%s app/src/main/assets/ai_models/realesrgan_x4plus.onnx)
+          if [ "$SIZE" -lt 50000000 ]; then echo "FAIL: realesrgan_x4plus.onnx too small (${SIZE}B)"; exit 1; fi
+          echo "RealESRGAN verified"
+
+      - name: Download RIFE v4 ONNX
+        run: |
+          python3 << 'PYEOF'
           from huggingface_hub import hf_hub_download
           import shutil, sys
           try:
@@ -369,9 +361,13 @@ jobs:
               print(f'RIFE FAIL: {e}')
               sys.exit(1)
           PYEOF
-          
-          echo "=== 5/6 Download Demucs htdemucs_ft ONNX ==="
-          python3 << 'PYEOF' || FAIL=1
+          SIZE=$(stat -c%s app/src/main/assets/ai_models/rife_v4.onnx)
+          if [ "$SIZE" -lt 5000000 ]; then echo "FAIL: rife_v4.onnx too small (${SIZE}B)"; exit 1; fi
+          echo "RIFE verified"
+
+      - name: Download Demucs htdemucs_ft ONNX
+        run: |
+          python3 << 'PYEOF'
           from huggingface_hub import hf_hub_download
           import shutil, sys
           sources = [
@@ -390,9 +386,13 @@ jobs:
           print('Demucs ALL SOURCES FAILED')
           sys.exit(1)
           PYEOF
-          
-          echo "=== 6/6 Download RNNoise ONNX ==="
-          python3 << 'PYEOF' || FAIL=1
+          SIZE=$(stat -c%s app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx)
+          if [ "$SIZE" -lt 50000000 ]; then echo "FAIL: demucs_htdemucs_ft.onnx too small (${SIZE}B)"; exit 1; fi
+          echo "Demucs verified"
+
+      - name: Download RNNoise ONNX
+        run: |
+          python3 << 'PYEOF'
           from huggingface_hub import hf_hub_download
           import shutil, sys
           sources = [
@@ -411,39 +411,9 @@ jobs:
           print('RNNoise ALL SOURCES FAILED')
           sys.exit(1)
           PYEOF
-          
-          echo "=== Final verification: all models must be valid ==="
-          declare -A MIN_SIZE
-          MIN_SIZE[whisper_encoder.onnx]=30000000
-          MIN_SIZE[whisper_decoder.onnx]=1000000
-          MIN_SIZE[whisper_tokens.txt]=1000
-          MIN_SIZE[sam_encoder.onnx]=30000000
-          MIN_SIZE[sam_decoder.onnx]=1000000
-          MIN_SIZE[realesrgan_x4plus.onnx]=50000000
-          MIN_SIZE[rife_v4.onnx]=5000000
-          MIN_SIZE[demucs_htdemucs_ft.onnx]=50000000
-          MIN_SIZE[rnnoise.onnx]=500000
-          
-          for m in whisper_encoder.onnx whisper_decoder.onnx whisper_tokens.txt sam_encoder.onnx sam_decoder.onnx realesrgan_x4plus.onnx rife_v4.onnx demucs_htdemucs_ft.onnx rnnoise.onnx; do
-            min=${MIN_SIZE[$m]:-100000}
-            if ! verify_file "app/src/main/assets/ai_models/$m" "$min"; then
-              FAIL=1
-            fi
-          done
-          
-          if [ "$FAIL" -eq 1 ]; then
-            echo ""
-            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            echo "!!! BUILD FAILED: AI model download failed     !!!"
-            echo "!!! No placeholder files allowed               !!!"
-            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            exit 1
-          fi
-          
-          echo ""
-          echo "=== All models verified ==="
-          TOTAL=$(du -sh app/src/main/assets/ai_models | cut -f1)
-          echo "Total model size: $TOTAL"
+          SIZE=$(stat -c%s app/src/main/assets/ai_models/rnnoise.onnx)
+          if [ "$SIZE" -lt 500000 ]; then echo "FAIL: rnnoise.onnx too small (${SIZE}B)"; exit 1; fi
+          echo "RNNoise verified"
 
       - name: Decode keystore
         run: |
