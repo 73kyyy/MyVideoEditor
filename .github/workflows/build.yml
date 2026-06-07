@@ -272,93 +272,61 @@ jobs:
           else
             mkdir -p app/src/main/cpp/third_party/rnnoise/arm64-v8a/lib app/src/main/cpp/third_party/rnnoise/armeabi-v7a/lib app/src/main/cpp/third_party/rnnoise/include
           fi
-      - name: Setup Python
-        run: |
-          sudo apt-get install -y python3 python3-pip 2>/dev/null || true
-          pip3 install --user onnx torch torchvision --quiet 2>/dev/null || true
-      - name: Download Whisper-tiny ONNX
+      - name: Download AI Models
         run: |
           mkdir -p app/src/main/assets/ai_models
-          if [ -f "app/src/main/assets/ai_models/whisper_tiny_fp32.bin" ] && [ -s "app/src/main/assets/ai_models/whisper_tiny_fp32.bin" ]; then exit 0; fi
-          curl -L -o whisper.onnx "https://huggingface.co/openai/whisper-tiny/resolve/main/model.onnx" --connect-timeout 30 --max-time 300
-          if [ -f "whisper.onnx" ] && [ -s "whisper.onnx" ]; then
-            mv whisper.onnx app/src/main/assets/ai_models/whisper_tiny_fp32.bin
-          else
-            touch app/src/main/assets/ai_models/whisper_tiny_fp32.bin
+          echo "=== 下载 Whisper tiny ONNX (sherpa-onnx) ==="
+          if [ ! -f "app/src/main/assets/ai_models/whisper_encoder.onnx" ] || [ ! -s "app/src/main/assets/ai_models/whisper_encoder.onnx" ]; then
+            curl -L --retry 3 --connect-timeout 30 --max-time 600 \
+              -o whisper-tiny.tar.bz2 "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2" && \
+              tar xjf whisper-tiny.tar.bz2 && \
+              cp sherpa-onnx-whisper-tiny/encoder.onnx app/src/main/assets/ai_models/whisper_encoder.onnx && \
+              cp sherpa-onnx-whisper-tiny/decoder.onnx app/src/main/assets/ai_models/whisper_decoder.onnx && \
+              cp sherpa-onnx-whisper-tiny/tokens.txt app/src/main/assets/ai_models/whisper_tokens.txt 2>/dev/null || true
+            rm -rf sherpa-onnx-whisper-tiny whisper-tiny.tar.bz2
           fi
-      - name: Download SAM2-base ONNX
-        run: |
-          mkdir -p app/src/main/assets/ai_models
-          if [ -f "app/src/main/assets/ai_models/sam2_base_fp32.bin" ] && [ -s "app/src/main/assets/ai_models/sam2_base_fp32.bin" ]; then exit 0; fi
-          curl -L -o sam2.onnx "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2_base.onnx" --connect-timeout 30 --max-time 600
-          if [ -f "sam2.onnx" ] && [ -s "sam2.onnx" ]; then
-            mv sam2.onnx app/src/main/assets/ai_models/sam2_base_fp32.bin
-          else
-            touch app/src/main/assets/ai_models/sam2_base_fp32.bin
+          echo "=== 下载 MobileSAM ONNX ==="
+          if [ ! -f "app/src/main/assets/ai_models/sam_encoder.onnx" ] || [ ! -s "app/src/main/assets/ai_models/sam_encoder.onnx" ]; then
+            curl -L --retry 3 --connect-timeout 30 --max-time 600 \
+              -o sam_models.zip "https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/mobile_sam_20230629.zip" && \
+              unzip -q sam_models.zip -d sam_tmp && \
+              cp sam_tmp/mobile_sam_20230629/mobile_sam.encoder.onnx app/src/main/assets/ai_models/sam_encoder.onnx && \
+              cp sam_tmp/mobile_sam_20230629/sam_vit_h_4b8939.decoder.onnx app/src/main/assets/ai_models/sam_decoder.onnx 2>/dev/null || true
+            rm -rf sam_tmp sam_models.zip
           fi
-      - name: Prepare RNNoise model
-        run: |
-          mkdir -p app/src/main/assets/ai_models
-          if [ -f "app/src/main/assets/ai_models/rnnoise_fp32.bin" ] && [ -s "app/src/main/assets/ai_models/rnnoise_fp32.bin" ]; then exit 0; fi
-          if [ -f "rnnoise/model/rnnoise_data.bin" ]; then
-            cp rnnoise/model/rnnoise_data.bin app/src/main/assets/ai_models/rnnoise_fp32.bin
-          else
-            touch app/src/main/assets/ai_models/rnnoise_fp32.bin
+          echo "=== 下载 RealESRGAN x4plus ONNX ==="
+          if [ ! -f "app/src/main/assets/ai_models/realesrgan_x4plus.onnx" ] || [ ! -s "app/src/main/assets/ai_models/realesrgan_x4plus.onnx" ]; then
+            curl -L --retry 3 --connect-timeout 30 --max-time 900 \
+              -o app/src/main/assets/ai_models/realesrgan_x4plus.onnx \
+              "https://huggingface.co/aihao1984/RealESRGAN-onnx/resolve/main/realesrgan-x4plus.onnx" 2>/dev/null || true
           fi
-      - name: Convert RealESRGAN to ONNX
-        run: |
-          mkdir -p app/src/main/assets/ai_models
-          if [ -f "app/src/main/assets/ai_models/esrgan_x4_fp32.bin" ] && [ -s "app/src/main/assets/ai_models/esrgan_x4_fp32.bin" ]; then exit 0; fi
-          git clone --depth=1 https://github.com/xinntao/Real-ESRGAN.git 2>/dev/null || true
-          cd Real-ESRGAN
-          if [ -f "weights/RealESRGAN_x4plus.pth" ]; then
-            python3 $GITHUB_WORKSPACE/scripts/convert_esrgan.py 2>/dev/null || echo "ESRGAN转换失败"
-            cd ..
-            if [ -f "esrgan_x4.onnx" ] && [ -s "esrgan_x4.onnx" ]; then
-              mv esrgan_x4.onnx app/src/main/assets/ai_models/esrgan_x4_fp32.bin
+          echo "=== 下载 RIFE v4 ONNX ==="
+          if [ ! -f "app/src/main/assets/ai_models/rife_v4.onnx" ] || [ ! -s "app/src/main/assets/ai_models/rife_v4.onnx" ]; then
+            curl -L --retry 3 --connect-timeout 30 --max-time 600 \
+              -o app/src/main/assets/ai_models/rife_v4.onnx \
+              "https://huggingface.co/AXERA-TECH/RIFE.axera/resolve/main/model/rife_x2_720p.onnx" 2>/dev/null || true
+          fi
+          echo "=== 下载 Demucs htdemucs_ft ONNX ==="
+          if [ ! -f "app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx" ] || [ ! -s "app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx" ]; then
+            curl -L --retry 3 --connect-timeout 30 --max-time 900 \
+              -o app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx \
+              "https://huggingface.co/StemSplitio/htdemucs_ft_ort_v1/resolve/main/htdemucs_ft_ort_v1.onnx" 2>/dev/null || true
+          fi
+          echo "=== 下载 RNNoise ONNX ==="
+          if [ ! -f "app/src/main/assets/ai_models/rnnoise.onnx" ] || [ ! -s "app/src/main/assets/ai_models/rnnoise.onnx" ]; then
+            curl -L --retry 3 --connect-timeout 30 --max-time 120 \
+              -o app/src/main/assets/ai_models/rnnoise.onnx \
+              "https://huggingface.co/niobures/RNNoise/resolve/main/rnnoise.onnx" 2>/dev/null || true
+          fi
+          echo "=== 验证模型文件 ==="
+          for f in app/src/main/assets/ai_models/*.onnx app/src/main/assets/ai_models/*.txt; do
+            if [ -f "$f" ] && [ -s "$f" ]; then
+              SIZE=$(du -h "$f" | cut -f1)
+              echo "OK: $(basename $f) ($SIZE)"
             else
-              touch app/src/main/assets/ai_models/esrgan_x4_fp32.bin
+              echo "MISSING: $(basename $f)"
             fi
-          else
-            cd ..
-            touch app/src/main/assets/ai_models/esrgan_x4_fp32.bin
-          fi
-      - name: Convert RIFE to ONNX
-        run: |
-          mkdir -p app/src/main/assets/ai_models
-          if [ -f "app/src/main/assets/ai_models/rife_v4_fp32.bin" ] && [ -s "app/src/main/assets/ai_models/rife_v4_fp32.bin" ]; then exit 0; fi
-          git clone --depth=1 https://github.com/megvii-research/ECCV2022-RIFE.git 2>/dev/null || true
-          cd ECCV2022-RIFE
-          if [ -f "train_log/RIFE_net.pth" ]; then
-            python3 $GITHUB_WORKSPACE/scripts/convert_rife.py 2>/dev/null || echo "RIFE转换失败"
-            cd ..
-            if [ -f "rife_v4.onnx" ] && [ -s "rife_v4.onnx" ]; then
-              mv rife_v4.onnx app/src/main/assets/ai_models/rife_v4_fp32.bin
-            else
-              touch app/src/main/assets/ai_models/rife_v4_fp32.bin
-            fi
-          else
-            cd ..
-            touch app/src/main/assets/ai_models/rife_v4_fp32.bin
-          fi
-      - name: Convert Demucs to ONNX
-        run: |
-          mkdir -p app/src/main/assets/ai_models
-          if [ -f "app/src/main/assets/ai_models/demucs_ft_fp16.bin" ] && [ -s "app/src/main/assets/ai_models/demucs_ft_fp16.bin" ]; then exit 0; fi
-          git clone --depth=1 https://github.com/facebookresearch/demucs.git 2>/dev/null || true
-          cd demucs
-          if [ -f "pretrained_models/htdemucs_ft.th" ]; then
-            python3 $GITHUB_WORKSPACE/scripts/convert_demucs.py 2>/dev/null || echo "Demucs转换失败"
-            cd ..
-            if [ -f "demucs_ft.onnx" ] && [ -s "demucs_ft.onnx" ]; then
-              mv demucs_ft.onnx app/src/main/assets/ai_models/demucs_ft_fp16.bin
-            else
-              touch app/src/main/assets/ai_models/demucs_ft_fp16.bin
-            fi
-          else
-            cd ..
-            touch app/src/main/assets/ai_models/demucs_ft_fp16.bin
-          fi
+          done
       - name: Decode keystore
         run: |
           mkdir -p keystore
