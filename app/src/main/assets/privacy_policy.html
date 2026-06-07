@@ -13,102 +13,367 @@ h3 { color: #FFFFFF; font-size: 14px; margin: 16px 0 8px; }
 p { font-size: 14px; margin-bottom: 12px; }
 ul { padding-left: 20px; margin-bottom: 12px; }
 li { font-size: 13px; margin-bottom: 6px; }
-.highlight { color: #E8A820; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+th { background: #1A1A1A; color: #4A90D9; padding: 8px 10px; text-align: left; border: 1px solid #2A2A2A; }
+td { padding: 8px 10px; border: 1px solid #2A2A2A; }
+.highlight { color: #E8A820; font-weight: bold; }
+.warn { color: #FF6B6B; }
+.safe { color: #4ADE80; }
 .section { background: #1A1A1A; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #2A2A2A; }
+.intro { background: #1A1A1A; border-radius: 8px; padding: 16px; margin-bottom: 16px; border-left: 3px solid #E8A820; }
 </style>
 </head>
 <body>
+
 <h1>NexClip 隐私政策</h1>
-<p>最后更新日期：2025年5月</p>
+<p>最后更新日期：2026年6月7日</p>
+<p>生效日期：2026年6月7日</p>
+
+<div class="intro">
+<p><strong>NexClip</strong>（以下简称"我们"）深知个人信息对您的重要性，我们将按照法律法规的规定，保护您的个人信息及隐私安全。我们制定本隐私政策以帮助您了解我们如何收集、使用、存储和保护您的个人信息。</p>
+<p><strong>请您在使用 NexClip 应用程序（以下简称"本应用"）前，仔细阅读并充分理解本隐私政策的全部内容。一旦您开始使用本应用，即表示您同意本隐私政策的全部内容。</strong></p>
+</div>
 
 <div class="section">
-<h2>一、数据收集</h2>
-<p>我们仅收集以下必要数据：</p>
+<h2>一、我们收集的信息</h2>
+
+<h3>1.1 您主动提供的信息</h3>
+<table>
+<tr><th>信息类型</th><th>用途</th><th>是否必须</th><th>存储方式</th></tr>
+<tr><td>注册邮箱</td><td>账号注册与登录、安全验证</td><td>是</td><td>加密存储</td></tr>
+<tr><td>昵称</td><td>个人资料展示</td><td>否</td><td>加密存储</td></tr>
+<tr><td>头像</td><td>个人资料展示</td><td>否</td><td>加密存储</td></tr>
+<tr><td>支付信息</td><td>会员订阅</td><td>是</td><td>由 Google Play 处理，我们不存储</td></tr>
+</table>
+
+<h3>1.2 我们自动收集的信息</h3>
+<table>
+<tr><th>信息类型</th><th>用途</th><th>收集方式</th><th>存储方式</th></tr>
+<tr><td>设备型号</td><td>兼容性适配、性能分级</td><td>应用启动时自动获取</td><td>加密存储</td></tr>
+<tr><td>操作系统版本</td><td>兼容性适配</td><td>应用启动时自动获取</td><td>加密存储</td></tr>
+<tr><td>设备唯一标识符（Android ID）</td><td>设备绑定与安全验证</td><td>应用启动时自动获取</td><td>加密存储</td></tr>
+<tr><td>应用版本号</td><td>版本管理</td><td>应用启动时自动获取</td><td>加密存储</td></tr>
+<tr><td>CPU/GPU/RAM 信息</td><td>性能分级，动态调整 AI 推理参数</td><td>应用启动时自动获取</td><td>仅本地使用，不上传</td></tr>
+<tr><td>崩溃日志</td><td>问题诊断与修复</td><td>崩溃时自动收集</td><td>匿名化加密存储</td></tr>
+<tr><td>AI 功能使用次数</td><td>会员配额管理</td><td>使用 AI 功能时记录</td><td>加密存储</td></tr>
+<tr><td>模型下载状态</td><td>确保模型正确下载</td><td>下载模型时记录</td><td>加密存储</td></tr>
+</table>
+
+<h3>1.3 我们绝不会收集的信息</h3>
+<p>本应用的所有 AI 功能均在您的设备本地运行，我们<span class="warn">绝对不会</span>收集以下信息：</p>
 <ul>
-<li><strong>账号信息：</strong>邮箱地址（用于登录和找回密码）</li>
-<li><strong>设备信息：</strong>设备型号、系统版本、DeviceID（用于兼容性适配和安全校验）</li>
-<li><strong>使用数据：</strong>功能使用频率（用于产品改进）</li>
-<li><strong>素材数据：</strong>您导入的视频/图片（仅在本地处理，不上传）</li>
-<li><strong>崩溃日志：</strong>APP崩溃信息（用于稳定性改进）</li>
+<li><span class="warn">&#10060;</span> 您的视频文件内容</li>
+<li><span class="warn">&#10060;</span> 您的音频文件内容</li>
+<li><span class="warn">&#10060;</span> 您的图片内容</li>
+<li><span class="warn">&#10060;</span> AI 推理过程中的任何数据</li>
+<li><span class="warn">&#10060;</span> AI 推理结果</li>
+<li><span class="warn">&#10060;</span> 您的相册/文件系统内容</li>
+<li><span class="warn">&#10060;</span> 您的通讯录</li>
+<li><span class="warn">&#10060;</span> 您的位置信息</li>
+<li><span class="warn">&#10060;</span> 您的通话记录</li>
+<li><span class="warn">&#10060;</span> 您的短信内容</li>
+<li><span class="warn">&#10060;</span> 您的浏览器历史</li>
+<li><span class="warn">&#10060;</span> 您的社交账号信息</li>
+<li><span class="warn">&#10060;</span> 您的生物识别信息（指纹/面部）</li>
+</ul>
+<p><strong>您的创作内容完全属于您自己，我们无法也不会访问。</strong></p>
+</div>
+
+<div class="section">
+<h2>二、AI 模型与本地处理</h2>
+
+<h3>2.1 本地 AI 推理</h3>
+<p>NexClip 的核心 AI 功能全部在您的设备本地运行：</p>
+<table>
+<tr><th>AI 功能</th><th>模型</th><th>处理方式</th><th>数据流向</th></tr>
+<tr><td>智能补帧</td><td>RIFE v4</td><td>本地 ONNX Runtime 推理</td><td>输入输出均在本地</td></tr>
+<tr><td>超分辨率</td><td>RealESRGAN</td><td>本地 ONNX Runtime 推理</td><td>输入输出均在本地</td></tr>
+<tr><td>语音识别</td><td>Whisper</td><td>本地 ONNX Runtime 推理</td><td>输入输出均在本地</td></tr>
+<tr><td>音源分离</td><td>Demucs</td><td>本地 ONNX Runtime 推理</td><td>输入输出均在本地</td></tr>
+<tr><td>音频降噪</td><td>RNNoise</td><td>本地 ONNX Runtime 推理</td><td>输入输出均在本地</td></tr>
+<tr><td>目标追踪</td><td>SAM2</td><td>本地 ONNX Runtime 推理</td><td>输入输出均在本地</td></tr>
+</table>
+<p><strong>所有 AI 推理均在您的设备上完成。您的视频、音频和图像数据永远不会上传到我们的服务器或任何第三方服务器。</strong></p>
+
+<h3>2.2 AI 模型分发机制</h3>
+<p>本应用采用<span class="highlight">混合模型分发</span>策略：</p>
+
+<h3>2.2.1 基础模型（打包在 APK 中）</h3>
+<table>
+<tr><th>模型</th><th>功能</th><th>大小</th><th>可用性</th></tr>
+<tr><td>RNNoise</td><td>音频降噪</td><td>约2MB</td><td><span class="safe">所有用户，无需下载</span></td></tr>
+<tr><td>Whisper</td><td>语音识别</td><td>约19MB</td><td><span class="safe">所有用户，无需下载</span></td></tr>
+</table>
+<p>基础模型随应用安装即可使用，无需联网下载。</p>
+
+<h3>2.2.2 高级模型（服务器下载）</h3>
+<table>
+<tr><th>模型</th><th>功能</th><th>大小</th><th>下载条件</th></tr>
+<tr><td>RIFE v4</td><td>智能补帧</td><td>约15MB</td><td>会员验证通过后下载</td></tr>
+<tr><td>RealESRGAN</td><td>超分辨率</td><td>约32MB</td><td>会员验证通过后下载</td></tr>
+<tr><td>SAM2</td><td>目标追踪</td><td>约39MB</td><td>会员验证通过后下载</td></tr>
+<tr><td>Demucs</td><td>音源分离</td><td>约40MB</td><td>会员验证通过后下载</td></tr>
+</table>
+<p>高级模型下载流程：</p>
+<ol>
+<li>用户点击使用高级 AI 功能</li>
+<li>应用检查本地是否已有该模型</li>
+<li>如无模型，向服务器请求下载（需验证会员状态）</li>
+<li>服务器验证会员身份后，返回加密模型文件的下载地址</li>
+<li>应用下载加密模型文件到设备内部存储</li>
+<li>使用设备绑定的密钥解密模型文件</li>
+<li>解密后的模型仅存在于设备内存中，不落盘明文</li>
+<li>模型加载到 ONNX Runtime 进行推理</li>
+</ol>
+
+<h3>2.3 模型加密与存储</h3>
+<ul>
+<li>所有高级模型文件使用 <strong>AES-256-GCM</strong> 加密存储在设备内部存储中</li>
+<li>解密密钥通过 <strong>Android Keystore</strong>（StrongBox）管理，无法导出</li>
+<li>模型推理时在内存中解密，推理完成后清除明文数据</li>
+<li>模型文件与设备绑定，无法在其他设备上使用</li>
+<li>卸载应用后，所有模型文件自动删除</li>
+</ul>
+
+<h3>2.4 模型更新</h3>
+<ul>
+<li>我们可能不定期更新 AI 模型以提升效果</li>
+<li>模型更新通过服务器分发，需联网下载</li>
+<li>更新前会验证会员状态</li>
+<li>您可以在设置中关闭自动模型更新</li>
 </ul>
 </div>
 
 <div class="section">
-<h2>二、数据使用</h2>
+<h2>三、会员验证与安全</h2>
+
+<h3>3.1 会员验证数据流</h3>
+<p>会员验证过程中涉及的数据传输：</p>
+<table>
+<tr><th>步骤</th><th>传输数据</th><th>方向</th><th>加密方式</th></tr>
+<tr><td>登录</td><td>邮箱+密码哈希</td><td>设备&#8594;服务器</td><td>TLS 1.3</td></tr>
+<tr><td>验证会员状态</td><td>设备ID+会员令牌</td><td>设备&#8594;服务器</td><td>TLS 1.3</td></tr>
+<tr><td>获取模型密钥</td><td>会员令牌+设备公钥</td><td>设备&#8594;服务器</td><td>TLS 1.3</td></tr>
+<tr><td>返回模型密钥</td><td>加密的模型密钥</td><td>服务器&#8594;设备</td><td>设备公钥加密</td></tr>
+<tr><td>AI使用计数</td><td>使用次数+设备ID</td><td>设备&#8594;服务器</td><td>TLS 1.3</td></tr>
+</table>
+
+<h3>3.2 离线使用</h3>
 <ul>
-<li>仅用于提供和改进服务</li>
-<li>不会出售给第三方</li>
-<li>不会用于广告投放</li>
-<li>未经您同意，我们不会从第三方获取、共享或向其提供您的信息</li>
+<li>会员状态缓存在本地，有效期7天</li>
+<li>缓存期内可离线使用所有已下载的 AI 功能</li>
+<li>缓存过期后需联网重新验证</li>
+<li>基础功能（剪辑、调色、特效等）无需联网，永久可用</li>
+</ul>
+
+<h3>3.3 安全防护措施</h3>
+<table>
+<tr><th>措施</th><th>说明</th></tr>
+<tr><td>传输加密</td><td>所有网络通信使用 TLS 1.3</td></tr>
+<tr><td>存储加密</td><td>服务器数据使用 AES-256-GCM 加密</td></tr>
+<tr><td>设备绑定</td><td>Android Keystore + StrongBox 硬件级密钥管理</td></tr>
+<tr><td>证书锁定</td><td>SHA-256 证书固定，防中间人攻击</td></tr>
+<tr><td>请求签名</td><td>HMAC-SHA256 请求签名，防篡改</td></tr>
+<tr><td>反调试</td><td>Frida/Xposed 检测，防 Hook</td></tr>
+<tr><td>Root 检测</td><td>Root 环境警告，防篡改</td></tr>
+<tr><td>模拟器检测</td><td>模拟器环境限制，防批量操作</td></tr>
+<tr><td>APK 签名验证</td><td>运行时校验 APK 完整性，防重打包</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>四、Android 权限说明</h2>
+<p>本应用请求以下 Android 权限：</p>
+<table>
+<tr><th>权限</th><th>用途</th><th>是否必须</th><th>拒绝影响</th></tr>
+<tr><td>READ_EXTERNAL_STORAGE</td><td>读取视频/音频/图片文件</td><td>是</td><td>无法导入素材</td></tr>
+<tr><td>WRITE_EXTERNAL_STORAGE</td><td>保存导出的视频文件</td><td>是</td><td>无法导出视频</td></tr>
+<tr><td>READ_MEDIA_VIDEO (Android 13+)</td><td>读取视频文件</td><td>是</td><td>无法导入视频</td></tr>
+<tr><td>READ_MEDIA_AUDIO (Android 13+)</td><td>读取音频文件</td><td>是</td><td>无法导入音频</td></tr>
+<tr><td>READ_MEDIA_IMAGES (Android 13+)</td><td>读取图片文件</td><td>否</td><td>无法导入图片</td></tr>
+<tr><td>INTERNET</td><td>会员验证、模型下载</td><td>是</td><td>无法使用高级AI功能</td></tr>
+<tr><td>ACCESS_NETWORK_STATE</td><td>检查网络状态</td><td>是</td><td>无法判断是否可下载模型</td></tr>
+<tr><td>ACCESS_WIFI_STATE</td><td>检查 Wi-Fi 状态</td><td>否</td><td>可能在移动网络下下载大文件</td></tr>
+<tr><td>FOREGROUND_SERVICE</td><td>后台导出视频</td><td>是</td><td>无法后台导出</td></tr>
+<tr><td>VIBRATE</td><td>操作反馈</td><td>否</td><td>无触感反馈</td></tr>
+<tr><td>WAKE_LOCK</td><td>导出时保持屏幕常亮</td><td>否</td><td>导出可能中断</td></tr>
+</table>
+<p><strong>我们不会请求任何与核心功能无关的权限。</strong></p>
+</div>
+
+<div class="section">
+<h2>五、第三方 SDK 数据说明</h2>
+<p>本应用集成的第三方 SDK 及其数据处理方式：</p>
+<table>
+<tr><th>SDK</th><th>用途</th><th>是否收集用户数据</th><th>数据传输</th></tr>
+<tr><td>ONNX Runtime</td><td>AI 推理引擎</td><td><span class="safe">&#10060; 不收集</span></td><td>无网络传输</td></tr>
+<tr><td>FFmpeg</td><td>音视频处理</td><td><span class="safe">&#10060; 不收集</span></td><td>无网络传输</td></tr>
+<tr><td>OpenCV</td><td>图像处理</td><td><span class="safe">&#10060; 不收集</span></td><td>无网络传输</td></tr>
+<tr><td>OkHttp</td><td>网络请求</td><td><span class="safe">&#10060; 不收集</span></td><td>仅转发本应用请求</td></tr>
+<tr><td>Coil</td><td>图片加载</td><td><span class="safe">&#10060; 不收集</span></td><td>无网络传输</td></tr>
+<tr><td>Google Play Billing</td><td>应用内支付</td><td><span class="warn">&#10004; 支付信息</span></td><td>由 Google 处理</td></tr>
+<tr><td>AndroidX / Jetpack</td><td>UI 框架</td><td><span class="safe">&#10060; 不收集</span></td><td>无网络传输</td></tr>
+</table>
+<p><strong>所有本地处理 SDK（ONNX Runtime、FFmpeg、OpenCV）均不收集任何用户数据，不进行任何网络传输。</strong></p>
+</div>
+
+<div class="section">
+<h2>六、信息的使用</h2>
+<p>我们仅将收集的信息用于以下目的：</p>
+<ol>
+<li><strong>提供核心服务</strong>：账号注册、登录、项目管理</li>
+<li><strong>会员管理</strong>：验证会员状态、管理 AI 功能使用配额、处理订阅</li>
+<li><strong>模型分发</strong>：验证会员后提供高级 AI 模型下载、确保模型完整性</li>
+<li><strong>安全防护</strong>：设备绑定、防破解、防欺诈、反调试</li>
+<li><strong>问题修复</strong>：通过崩溃日志诊断和修复应用问题</li>
+<li><strong>兼容性适配</strong>：根据设备信息优化应用性能和 AI 推理参数</li>
+<li><strong>性能优化</strong>：设备性能分级，动态调整推理精度和速度</li>
+</ol>
+<p>我们<span class="warn">不会</span>将您的信息用于：</p>
+<ul>
+<li>&#10060; 向您推送广告</li>
+<li>&#10060; 出售给第三方</li>
+<li>&#10060; 用户画像</li>
+<li>&#10060; 大数据分析</li>
+<li>&#10060; 任何与提供服务无关的用途</li>
 </ul>
 </div>
 
 <div class="section">
-<h2>三、数据存储</h2>
+<h2>七、信息的存储与保护</h2>
+
+<h3>7.1 存储位置</h3>
+<table>
+<tr><th>数据类型</th><th>存储位置</th><th>存储方式</th><th>存储期限</th></tr>
+<tr><td>账号信息</td><td>我们的服务器</td><td>AES-256-GCM 加密</td><td>账号存续期间</td></tr>
+<tr><td>会员状态</td><td>服务器 + 本地缓存</td><td>加密存储，缓存7天</td><td>账号存续期间</td></tr>
+<tr><td>AI 使用记录</td><td>我们的服务器</td><td>加密存储</td><td>账号存续期间</td></tr>
+<tr><td>崩溃日志</td><td>我们的服务器</td><td>匿名化加密存储</td><td>90天后自动删除</td></tr>
+<tr><td>AI 模型文件</td><td>您的设备本地</td><td>AES-256-GCM 加密</td><td>直到卸载应用</td></tr>
+<tr><td>项目文件</td><td>您的设备本地</td><td>不加密（用户自有数据）</td><td>直到用户删除</td></tr>
+<tr><td>设备绑定信息</td><td>我们的服务器</td><td>加密存储</td><td>账号存续期间</td></tr>
+</table>
+
+<h3>7.2 数据保护措施</h3>
 <ul>
-<li><strong>账号数据：</strong>存续期 + 30天</li>
-<li><strong>使用记录：</strong>最长6个月</li>
-<li><strong>日志数据：</strong>最长3个月</li>
-<li><strong>缓存数据：</strong>卸载时自动删除</li>
+<li>所有服务器数据使用 AES-256-GCM 加密存储</li>
+<li>所有网络传输使用 TLS 1.3 加密</li>
+<li>密钥使用 PBKDF2-HMAC-SHA256 派生（迭代 &#8805; 100,000 次）</li>
+<li>设备密钥存储在 Android Keystore（StrongBox）中，硬件级保护</li>
+<li>服务器部署在中国大陆，通过等保二级认证</li>
+<li>定期进行安全审计和渗透测试</li>
 </ul>
-<p>所有数据均加密存储，日志中敏感字段已脱敏处理。</p>
+
+<h3>7.3 数据跨境传输</h3>
+<p>我们的服务器位于中华人民共和国境内。如因业务需要将数据传输至境外，我们将：</p>
+<ol>
+<li>按照《个人信息保护法》要求进行安全评估</li>
+<li>获得您的单独同意</li>
+<li>确保接收方提供同等水平的数据保护</li>
+<li>向您告知境外接收方的名称、联系方式、处理目的和处理方式</li>
+</ol>
 </div>
 
 <div class="section">
-<h2>四、您的权利</h2>
-<p>您享有以下权利，可随时通过APP内设置或联系客服行使：</p>
+<h2>八、数据泄露通知</h2>
+<p>如发生个人信息安全事件，我们将：</p>
+<ol>
+<li><strong>及时通知</strong>：在确认安全事件后72小时内通知您</li>
+<li><strong>通知方式</strong>：应用内弹窗、邮件通知</li>
+<li><strong>通知内容</strong>：事件类型、涉及数据、可能影响、已采取的补救措施、您可采取的防护措施</li>
+<li><strong>补救措施</strong>：重置密码、撤销授权、加强安全防护</li>
+<li><strong>监管报告</strong>：按照法律法规要求向主管部门报告</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>九、您的权利</h2>
+<p>根据《中华人民共和国个人信息保护法》及相关法律法规，您享有以下权利：</p>
+
+<h3>9.1 权利清单</h3>
+<table>
+<tr><th>权利</th><th>说明</th><th>行使方式</th></tr>
+<tr><td>知情权</td><td>了解我们如何处理您的信息</td><td>阅读本隐私政策</td></tr>
+<tr><td>决定权</td><td>决定是否同意我们处理您的信息</td><td>应用内设置</td></tr>
+<tr><td>访问权</td><td>查看您的个人信息</td><td>应用内"设置&#8594;账号"</td></tr>
+<tr><td>更正权</td><td>更正不准确的个人信息</td><td>应用内"设置&#8594;账号"</td></tr>
+<tr><td>删除权</td><td>要求删除您的个人信息</td><td>联系我们</td></tr>
+<tr><td>撤回同意权</td><td>撤回之前给予的同意</td><td>应用内"设置&#8594;隐私"</td></tr>
+<tr><td>数据可携带权</td><td>获取您的个人信息副本</td><td>联系我们</td></tr>
+<tr><td>注销权</td><td>注销您的账号</td><td>应用内"设置&#8594;账号&#8594;注销"</td></tr>
+<tr><td>自动化决策拒绝权</td><td>拒绝仅通过自动化决策方式作出的决定</td><td>联系我们</td></tr>
+</table>
+
+<h3>9.2 行使权利的方式</h3>
 <ul>
-<li><strong>访问权：</strong>查看我们收集的数据</li>
-<li><strong>更正权：</strong>修改不准确的数据</li>
-<li><strong>删除权：</strong>要求删除所有数据（30天内完成）</li>
-<li><strong>可携带权：</strong>以JSON/CSV格式导出数据</li>
-<li><strong>限制处理权：</strong>限制数据处理方式</li>
-<li><strong>反对权：</strong>反对特定数据处理</li>
-<li><strong>撤回同意权：</strong>随时撤回授权</li>
-<li><strong>账户注销：</strong>可通过APP内设置注销账户</li>
+<li><strong>应用内操作</strong>：大部分权利可在应用内直接行使</li>
+<li><strong>邮件请求</strong>：发送邮件至 <span class="highlight">1693960054@qq.com</span></li>
+<li><strong>响应时间</strong>：我们将在15个工作日内回复您的请求</li>
 </ul>
-</div>
 
-<div class="section">
-<h2>五、GDPR合规</h2>
-<p>如果您位于欧盟地区，您享有GDPR规定的各项权利，包括知情权、访问权、更正权、删除权、可携带权、限制处理权和反对权。</p>
-<p>如发生数据泄露，我们将在72小时内通知相关用户和监管机构。</p>
-</div>
-
-<div class="section">
-<h2>六、个保法合规</h2>
-<p>如果您位于中国大陆，我们遵守《个人信息保护法》的相关规定：</p>
+<h3>9.3 注销账号</h3>
+<p>注销账号后：</p>
 <ul>
-<li>个人信息处理规则已在本政策中公示</li>
-<li>敏感信息处理将单独获取您的同意</li>
-<li>充分保障您的用户权利</li>
+<li>您的个人信息将在30天内从服务器删除</li>
+<li>您的会员权益将不可恢复</li>
+<li>本地项目文件不受影响（存储在您的设备上）</li>
+<li>已下载的 AI 模型文件将随应用卸载而删除</li>
 </ul>
 </div>
 
 <div class="section">
-<h2>七、数据安全</h2>
+<h2>十、未成年人保护</h2>
+
+<h3>10.1 年龄限制</h3>
 <ul>
-<li>全程加密传输和存储</li>
-<li>定期安全审计</li>
-<li>日志数据脱敏处理</li>
-<li>APP内置安全检测机制</li>
+<li>本应用不面向未满14周岁的未成年人</li>
+<li>14周岁以上未满18周岁的未成年人，应在监护人的陪同和指导下使用本应用</li>
+</ul>
+
+<h3>10.2 监护人同意</h3>
+<ul>
+<li>未成年人在使用本应用前，应取得其监护人的同意</li>
+<li>监护人应指导未成年人正确使用本应用</li>
+<li>我们不会故意收集未成年人的个人信息</li>
+</ul>
+
+<h3>10.3 未成年人信息保护</h3>
+<p>如我们发现在未获得监护人同意的情况下收集了未成年人的个人信息，我们将尽快删除相关信息。</p>
+
+<h3>10.4 监护人权利</h3>
+<p>未成年人的监护人有权：</p>
+<ul>
+<li>查询未成年人的个人信息</li>
+<li>更正未成年人的个人信息</li>
+<li>删除未成年人的个人信息</li>
+<li>撤回对未成年人使用本应用的同意</li>
 </ul>
 </div>
 
 <div class="section">
-<h2>八、未成年人保护</h2>
-<p>我们不会故意收集14岁以下未成年人的个人信息。如果您是未成年人的监护人，请联系我们删除相关数据。</p>
+<h2>十一、隐私政策的更新</h2>
+
+<h3>11.1 更新通知</h3>
+<table>
+<tr><th>变更类型</th><th>通知方式</th></tr>
+<tr><td>重大变更（新增数据收集、新增第三方共享等）</td><td>应用内弹窗 + 邮件通知</td></tr>
+<tr><td>一般变更（措辞优化、格式调整等）</td><td>应用内公告</td></tr>
+<tr><td>紧急变更（安全事件响应等）</td><td>应用内弹窗 + 邮件通知</td></tr>
+</table>
+
+<h3>11.2 同意方式</h3>
+<ul>
+<li>重大变更：需您重新点击"同意"</li>
+<li>一般变更：继续使用即视为同意</li>
+<li>紧急变更：为保护您的权益，可能立即生效</li>
+</ul>
 </div>
 
 <div class="section">
-<h2>九、政策更新</h2>
-<p>我们可能会不时更新本隐私政策。更新后的政策将在APP内通知您，重大变更将重新获取您的同意。</p>
-</div>
-
-<div class="section">
-<h2>十、联系我们</h2>
-<p>如有任何问题，请通过以下方式联系我们：</p>
+<h2>十二、联系方式</h2>
+<p>如您对本隐私政策有任何疑问、意见或建议，请通过以下方式联系我们：</p>
 <p>邮箱：<span class="highlight">1693960054@qq.com</span></p>
+<p>我们将在15个工作日内回复您的请求。</p>
 </div>
 
 </body>
