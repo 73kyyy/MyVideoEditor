@@ -275,8 +275,11 @@ jobs:
       - name: Download AI Models
         run: |
           mkdir -p app/src/main/assets/ai_models
-          echo "=== 下载 Whisper tiny ONNX (sherpa-onnx) ==="
-          if [ ! -f "app/src/main/assets/ai_models/whisper_encoder.onnx" ] || [ ! -s "app/src/main/assets/ai_models/whisper_encoder.onnx" ]; then
+          pip3 install -q huggingface_hub 2>/dev/null || true
+          HF="python3 -c \"from huggingface_hub import hf_hub_download; print(hf_hub_download(repo_id='%s', filename='%s', local_dir='app/src/main/assets/ai_models'))\""
+          
+          echo "=== 1/6 下载 Whisper tiny ONNX ==="
+          if [ ! -s "app/src/main/assets/ai_models/whisper_encoder.onnx" ]; then
             curl -L --retry 3 --connect-timeout 30 --max-time 600 \
               -o whisper-tiny.tar.bz2 "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2" && \
               tar xjf whisper-tiny.tar.bz2 && \
@@ -285,46 +288,91 @@ jobs:
               cp sherpa-onnx-whisper-tiny/tokens.txt app/src/main/assets/ai_models/whisper_tokens.txt 2>/dev/null || true
             rm -rf sherpa-onnx-whisper-tiny whisper-tiny.tar.bz2
           fi
-          echo "=== 下载 MobileSAM ONNX ==="
-          if [ ! -f "app/src/main/assets/ai_models/sam_encoder.onnx" ] || [ ! -s "app/src/main/assets/ai_models/sam_encoder.onnx" ]; then
-            curl -L --retry 3 --connect-timeout 30 --max-time 600 \
-              -o sam_models.zip "https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/mobile_sam_20230629.zip" && \
-              unzip -q sam_models.zip -d sam_tmp && \
-              cp sam_tmp/mobile_sam_20230629/mobile_sam.encoder.onnx app/src/main/assets/ai_models/sam_encoder.onnx && \
-              cp sam_tmp/mobile_sam_20230629/sam_vit_h_4b8939.decoder.onnx app/src/main/assets/ai_models/sam_decoder.onnx 2>/dev/null || true
-            rm -rf sam_tmp sam_models.zip
+          
+          echo "=== 2/6 下载 MobileSAM ONNX ==="
+          if [ ! -s "app/src/main/assets/ai_models/sam_encoder.onnx" ]; then
+            python3 -c "
+from huggingface_hub import hf_hub_download
+import shutil
+f1 = hf_hub_download('vietanhdev/segment-anything-onnx-models', 'mobile_sam_20230629/mobile_sam.encoder.onnx')
+shutil.copy2(f1, 'app/src/main/assets/ai_models/sam_encoder.onnx')
+f2 = hf_hub_download('vietanhdev/segment-anything-onnx-models', 'mobile_sam_20230629/sam_vit_h_4b8939.decoder.onnx')
+shutil.copy2(f2, 'app/src/main/assets/ai_models/sam_decoder.onnx')
+print('MobileSAM OK')
+" 2>/dev/null || echo "MobileSAM download failed"
           fi
-          echo "=== 下载 RealESRGAN x4plus ONNX ==="
-          if [ ! -f "app/src/main/assets/ai_models/realesrgan_x4plus.onnx" ] || [ ! -s "app/src/main/assets/ai_models/realesrgan_x4plus.onnx" ]; then
-            curl -L --retry 3 --connect-timeout 30 --max-time 900 \
-              -o app/src/main/assets/ai_models/realesrgan_x4plus.onnx \
-              "https://huggingface.co/aihao1984/RealESRGAN-onnx/resolve/main/realesrgan-x4plus.onnx" 2>/dev/null || true
+          
+          echo "=== 3/6 下载 RealESRGAN x4plus ONNX ==="
+          if [ ! -s "app/src/main/assets/ai_models/realesrgan_x4plus.onnx" ]; then
+            python3 -c "
+from huggingface_hub import hf_hub_download
+import shutil
+f = hf_hub_download('aihao1984/RealESRGAN-onnx', 'realesrgan-x4plus.onnx')
+shutil.copy2(f, 'app/src/main/assets/ai_models/realesrgan_x4plus.onnx')
+print('RealESRGAN OK')
+" 2>/dev/null || echo "RealESRGAN download failed, trying alternative..."
+            if [ ! -s "app/src/main/assets/ai_models/realesrgan_x4plus.onnx" ] || [ "$(stat -c%s app/src/main/assets/ai_models/realesrgan_x4plus.onnx 2>/dev/null)" -lt 1000000 ]; then
+              rm -f app/src/main/assets/ai_models/realesrgan_x4plus.onnx
+              python3 -c "
+from huggingface_hub import hf_hub_download
+import shutil
+f = hf_hub_download('schuylertibbs/realesrgan-x4plus', 'realesrgan-x4plus.onnx')
+shutil.copy2(f, 'app/src/main/assets/ai_models/realesrgan_x4plus.onnx')
+print('RealESRGAN alt OK')
+" 2>/dev/null || echo "RealESRGAN alt also failed"
+            fi
           fi
-          echo "=== 下载 RIFE v4 ONNX ==="
-          if [ ! -f "app/src/main/assets/ai_models/rife_v4.onnx" ] || [ ! -s "app/src/main/assets/ai_models/rife_v4.onnx" ]; then
-            curl -L --retry 3 --connect-timeout 30 --max-time 600 \
-              -o app/src/main/assets/ai_models/rife_v4.onnx \
-              "https://huggingface.co/AXERA-TECH/RIFE.axera/resolve/main/model/rife_x2_720p.onnx" 2>/dev/null || true
+          
+          echo "=== 4/6 下载 RIFE v4 ONNX ==="
+          if [ ! -s "app/src/main/assets/ai_models/rife_v4.onnx" ]; then
+            python3 -c "
+from huggingface_hub import hf_hub_download
+import shutil
+f = hf_hub_download('AXERA-TECH/RIFE.axera', 'model/rife_x2_720p.onnx')
+shutil.copy2(f, 'app/src/main/assets/ai_models/rife_v4.onnx')
+print('RIFE OK')
+" 2>/dev/null || echo "RIFE download failed"
           fi
-          echo "=== 下载 Demucs htdemucs_ft ONNX ==="
-          if [ ! -f "app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx" ] || [ ! -s "app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx" ]; then
-            curl -L --retry 3 --connect-timeout 30 --max-time 900 \
-              -o app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx \
-              "https://huggingface.co/StemSplitio/htdemucs_ft_ort_v1/resolve/main/htdemucs_ft_ort_v1.onnx" 2>/dev/null || true
+          
+          echo "=== 5/6 下载 Demucs htdemucs_ft ONNX ==="
+          if [ ! -s "app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx" ]; then
+            python3 -c "
+from huggingface_hub import hf_hub_download
+import shutil
+f = hf_hub_download('StemSplitio/htdemucs_ft_ort_v1', 'htdemucs_ft_ort_v1.onnx')
+shutil.copy2(f, 'app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx')
+print('Demucs OK')
+" 2>/dev/null || echo "Demucs download failed"
           fi
-          echo "=== 下载 RNNoise ONNX ==="
-          if [ ! -f "app/src/main/assets/ai_models/rnnoise.onnx" ] || [ ! -s "app/src/main/assets/ai_models/rnnoise.onnx" ]; then
-            curl -L --retry 3 --connect-timeout 30 --max-time 120 \
-              -o app/src/main/assets/ai_models/rnnoise.onnx \
-              "https://huggingface.co/niobures/RNNoise/resolve/main/rnnoise.onnx" 2>/dev/null || true
+          
+          echo "=== 6/6 下载 RNNoise ONNX ==="
+          if [ ! -s "app/src/main/assets/ai_models/rnnoise.onnx" ]; then
+            python3 -c "
+from huggingface_hub import hf_hub_download
+import shutil
+f = hf_hub_download('niobures/RNNoise', 'rnnoise.onnx')
+shutil.copy2(f, 'app/src/main/assets/ai_models/rnnoise.onnx')
+print('RNNoise OK')
+" 2>/dev/null || echo "RNNoise download failed"
           fi
+          
           echo "=== 验证模型文件 ==="
+          rm -f app/src/main/assets/ai_models/*.onnx.tmp 2>/dev/null
           for f in app/src/main/assets/ai_models/*.onnx app/src/main/assets/ai_models/*.txt; do
-            if [ -f "$f" ] && [ -s "$f" ]; then
-              SIZE=$(du -h "$f" | cut -f1)
-              echo "OK: $(basename $f) ($SIZE)"
-            else
-              echo "MISSING: $(basename $f)"
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f" 2>/dev/null || echo 0)
+              if [ "$SIZE" -gt 100000 ]; then
+                echo "OK: $(basename $f) ($(du -h "$f" | cut -f1))"
+              else
+                echo "INVALID (too small, ${SIZE}B): $(basename $f) - removing"
+                rm -f "$f"
+              fi
+            fi
+          done
+          echo "=== 缺失模型列表 ==="
+          for m in whisper_encoder.onnx whisper_decoder.onnx whisper_tokens.txt sam_encoder.onnx sam_decoder.onnx realesrgan_x4plus.onnx rife_v4.onnx demucs_htdemucs_ft.onnx rnnoise.onnx; do
+            if [ ! -f "app/src/main/assets/ai_models/$m" ] || [ ! -s "app/src/main/assets/ai_models/$m" ]; then
+              echo "MISSING: $m"
             fi
           done
       - name: Decode keystore
