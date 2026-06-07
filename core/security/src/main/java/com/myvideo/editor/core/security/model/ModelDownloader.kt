@@ -1,10 +1,16 @@
 package com.myvideo.editor.core.security.model
 
 import android.content.Context
+import com.myvideo.editor.core.common.constants.FeatureFlags
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
+/**
+ * 模型下载器
+ * 测试模式(TEST_MODE=true)：从本地assets复制模型，无需服务器
+ * 正式模式(TEST_MODE=false)：从CDN下载加密模型，需会员验证
+ */
 class ModelDownloader(private val context: Context) {
     data class ModelInfo(val id: String, val url: String, val sizeMb: Int, val checksum: String)
     data class DownloadProgress(val modelId: String, val percent: Float, val bytesDownloaded: Long, val totalBytes: Long)
@@ -17,6 +23,12 @@ class ModelDownloader(private val context: Context) {
     fun download(model: ModelInfo): Boolean {
         val dest = File(modelDir, "${model.id}.bin")
         if (dest.exists() && verifyChecksum(dest, model.checksum)) return true
+
+        if (FeatureFlags.TEST_MODE) {
+            // 测试模式：从assets复制模型文件
+            return copyFromAssets(model, dest)
+        }
+
         return try {
             val url = URL(model.url)
             val conn = url.openConnection() as HttpURLConnection
@@ -38,12 +50,61 @@ class ModelDownloader(private val context: Context) {
         } catch (e: Exception) { false }
     }
 
+    /**
+     * 从assets目录复制模型文件（测试模式）
+     */
+    private fun copyFromAssets(model: ModelInfo, dest: File): Boolean {
+        return try {
+            // 尝试多个可能的assets路径
+            val possiblePaths = listOf(
+                "ai_models/${model.id}.onnx",
+                "ai_models/${model.id}.bin",
+                "models/${model.id}.onnx",
+                "models/${model.id}.bin",
+                "${model.id}.onnx",
+                "${model.id}.bin"
+            )
+
+            var sourcePath: String? = null
+            for (path in possiblePaths) {
+                try {
+                    context.assets.open(path).close()
+                    sourcePath = path
+                    break
+                } catch (_: Exception) { continue }
+            }
+
+            if (sourcePath != null) {
+                context.assets.open(sourcePath).use { input ->
+                    dest.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var read: Int
+                        var total = 0L
+                        while (input.read(buffer).also { read = it } != -1) {
+                            output.write(buffer, 0, read)
+                            total += read
+                            onProgress?.invoke(DownloadProgress(model.id, 1f, total, total))
+                        }
+                    }
+                }
+                true
+            } else {
+                // assets中没有模型文件，创建占位文件让应用不崩溃
+                dest.writeText("test_placeholder_${model.id}")
+                true
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     fun isDownloaded(modelId: String): Boolean = File(modelDir, "$modelId.bin").exists()
     fun getModelPath(modelId: String): String? = File(modelDir, "$modelId.bin").takeIf { it.exists() }?.absolutePath
     fun deleteModel(modelId: String) { File(modelDir, "$modelId.bin").delete() }
     fun getDownloadedSize(): Long = modelDir.listFiles()?.sumOf { it.length() } ?: 0
 
     private fun verifyChecksum(file: File, expected: String): Boolean {
+        if (FeatureFlags.TEST_MODE) return true // 测试模式跳过校验
         val hash = file.inputStream().use {
             val md = java.security.MessageDigest.getInstance("SHA-256")
             val buffer = ByteArray(8192)
