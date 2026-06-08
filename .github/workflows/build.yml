@@ -69,8 +69,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: app/src/main/assets/ai_models
-          key: ai-models-v2-${{ runner.os }}
-          restore-keys: ai-models-v2-${{ runner.os }}-
+          key: ai-models-v5-${{ runner.os }}
+          restore-keys: ai-models-v5-${{ runner.os }}-
 
       - name: Link security Kotlin files
         run: |
@@ -289,15 +289,17 @@ jobs:
           fi
 
       # ============================================================
-      # AI Models: Direct download with wget (faster than hf_hub_download)
-      # All models cached via actions/cache to avoid re-downloading
+      # AI Models Download
+      # Strategy: Direct URL download for pre-converted ONNX,
+      # PyTorch export for models without pre-converted ONNX
       # ============================================================
       - name: Download AI Models
         run: |
+          set -e
           mkdir -p app/src/main/assets/ai_models
           MODELS_DIR="app/src/main/assets/ai_models"
 
-          # Helper function: download with wget, verify size
+          # Helper: download with wget, verify size
           dl() {
             local url="$1" out="$2" min_size="$3"
             if [ -f "$MODELS_DIR/$out" ]; then
@@ -306,11 +308,12 @@ jobs:
                 echo "CACHED: $out ($sz bytes)"
                 return 0
               fi
-              echo "RE-DOWNLOAD: $out (cached size ${sz}B < min ${min_size}B)"
+              echo "RE-DOWNLOAD: $out (cached ${sz}B < min ${min_size}B)"
               rm -f "$MODELS_DIR/$out"
             fi
-            echo "Downloading $out from $url ..."
-            wget -q --show-progress -O "$MODELS_DIR/$out" "$url" 2>&1 || curl -L -f -o "$MODELS_DIR/$out" "$url" 2>&1
+            echo "Downloading $out ..."
+            wget -q --show-progress -O "$MODELS_DIR/$out" "$url" 2>&1 || \
+              curl -L -f -o "$MODELS_DIR/$out" "$url" 2>&1
             local sz=$(stat -c%s "$MODELS_DIR/$out" 2>/dev/null || echo 0)
             if [ "$sz" -lt "$min_size" ]; then
               echo "FAIL: $out too small (${sz}B, need >=${min_size}B)"
@@ -321,7 +324,10 @@ jobs:
             return 0
           }
 
+          # ──────────────────────────────────────────────
           # 1. Whisper tiny (csukuangfj/sherpa-onnx-whisper-tiny)
+          #    Verified working: encoder ~57MB, decoder ~3MB, tokens ~90KB
+          # ──────────────────────────────────────────────
           dl "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main/tiny-encoder.onnx" \
              "whisper_encoder.onnx" 30000000
           dl "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main/tiny-decoder.onnx" \
@@ -329,23 +335,106 @@ jobs:
           dl "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main/tiny-tokens.txt" \
              "whisper_tokens.txt" 1000
 
-          # 2. MobileSAM (qualcomm/MobileSam on HuggingFace has ONNX)
-          # Try qualcomm/MobileSam first (verified ONNX files), then fallbacks
-          if ! dl "https://huggingface.co/qualcomm/MobileSam/resolve/main/MobileSam.onnx" \
-                  "sam_encoder.onnx" 1000000; then
-            if ! dl "https://huggingface.co/onnx-community/mobile_sam/resolve/main/onnx/encoder_model.onnx" \
-                    "sam_encoder.onnx" 1000000; then
-              dl "https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/mobile_sam_20230629/mobile_sam.encoder.onnx" \
-                 "sam_encoder.onnx" 1000000
-            fi
-          fi
-          if ! dl "https://huggingface.co/onnx-community/mobile_sam/resolve/main/onnx/decoder_model.onnx" \
-                  "sam_decoder.onnx" 100000; then
-            dl "https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/mobile_sam_20230629/mobile_sam.mask_decoder.onnx" \
-               "sam_decoder.onnx" 100000
+          # ──────────────────────────────────────────────
+          # 2. MobileSAM — Export from PyTorch (most reliable)
+          #    Download mobile_sam.pt from GitHub, export encoder + decoder
+          # ──────────────────────────────────────────────
+          if [ -f "$MODELS_DIR/sam_encoder.onnx" ] && [ $(stat -c%s "$MODELS_DIR/sam_encoder.onnx") -ge 1000000 ] && \
+             [ -f "$MODELS_DIR/sam_decoder.onnx" ] && [ $(stat -c%s "$MODELS_DIR/sam_decoder.onnx") -ge 100000 ]; then
+            echo "CACHED: MobileSAM models"
+          else
+            echo "Exporting MobileSAM from PyTorch..."
+            pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -3
+            pip3 install onnx 2>&1 | tail -3
+            # Install mobile_sam package
+            pip3 install git+https://github.com/ChaoningZhang/MobileSAM.git 2>&1 | tail -3
+            python3 << 'PYEOF'
+          import torch
+          import urllib.request
+          import os
+          import sys
+
+          MODELS_DIR = "app/src/main/assets/ai_models"
+
+          try:
+              from mobile_sam import sam_model_registry, SamPredictor
+
+              # Download weights
+              url = "https://github.com/ChaoningZhang/MobileSAM/raw/master/weights/mobile_sam.pt"
+              print(f"Downloading MobileSAM weights from {url}...")
+              urllib.request.urlretrieve(url, "/tmp/mobile_sam.pt")
+
+              # Load model
+              sam = sam_model_registry["vit_t"](checkpoint="/tmp/mobile_sam.pt")
+              sam.eval()
+              os.remove("/tmp/mobile_sam.pt")
+
+              # Export encoder (TinyViT image encoder)
+              print("Exporting MobileSAM encoder to ONNX...")
+              with torch.no_grad():
+                  dummy = torch.randn(1, 3, 1024, 1024)
+                  torch.onnx.export(
+                      sam.image_encoder,
+                      dummy,
+                      os.path.join(MODELS_DIR, "sam_encoder.onnx"),
+                      opset_version=14,
+                      input_names=["input_image"],
+                      output_names=["image_embeddings"],
+                      dynamic_axes={"input_image": {0: "batch"}, "image_embeddings": {0: "batch"}}
+                  )
+
+              # Export decoder (mask decoder)
+              print("Exporting MobileSAM decoder to ONNX...")
+              with torch.no_grad():
+                  # Decoder expects: image_embeddings, point_coords, point_labels, mask_input, has_mask_input
+                  img_emb = torch.randn(1, 256, 64, 64)
+                  point_coords = torch.randn(1, 1, 2)
+                  point_labels = torch.ones(1, 1, dtype=torch.float32)
+                  mask_input = torch.randn(1, 1, 256, 256)
+                  has_mask = torch.tensor([0], dtype=torch.float32)
+
+                  torch.onnx.export(
+                      sam.mask_decoder,
+                      (img_emb, point_coords, point_labels, mask_input, has_mask),
+                      os.path.join(MODELS_DIR, "sam_decoder.onnx"),
+                      opset_version=14,
+                      input_names=["image_embeddings", "point_coords", "point_labels", "mask_input", "has_mask_input"],
+                      output_names=["masks", "iou_predictions", "low_res_masks"],
+                      dynamic_axes={
+                          "image_embeddings": {0: "batch"},
+                          "point_coords": {0: "batch", 1: "num_points"},
+                          "point_labels": {0: "batch", 1: "num_points"},
+                          "masks": {0: "batch"},
+                          "iou_predictions": {0: "batch"},
+                          "low_res_masks": {0: "batch"}
+                      }
+                  )
+
+              enc_size = os.path.getsize(os.path.join(MODELS_DIR, "sam_encoder.onnx"))
+              dec_size = os.path.getsize(os.path.join(MODELS_DIR, "sam_decoder.onnx"))
+              print(f"MobileSAM encoder: {enc_size} bytes")
+              print(f"MobileSAM decoder: {dec_size} bytes")
+
+              if enc_size < 1000000:
+                  print("FAIL: sam_encoder.onnx too small")
+                  sys.exit(1)
+              if dec_size < 100000:
+                  print("FAIL: sam_decoder.onnx too small")
+                  sys.exit(1)
+              print("MobileSAM ONNX export OK")
+
+          except Exception as e:
+              print(f"MobileSAM export error: {e}")
+              import traceback
+              traceback.print_exc()
+              sys.exit(1)
+          PYEOF
           fi
 
-          # 3. RealESRGAN x4plus (from GitHub releases pth -> ONNX via PyTorch)
+          # ──────────────────────────────────────────────
+          # 3. RealESRGAN x4plus — Export from PyTorch
+          #    Download .pth from GitHub Releases, export to ONNX
+          # ──────────────────────────────────────────────
           if [ -f "$MODELS_DIR/realesrgan_x4plus.onnx" ] && [ $(stat -c%s "$MODELS_DIR/realesrgan_x4plus.onnx") -ge 1000000 ]; then
             echo "CACHED: realesrgan_x4plus.onnx"
           else
@@ -431,51 +520,53 @@ jobs:
             echo "OK: realesrgan_x4plus.onnx ($SIZE bytes)"
           fi
 
-          # 4. RIFE v4 (yuvraj108c/rife-onnx)
+          # ──────────────────────────────────────────────
+          # 4. RIFE v4.6 (yuvraj108c/rife-onnx)
+          #    Pre-converted ONNX, direct download
+          # ──────────────────────────────────────────────
           dl "https://huggingface.co/yuvraj108c/rife-onnx/resolve/main/rife49_ensemble_True_scale_1_sim.onnx" \
              "rife_v4.onnx" 5000000
 
-          # 5. Demucs htdemucs_ft (StemSplitio)
-          if ! dl "https://huggingface.co/StemSplitio/htdemucs-ft-onnx/resolve/main/htdemucs_ft.onnx" \
-                  "demucs_htdemucs_ft.onnx" 1000000; then
-            echo "Trying alternative Demucs source..."
-            dl "https://huggingface.co/StemSplitio/htdemucs_ort_v1/resolve/main/htdemucs_ort_v1.onnx" \
-               "demucs_htdemucs_ft.onnx" 1000000
+          # ──────────────────────────────────────────────
+          # 5. Demucs htdemucs (StemSplitio/htdemucs-onnx)
+          #    Single-file ONNX, fp16 weights (~166MB)
+          # ──────────────────────────────────────────────
+          if ! dl "https://huggingface.co/StemSplitio/htdemucs-onnx/resolve/main/htdemucs_fp16weights.onnx" \
+                  "demucs_htdemucs.onnx" 100000000; then
+            echo "Trying fp32 variant..."
+            dl "https://huggingface.co/StemSplitio/htdemucs-onnx/resolve/main/htdemucs.onnx" \
+               "demucs_htdemucs.onnx" 100000000
           fi
 
-          # 6. RNNoise (onnx-community)
+          # ──────────────────────────────────────────────
+          # 6. RNNoise (onnx-community/rnnoise-denoising)
+          #    Pre-converted ONNX, direct download
+          # ──────────────────────────────────────────────
           dl "https://huggingface.co/onnx-community/rnnoise-denoising/resolve/main/onnx/model.onnx" \
              "rnnoise.onnx" 100000
 
-          # Final verification
+          # ──────────────────────────────────────────────
+          # Final verification — ALL models must exist and be valid size
+          # ──────────────────────────────────────────────
           echo ""
           echo "=== AI Models Summary ==="
           TOTAL=0
+          MISSING=0
           for f in whisper_encoder.onnx whisper_decoder.onnx whisper_tokens.txt \
                    sam_encoder.onnx sam_decoder.onnx \
                    realesrgan_x4plus.onnx rife_v4.onnx \
-                   demucs_htdemucs_ft.onnx rnnoise.onnx; do
+                   demucs_htdemucs.onnx rnnoise.onnx; do
             if [ -f "$MODELS_DIR/$f" ]; then
               SZ=$(stat -c%s "$MODELS_DIR/$f")
               TOTAL=$((TOTAL + SZ))
               printf "  %-30s %s\n" "$f" "$(du -h $MODELS_DIR/$f | cut -f1)"
             else
               printf "  %-30s MISSING!\n" "$f"
+              MISSING=1
             fi
           done
           echo "  Total: $((TOTAL / 1024 / 1024)) MB"
 
-          # Check all required files exist
-          MISSING=0
-          for f in whisper_encoder.onnx whisper_decoder.onnx whisper_tokens.txt \
-                   sam_encoder.onnx sam_decoder.onnx \
-                   realesrgan_x4plus.onnx rife_v4.onnx \
-                   demucs_htdemucs_ft.onnx rnnoise.onnx; do
-            if [ ! -f "$MODELS_DIR/$f" ]; then
-              echo "MISSING: $f"
-              MISSING=1
-            fi
-          done
           if [ "$MISSING" -eq 1 ]; then
             echo "FAIL: Some AI models are missing!"
             exit 1
