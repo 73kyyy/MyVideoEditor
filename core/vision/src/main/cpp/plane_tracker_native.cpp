@@ -2,40 +2,61 @@
 #include <android/log.h>
 #include <vector>
 
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/video/tracking.hpp>
+
 #define TAG "PlaneTracker"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
+
+static cv::Mat prevGray;
+static std::vector<cv::Point2f> prevPoints;
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_myvideo_editor_core_vision_PlaneTracker_nativeTrack(JNIEnv *env, jobject thiz,
     jintArray prevPixels, jintArray currPixels, jint w, jint h) {
-    int* prev = env->GetIntArrayElements(prevPixels, nullptr);
-    int* curr = env->GetIntArrayElements(currPixels, nullptr);
-    std::vector<float> points;
-    int blockSize = 16;
-    for (int y = blockSize; y < h - blockSize; y += blockSize) {
-        for (int x = blockSize; x < w - blockSize; x += blockSize) {
-            int bestDx = 0, bestDy = 0, bestDiff = INT32_MAX;
-            for (int dy = -8; dy <= 8; dy += 2) {
-                for (int dx = -8; dx <= 8; dx += 2) {
-                    int diff = 0;
-                    for (int by = -2; by <= 2; by++) for (int bx = -2; bx <= 2; bx++) {
-                        int py = y + by, px = x + bx;
-                        int cy = py + dy, cx = px + dx;
-                        if (cy >= 0 && cy < h && cx >= 0 && cx < w) {
-                            int p = prev[py*w+px], c = curr[cy*w+cx];
-                            diff += abs((p>>16&0xFF)-(c>>16&0xFF))+abs((p>>8&0xFF)-(c>>8&0xFF))+abs((p&0xFF)-(c&0xFF));
-                        }
-                    }
-                    if (diff < bestDiff) { bestDiff = diff; bestDx = dx; bestDy = dy; }
-                }
-            }
-            points.push_back(x + bestDx);
-            points.push_back(y + bestDy);
+    // Convert both frames to grayscale OpenCV Mats
+    jint* prevData = env->GetIntArrayElements(prevPixels, nullptr);
+    jint* currData = env->GetIntArrayElements(currPixels, nullptr);
+
+    cv::Mat prevRGBA(h, w, CV_8UC4, prevData);
+    cv::Mat currRGBA(h, w, CV_8UC4, currData);
+
+    cv::Mat prevG, currG;
+    cv::cvtColor(prevRGBA, prevG, cv::COLOR_RGBA2GRAY);
+    cv::cvtColor(currRGBA, currG, cv::COLOR_RGBA2GRAY);
+
+    env->ReleaseIntArrayElements(prevPixels, prevData, JNI_ABORT);
+    env->ReleaseIntArrayElements(currPixels, currData, JNI_ABORT);
+
+    // Detect good features to track if no previous points
+    if (prevPoints.empty() || prevGray.empty()) {
+        cv::goodFeaturesToTrack(prevG, prevPoints, 200, 0.01, 10);
+        prevGray = prevG.clone();
+    }
+
+    // Lucas-Kanade optical flow
+    std::vector<cv::Point2f> currPoints;
+    std::vector<uchar> status;
+    std::vector<float> err;
+    cv::calcOpticalFlowPyrLK(prevGray, currG, prevPoints, currPoints, status, err);
+
+    // Collect tracked points
+    std::vector<float> result;
+    for (size_t i = 0; i < currPoints.size(); i++) {
+        if (status[i]) {
+            result.push_back(currPoints[i].x);
+            result.push_back(currPoints[i].y);
         }
     }
-    env->ReleaseIntArrayElements(prevPixels, prev, JNI_ABORT);
-    env->ReleaseIntArrayElements(currPixels, curr, JNI_ABORT);
-    jfloatArray result = env->NewFloatArray(points.size());
-    env->SetFloatArrayRegion(result, 0, points.size(), points.data());
-    return result;
+
+    // Update state
+    prevGray = currG.clone();
+    prevPoints = currPoints;
+
+    jfloatArray out = env->NewFloatArray(result.size());
+    if (result.size() > 0) {
+        env->SetFloatArrayRegion(out, 0, result.size(), result.data());
+    }
+    return out;
 }

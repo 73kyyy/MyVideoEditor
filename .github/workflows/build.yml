@@ -139,25 +139,43 @@ jobs:
 
       - name: Download opencv-mobile
         run: |
-          mkdir -p app/src/main/cpp/third_party/opencv-mobile
-          if [ -d "app/src/main/cpp/third_party/opencv-mobile/sdk" ]; then exit 0; fi
+          mkdir -p app/src/main/cpp/third_party/opencv/sdk/native/jni
+          if [ -f "app/src/main/cpp/third_party/opencv/sdk/native/jni/OpenCVConfig.cmake" ]; then
+            echo "OpenCV already downloaded"
+            exit 0
+          fi
+          # Download opencv-mobile SDK for Android
           D=0
-          for T in v2.5 v2.4 v2.3; do
-            for V in 4.10.0 4.9.0 4.8.0; do
-              U="https://github.com/nihui/opencv-mobile/releases/download/$T/opencv-mobile-$V-android-sdk.zip"
-              if curl -L -f -o cv.zip "$U" --connect-timeout 15 --max-time 120 2>/dev/null; then
-                if unzip -t cv.zip >/dev/null 2>&1; then
-                  unzip -q cv.zip -d app/src/main/cpp/third_party/opencv-mobile/
-                  mv app/src/main/cpp/third_party/opencv-mobile/opencv-mobile-*-android-sdk/sdk app/src/main/cpp/third_party/opencv-mobile/sdk 2>/dev/null || true
+          for V in 4.10.0 4.9.0 4.8.0; do
+            U="https://github.com/nihui/opencv-mobile/releases/download/v2.5/opencv-mobile-$V-android-sdk.zip"
+            echo "Trying: $U"
+            if curl -L -f -o cv.zip "$U" --connect-timeout 15 --max-time 120 2>/dev/null; then
+              if unzip -t cv.zip >/dev/null 2>&1; then
+                unzip -q cv.zip -d app/src/main/cpp/third_party/opencv-tmp/
+                # Find and move the SDK directory
+                SDK_DIR=$(find app/src/main/cpp/third_party/opencv-tmp -name "sdk" -type d | head -1)
+                if [ -n "$SDK_DIR" ]; then
+                  cp -r "$SDK_DIR"/* app/src/main/cpp/third_party/opencv/sdk/
                   D=1
-                  break 2
+                else
+                  # Try alternate structure
+                  TMP_DIR=$(find app/src/main/cpp/third_party/opencv-tmp -name "OpenCVConfig.cmake" -exec dirname {} \; | head -1)
+                  if [ -n "$TMP_DIR" ]; then
+                    cp -r "$TMP_DIR"/* app/src/main/cpp/third_party/opencv/sdk/native/jni/
+                    D=1
+                  fi
                 fi
+                rm -rf app/src/main/cpp/third_party/opencv-tmp cv.zip
+                if [ "$D" -eq 1 ]; then break; fi
               fi
-              rm -f cv.zip
-            done
+            fi
+            rm -f cv.zip
           done
-          if [ "$D" -eq 0 ]; then
-            echo "opencv-mobile download failed, skipping"
+          # Verify
+          if [ -f "app/src/main/cpp/third_party/opencv/sdk/native/jni/OpenCVConfig.cmake" ]; then
+            echo "OpenCV SDK downloaded successfully"
+          else
+            echo "WARN: OpenCV SDK download failed, will build without OpenCV"
           fi
 
       - name: Download ncnn
