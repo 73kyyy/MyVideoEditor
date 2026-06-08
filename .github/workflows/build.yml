@@ -345,7 +345,7 @@ jobs:
           else
             echo "Exporting MobileSAM from PyTorch..."
             pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -3
-            pip3 install onnx timm 2>&1 | tail -3
+            pip3 install onnx timm onnxscript 2>&1 | tail -3
             # Install mobile_sam package
             pip3 install git+https://github.com/ChaoningZhang/MobileSAM.git 2>&1 | tail -3
             python3 << 'PYEOF'
