@@ -3,21 +3,20 @@ project(core_ai)
 
 # ── ONNX Runtime ──────────────────────────────────────────────────────────────
 # The shared library (libonnxruntime.so) is provided by the onnxruntime-android
-# AAR.  Gradle extracts native libs from the AAR and packages them into the APK.
-# For CMake linking, we pass the library directory via ONNXRUNTIME_LIB_DIR.
+# AAR.  Gradle extracts native libs from the AAR into ONNXRUNTIME_LIB_DIR
+# with ABI subdirectories (e.g., onnxruntime-libs/arm64-v8a/libonnxruntime.so).
 # The header directory is passed via ONNXRUNTIME_INCLUDE_DIR.
-#
-# If the library directory is not set (e.g., during CMake configure before the
-# AAR is fully resolved), we fall back to a stub mode where ONNX Runtime calls
-# are compiled but the library is not linked — the actual loading happens at
-# runtime via dlopen from the APK's lib directory.
 
 set(USE_ONNX_RUNTIME FALSE)
 
 if(DEFINED ONNXRUNTIME_INCLUDE_DIR AND DEFINED ONNXRUNTIME_LIB_DIR)
-    if(EXISTS "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so")
+    # ANDROID_ABI is set by the Android CMake toolchain
+    set(_ORT_LIB_PATH "${ONNXRUNTIME_LIB_DIR}/${ANDROID_ABI}/libonnxruntime.so")
+    if(EXISTS "${_ORT_LIB_PATH}")
         set(USE_ONNX_RUNTIME TRUE)
-        message(STATUS "ONNX Runtime found: ${ONNXRUNTIME_LIB_DIR}")
+        message(STATUS "ONNX Runtime found: ${_ORT_LIB_PATH}")
+    else()
+        message(WARNING "ONNX Runtime lib not found at ${_ORT_LIB_PATH} - building in stub mode")
     endif()
 endif()
 
@@ -41,7 +40,7 @@ if(USE_ONNX_RUNTIME)
     target_link_libraries(core_ai
         log
         android
-        ${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so
+        ${_ORT_LIB_PATH}
     )
     target_compile_definitions(core_ai PRIVATE USE_ONNX_RUNTIME=1)
     message(STATUS "Building with ONNX Runtime support")

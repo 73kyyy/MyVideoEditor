@@ -18,7 +18,7 @@ android {
                 cppFlags += "-std=c++17"
                 arguments += listOf(
                     "-DONNXRUNTIME_INCLUDE_DIR=${layout.buildDirectory.get()}/onnxruntime-headers",
-                    "-DONNXRUNTIME_LIB_DIR=${layout.buildDirectory.get()}/onnxruntime-libs/\${ANDROID_ABI}"
+                    "-DONNXRUNTIME_LIB_DIR=${layout.buildDirectory.get()}/onnxruntime-libs"
                 )
             }
         }
