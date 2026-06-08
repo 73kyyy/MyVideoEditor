@@ -384,31 +384,46 @@ jobs:
                       dynamic_axes={"input_image": {0: "batch"}, "image_embeddings": {0: "batch"}}
                   )
 
-              # Export decoder (mask decoder)
+              # Export decoder (prompt_encoder + mask_decoder wrapper)
+              # The mask_decoder needs pre-computed embeddings from prompt_encoder,
+              # so we wrap both together for a clean ONNX interface.
               print("Exporting MobileSAM decoder to ONNX...")
-              with torch.no_grad():
-                  # Decoder expects: image_embeddings, point_coords, point_labels, mask_input, has_mask_input
-                  img_emb = torch.randn(1, 256, 64, 64)
-                  point_coords = torch.randn(1, 1, 2)
-                  point_labels = torch.ones(1, 1, dtype=torch.float32)
-                  mask_input = torch.randn(1, 1, 256, 256)
-                  has_mask = torch.tensor([0], dtype=torch.float32)
+              class SamDecoderWrapper(torch.nn.Module):
+                  def __init__(self, prompt_encoder, mask_decoder):
+                      super().__init__()
+                      self.prompt_encoder = prompt_encoder
+                      self.mask_decoder = mask_decoder
+                  def forward(self, image_embeddings, point_coords, point_labels):
+                      sparse_emb, dense_emb = self.prompt_encoder(
+                          points=(point_coords, point_labels), boxes=None, masks=None)
+                      low_res_masks, iou_pred = self.mask_decoder(
+                          image_embeddings=image_embeddings,
+                          image_pe=self.prompt_encoder.get_dense_pe(),
+                          sparse_prompt_embeddings=sparse_emb,
+                          dense_prompt_embeddings=dense_emb,
+                          multimask_output=False)
+                      return low_res_masks, iou_pred
 
+              decoder = SamDecoderWrapper(sam.prompt_encoder, sam.mask_decoder)
+              decoder.eval()
+              with torch.no_grad():
+                  img_emb = torch.randn(1, 256, 64, 64)
+                  pt_coords = torch.randn(1, 1, 2)
+                  pt_labels = torch.ones(1, 1, dtype=torch.float32)
                   torch.onnx.export(
-                      sam.mask_decoder,
-                      (img_emb, point_coords, point_labels, mask_input, has_mask),
+                      decoder,
+                      (img_emb, pt_coords, pt_labels),
                       os.path.join(MODELS_DIR, "sam_decoder.onnx"),
                       opset_version=14,
                       dynamo=False,
-                      input_names=["image_embeddings", "point_coords", "point_labels", "mask_input", "has_mask_input"],
-                      output_names=["masks", "iou_predictions", "low_res_masks"],
+                      input_names=["image_embeddings", "point_coords", "point_labels"],
+                      output_names=["low_res_masks", "iou_predictions"],
                       dynamic_axes={
                           "image_embeddings": {0: "batch"},
                           "point_coords": {0: "batch", 1: "num_points"},
                           "point_labels": {0: "batch", 1: "num_points"},
-                          "masks": {0: "batch"},
-                          "iou_predictions": {0: "batch"},
-                          "low_res_masks": {0: "batch"}
+                          "low_res_masks": {0: "batch"},
+                          "iou_predictions": {0: "batch"}
                       }
                   )
 
