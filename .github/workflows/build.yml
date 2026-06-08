@@ -378,6 +378,7 @@ jobs:
                       dummy,
                       os.path.join(MODELS_DIR, "sam_encoder.onnx"),
                       opset_version=14,
+                      dynamo=False,
                       input_names=["input_image"],
                       output_names=["image_embeddings"],
                       dynamic_axes={"input_image": {0: "batch"}, "image_embeddings": {0: "batch"}}
@@ -398,6 +399,7 @@ jobs:
                       (img_emb, point_coords, point_labels, mask_input, has_mask),
                       os.path.join(MODELS_DIR, "sam_decoder.onnx"),
                       opset_version=14,
+                      dynamo=False,
                       input_names=["image_embeddings", "point_coords", "point_labels", "mask_input", "has_mask_input"],
                       output_names=["masks", "iou_predictions", "low_res_masks"],
                       dynamic_axes={
@@ -511,7 +513,8 @@ jobs:
           with torch.no_grad():
               torch.onnx.export(model, torch.randn(1,3,64,64),
                   'app/src/main/assets/ai_models/realesrgan_x4plus.onnx',
-                  opset_version=14, input_names=['input'], output_names=['output'],
+                  opset_version=14, dynamo=False,
+                  input_names=['input'], output_names=['output'],
                   dynamic_axes={'input':{0:'batch',2:'h',3:'w'},'output':{0:'batch',2:'h',3:'w'}})
           print('RealESRGAN ONNX export OK')
           PYEOF
