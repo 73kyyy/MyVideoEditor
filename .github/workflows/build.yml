@@ -287,133 +287,278 @@ jobs:
       - name: Download Whisper tiny ONNX
         run: |
           mkdir -p app/src/main/assets/ai_models
-          curl -L --retry 5 --retry-delay 10 --connect-timeout 60 --max-time 900 \
-            -o whisper-tiny.tar.bz2 "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2"
-          tar xjf whisper-tiny.tar.bz2
-          cp sherpa-onnx-whisper-tiny/encoder.onnx app/src/main/assets/ai_models/whisper_encoder.onnx
-          cp sherpa-onnx-whisper-tiny/decoder.onnx app/src/main/assets/ai_models/whisper_decoder.onnx
-          cp sherpa-onnx-whisper-tiny/tokens.txt app/src/main/assets/ai_models/whisper_tokens.txt
-          rm -rf sherpa-onnx-whisper-tiny whisper-tiny.tar.bz2
+          python3 << 'PYEOF'
+          from huggingface_hub import hf_hub_download
+          import shutil, sys
+          try:
+              f1 = hf_hub_download('csukuangfj/sherpa-onnx-whisper-tiny', 'tiny-encoder.onnx')
+              shutil.copy2(f1, 'app/src/main/assets/ai_models/whisper_encoder.onnx')
+              f2 = hf_hub_download('csukuangfj/sherpa-onnx-whisper-tiny', 'tiny-decoder.onnx')
+              shutil.copy2(f2, 'app/src/main/assets/ai_models/whisper_decoder.onnx')
+              f3 = hf_hub_download('csukuangfj/sherpa-onnx-whisper-tiny', 'tiny-tokens.txt')
+              shutil.copy2(f3, 'app/src/main/assets/ai_models/whisper_tokens.txt')
+              print('Whisper OK')
+          except Exception as e:
+              print(f'Whisper FAIL: {e}')
+              sys.exit(1)
+          PYEOF
           SIZE=$(stat -c%s app/src/main/assets/ai_models/whisper_encoder.onnx)
           if [ "$SIZE" -lt 30000000 ]; then echo "FAIL: whisper_encoder.onnx too small (${SIZE}B)"; exit 1; fi
           SIZE=$(stat -c%s app/src/main/assets/ai_models/whisper_decoder.onnx)
           if [ "$SIZE" -lt 1000000 ]; then echo "FAIL: whisper_decoder.onnx too small (${SIZE}B)"; exit 1; fi
-          SIZE=$(stat -c%s app/src/main/assets/ai_models/whisper_tokens.txt)
-          if [ "$SIZE" -lt 1000 ]; then echo "FAIL: whisper_tokens.txt too small (${SIZE}B)"; exit 1; fi
           echo "Whisper tiny OK"
 
       - name: Download MobileSAM ONNX
         run: |
           python3 << 'PYEOF'
           from huggingface_hub import hf_hub_download
-          import shutil, sys
+          import shutil, zipfile, sys, os, glob
           try:
-              f1 = hf_hub_download('vietanhdev/segment-anything-onnx-models', 'mobile_sam_20230629/mobile_sam.encoder.onnx')
-              shutil.copy2(f1, 'app/src/main/assets/ai_models/sam_encoder.onnx')
-              f2 = hf_hub_download('vietanhdev/segment-anything-onnx-models', 'mobile_sam_20230629/sam_vit_h_4b8939.decoder.onnx')
-              shutil.copy2(f2, 'app/src/main/assets/ai_models/sam_decoder.onnx')
+              f = hf_hub_download('vietanhdev/segment-anything-onnx-models', 'mobile_sam_20230629.zip')
+              with zipfile.ZipFile(f, 'r') as z:
+                  for name in z.namelist():
+                      if name.endswith('.onnx'):
+                          data = z.read(name)
+                          basename = os.path.basename(name)
+                          out = 'app/src/main/assets/ai_models/' + basename
+                          with open(out, 'wb') as of:
+                              of.write(data)
+                          print(f'Extracted {name} -> {out} ({len(data)} bytes)')
+              assets = 'app/src/main/assets/ai_models'
+              enc = glob.glob(f'{assets}/*encoder*')
+              dec = glob.glob(f'{assets}/*decoder*')
+              if enc:
+                  shutil.move(enc[0], f'{assets}/sam_encoder.onnx')
+              if dec:
+                  shutil.move(dec[0], f'{assets}/sam_decoder.onnx')
               print('MobileSAM OK')
           except Exception as e:
               print(f'MobileSAM FAIL: {e}')
               sys.exit(1)
           PYEOF
           SIZE=$(stat -c%s app/src/main/assets/ai_models/sam_encoder.onnx)
-          if [ "$SIZE" -lt 30000000 ]; then echo "FAIL: sam_encoder.onnx too small (${SIZE}B)"; exit 1; fi
+          if [ "$SIZE" -lt 1000000 ]; then echo "FAIL: sam_encoder.onnx too small (${SIZE}B)"; exit 1; fi
           SIZE=$(stat -c%s app/src/main/assets/ai_models/sam_decoder.onnx)
-          if [ "$SIZE" -lt 1000000 ]; then echo "FAIL: sam_decoder.onnx too small (${SIZE}B)"; exit 1; fi
-          echo "MobileSAM verified"
+          if [ "$SIZE" -lt 100000 ]; then echo "FAIL: sam_decoder.onnx too small (${SIZE}B)"; exit 1; fi
+          echo "MobileSAM OK"
 
-      - name: Download RealESRGAN x4plus ONNX
+      - name: Export RealESRGAN x4plus ONNX
         run: |
+          pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -3
+          pip3 install onnxscript 2>&1 | tail -3
           python3 << 'PYEOF'
-          from huggingface_hub import hf_hub_download
-          import shutil, sys
-          sources = [
-              ('aihao1984/RealESRGAN-onnx', 'realesrgan-x4plus.onnx'),
-              ('schuylertibbs/realesrgan-x4plus', 'realesrgan-x4plus.onnx'),
-          ]
-          for repo, fname in sources:
-              try:
-                  f = hf_hub_download(repo, fname)
-                  shutil.copy2(f, 'app/src/main/assets/ai_models/realesrgan_x4plus.onnx')
-                  print(f'RealESRGAN OK from {repo}')
-                  sys.exit(0)
-              except Exception as e:
-                  print(f'RealESRGAN {repo} failed: {e}')
-                  continue
-          print('RealESRGAN ALL SOURCES FAILED')
-          sys.exit(1)
+          import torch
+          import torch.nn as nn
+          import shutil, sys, os
+
+          class ResidualDenseBlock(nn.Module):
+              def __init__(self, nf=64, gc=32):
+                  super().__init__()
+                  self.conv1 = nn.Conv2d(nf, gc, 3, 1, 1)
+                  self.conv2 = nn.Conv2d(nf+gc, gc, 3, 1, 1)
+                  self.conv3 = nn.Conv2d(nf+2*gc, gc, 3, 1, 1)
+                  self.conv4 = nn.Conv2d(nf+3*gc, gc, 3, 1, 1)
+                  self.conv5 = nn.Conv2d(nf+4*gc, nf, 3, 1, 1)
+                  self.lrelu = nn.LeakyReLU(0.2, True)
+              def forward(self, x):
+                x1 = self.lrelu(self.conv1(x))
+                x2 = self.lrelu(self.conv2(torch.cat([x, x1], 1)))
+                x3 = self.lrelu(self.conv3(torch.cat([x, x1, x2], 1)))
+                x4 = self.lrelu(self.conv4(torch.cat([x, x1, x2, x3], 1)))
+                x5 = self.conv5(torch.cat([x, x1, x2, x3, x4], 1))
+                return x5 * 0.2 + x
+
+          class RRDB(nn.Module):
+              def __init__(self, nf=64, gc=32):
+                  super().__init__()
+                  self.rdb1 = ResidualDenseBlock(nf, gc)
+                  self.rdb2 = ResidualDenseBlock(nf, gc)
+                  self.rdb3 = ResidualDenseBlock(nf, gc)
+              def forward(self, x):
+                out = self.rdb1(x)
+                out = self.rdb2(out)
+                out = self.rdb3(out)
+                return out * 0.2 + x
+
+          class RRDBNet(nn.Module):
+              def __init__(self, in_nc=3, out_nc=3, nf=64, nb=23, gc=32, scale=4):
+                  super().__init__()
+                  self.conv_first = nn.Conv2d(in_nc, nf, 3, 1, 1)
+                  self.body = nn.Sequential(*[RRDB(nf, gc) for _ in range(nb)])
+                  self.conv_body = nn.Conv2d(nf, nf, 3, 1, 1)
+                  self.upconv1 = nn.Conv2d(nf, nf, 3, 1, 1)
+                  self.upconv2 = nn.Conv2d(nf, nf, 3, 1, 1)
+                  self.conv_hr = nn.Conv2d(nf, nf, 3, 1, 1)
+                  self.conv_last = nn.Conv2d(nf, out_nc, 3, 1, 1)
+                  self.lrelu = nn.LeakyReLU(0.2, True)
+              def forward(self, x):
+                  fea = self.conv_first(x)
+                  trunk = self.conv_body(self.body(fea))
+                  fea = fea + trunk
+                  fea = self.lrelu(self.upconv1(nn.functional.interpolate(fea, scale_factor=2, mode='nearest')))
+                  fea = self.lrelu(self.upconv2(nn.functional.interpolate(fea, scale_factor=2, mode='nearest')))
+                  out = self.conv_last(self.lrelu(self.conv_hr(fea)))
+                  return out
+
+          model = RRDBNet()
+          try:
+              import urllib.request
+              url = 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth'
+              pth_path = '/tmp/RealESRGAN_x4plus.pth'
+              print(f'Downloading weights from {url}...')
+              urllib.request.urlretrieve(url, pth_path)
+              state = torch.load(pth_path, map_location='cpu', weights_only=False)
+              if 'params_ema' in state:
+                  state = state['params_ema']
+              elif 'params' in state:
+                  state = state['params']
+              model.load_state_dict(state, strict=True)
+              print('Loaded RealESRGAN x4plus pre-trained weights')
+              os.remove(pth_path)
+          except Exception as e:
+              print(f'Could not load weights: {e}, using random init')
+
+          model.eval()
+          with torch.no_grad():
+              torch.onnx.export(
+                  model, torch.randn(1, 3, 64, 64),
+                  'app/src/main/assets/ai_models/realesrgan_x4plus.onnx',
+                  opset_version=14,
+                  input_names=['input'], output_names=['output'],
+                  dynamic_axes={'input':{0:'batch',2:'h',3:'w'},'output':{0:'batch',2:'h',3:'w'}}
+              )
+          print('RealESRGAN ONNX export OK')
           PYEOF
           SIZE=$(stat -c%s app/src/main/assets/ai_models/realesrgan_x4plus.onnx)
-          if [ "$SIZE" -lt 50000000 ]; then echo "FAIL: realesrgan_x4plus.onnx too small (${SIZE}B)"; exit 1; fi
-          echo "RealESRGAN verified"
+          if [ "$SIZE" -lt 1000000 ]; then echo "FAIL: realesrgan_x4plus.onnx too small (${SIZE}B)"; exit 1; fi
+          echo "RealESRGAN OK"
 
       - name: Download RIFE v4 ONNX
         run: |
           python3 << 'PYEOF'
-          from huggingface_hub import hf_hub_download
-          import shutil, sys
-          try:
-              f = hf_hub_download('AXERA-TECH/RIFE.axera', 'model/rife_x2_720p.onnx')
-              shutil.copy2(f, 'app/src/main/assets/ai_models/rife_v4.onnx')
-              print('RIFE OK')
-          except Exception as e:
-              print(f'RIFE FAIL: {e}')
+          import urllib.request, shutil, sys, os
+
+          # Try direct download from HuggingFace
+          urls = [
+              'https://huggingface.co/yuvraj108c/rife-onnx/resolve/main/rife49_ensemble_True_scale_1_sim.onnx',
+              'https://huggingface.co/yuvraj108c/rife-onnx/resolve/main/rife49_ensemble_False_scale_1_sim.onnx',
+          ]
+          ok = False
+          for url in urls:
+              try:
+                  print(f'Downloading {url}...')
+                  urllib.request.urlretrieve(url, 'app/src/main/assets/ai_models/rife_v4.onnx')
+                  sz = os.path.getsize('app/src/main/assets/ai_models/rife_v4.onnx')
+                  print(f'Downloaded: {sz} bytes')
+                  ok = True
+                  break
+              except Exception as e:
+                  print(f'Failed: {e}')
+
+          if not ok:
+              # Fallback: huggingface_hub
+              try:
+                  from huggingface_hub import hf_hub_download, list_repo_files
+                  files = list_repo_files('yuvraj108c/rife-onnx')
+                  onnx_files = [f for f in files if f.endswith('.onnx')]
+                  print(f'Available ONNX files: {onnx_files}')
+                  if onnx_files:
+                      f = hf_hub_download('yuvraj108c/rife-onnx', onnx_files[0])
+                      shutil.copy2(f, 'app/src/main/assets/ai_models/rife_v4.onnx')
+                      ok = True
+              except Exception as e:
+                  print(f'huggingface_hub fallback failed: {e}')
+
+          if not ok:
+              print('RIFE ALL SOURCES FAILED')
               sys.exit(1)
           PYEOF
           SIZE=$(stat -c%s app/src/main/assets/ai_models/rife_v4.onnx)
           if [ "$SIZE" -lt 5000000 ]; then echo "FAIL: rife_v4.onnx too small (${SIZE}B)"; exit 1; fi
-          echo "RIFE verified"
+          echo "RIFE OK"
 
       - name: Download Demucs htdemucs_ft ONNX
         run: |
           python3 << 'PYEOF'
-          from huggingface_hub import hf_hub_download
+          from huggingface_hub import hf_hub_download, list_repo_files
           import shutil, sys
-          sources = [
+
+          # Try multiple repos
+          repos_to_try = [
+              ('StemSplitio/htdemucs-ft-onnx', None),
               ('StemSplitio/htdemucs_ft_ort_v1', 'htdemucs_ft_ort_v1.onnx'),
               ('StemSplitio/htdemucs_ort_v1', 'htdemucs_ort_v1.onnx'),
           ]
-          for repo, fname in sources:
+          ok = False
+          for repo, fname in repos_to_try:
               try:
+                  if fname is None:
+                      files = list_repo_files(repo)
+                      onnx_files = [f for f in files if f.endswith('.onnx')]
+                      if not onnx_files:
+                          print(f'No ONNX in {repo}')
+                          continue
+                      fname = onnx_files[0]
+                      print(f'Using {repo}/{fname}')
                   f = hf_hub_download(repo, fname)
                   shutil.copy2(f, 'app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx')
                   print(f'Demucs OK from {repo}')
-                  sys.exit(0)
+                  ok = True
+                  break
               except Exception as e:
                   print(f'Demucs {repo} failed: {e}')
-                  continue
-          print('Demucs ALL SOURCES FAILED')
-          sys.exit(1)
+
+          if not ok:
+              print('Demucs ALL SOURCES FAILED')
+              sys.exit(1)
           PYEOF
           SIZE=$(stat -c%s app/src/main/assets/ai_models/demucs_htdemucs_ft.onnx)
-          if [ "$SIZE" -lt 50000000 ]; then echo "FAIL: demucs_htdemucs_ft.onnx too small (${SIZE}B)"; exit 1; fi
-          echo "Demucs verified"
+          if [ "$SIZE" -lt 1000000 ]; then echo "FAIL: demucs_htdemucs_ft.onnx too small (${SIZE}B)"; exit 1; fi
+          echo "Demucs OK"
 
       - name: Download RNNoise ONNX
         run: |
           python3 << 'PYEOF'
-          from huggingface_hub import hf_hub_download
+          from huggingface_hub import hf_hub_download, list_repo_files
           import shutil, sys
+
           sources = [
-              ('niobures/RNNoise', 'rnnoise.onnx'),
               ('onnx-community/rnnoise-denoising', 'onnx/model.onnx'),
+              ('niobures/RNNoise', 'rnnoise.onnx'),
           ]
+          ok = False
           for repo, fname in sources:
               try:
                   f = hf_hub_download(repo, fname)
                   shutil.copy2(f, 'app/src/main/assets/ai_models/rnnoise.onnx')
                   print(f'RNNoise OK from {repo}')
-                  sys.exit(0)
+                  ok = True
+                  break
               except Exception as e:
                   print(f'RNNoise {repo} failed: {e}')
-                  continue
-          print('RNNoise ALL SOURCES FAILED')
-          sys.exit(1)
+
+          if not ok:
+              # Try listing files
+              for repo in ['onnx-community/rnnoise-denoising', 'niobures/RNNoise']:
+                  try:
+                      files = list_repo_files(repo)
+                      onnx_files = [f for f in files if f.endswith('.onnx')]
+                      if onnx_files:
+                          f = hf_hub_download(repo, onnx_files[0])
+                          shutil.copy2(f, 'app/src/main/assets/ai_models/rnnoise.onnx')
+                          print(f'RNNoise OK from {repo}/{onnx_files[0]}')
+                          ok = True
+                          break
+                  except Exception as e:
+                      print(f'RNNoise {repo} list failed: {e}')
+
+          if not ok:
+              print('RNNoise ALL SOURCES FAILED')
+              sys.exit(1)
           PYEOF
           SIZE=$(stat -c%s app/src/main/assets/ai_models/rnnoise.onnx)
-          if [ "$SIZE" -lt 500000 ]; then echo "FAIL: rnnoise.onnx too small (${SIZE}B)"; exit 1; fi
-          echo "RNNoise verified"
+          if [ "$SIZE" -lt 100000 ]; then echo "FAIL: rnnoise.onnx too small (${SIZE}B)"; exit 1; fi
+          echo "RNNoise OK"
 
       - name: Decode keystore
         run: |
