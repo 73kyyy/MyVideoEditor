@@ -4,13 +4,13 @@ class RNNoiseWrapper {
     private var nativePtr: Long = 0
     var isReady = false; private set
 
-    external fun nativeInit(): Long
+    external fun nativeInit(modelPath: String): Long
     external fun nativeProcess(ptr: Long, pcm: FloatArray): FloatArray
     external fun nativeRelease(ptr: Long)
 
-    fun init(): Boolean {
+    fun init(modelPath: String): Boolean {
         return try {
-            nativePtr = nativeInit()
+            nativePtr = nativeInit(modelPath)
             isReady = nativePtr != 0L
             isReady
         } catch (e: Exception) { false }
