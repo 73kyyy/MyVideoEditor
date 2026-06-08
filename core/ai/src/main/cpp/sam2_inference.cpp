@@ -4,11 +4,13 @@
 #include <string>
 #include <algorithm>
 
-#include "onnxruntime_helper.h"
-
 #define TAG "SAM2Inference"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+
+#if USE_ONNX_RUNTIME
+
+#include "onnxruntime_helper.h"
 
 struct SAM2Context {
     std::unique_ptr<ORTSession> encoder;
@@ -229,3 +231,29 @@ Java_com_myvideo_editor_core_ai_segmentation_SAM2Wrapper_nativeRelease(
         LOGD("SAM2 released");
     }
 }
+
+#else // !USE_ONNX_RUNTIME
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_myvideo_editor_core_ai_segmentation_SAM2Wrapper_nativeInit(
+        JNIEnv *env, jobject /*thiz*/, jstring modelPath) {
+    LOGE("ONNX Runtime not available - SAM2 nativeInit stub");
+    return 0;
+}
+
+extern "C" JNIEXPORT jfloatArray JNICALL
+Java_com_myvideo_editor_core_ai_segmentation_SAM2Wrapper_nativeSegment(
+        JNIEnv *env, jobject /*thiz*/,
+        jlong handle, jfloatArray input, jint width, jint height,
+        jfloat pointX, jfloat pointY) {
+    LOGE("ONNX Runtime not available - SAM2 nativeSegment stub");
+    return nullptr;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_myvideo_editor_core_ai_segmentation_SAM2Wrapper_nativeRelease(
+        JNIEnv *env, jobject /*thiz*/, jlong handle) {
+    LOGE("ONNX Runtime not available - SAM2 nativeRelease stub");
+}
+
+#endif // USE_ONNX_RUNTIME

@@ -4,11 +4,13 @@
 #include <string>
 #include <cstring>
 
-#include "onnxruntime_helper.h"
-
 #define TAG "DemucsInference"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+
+#if USE_ONNX_RUNTIME
+
+#include "onnxruntime_helper.h"
 
 struct DemucsContext {
     std::unique_ptr<ORTSession> session;
@@ -160,3 +162,28 @@ Java_com_myvideo_editor_core_ai_separation_DemucsWrapper_nativeRelease(
         LOGD("Demucs released");
     }
 }
+
+#else // !USE_ONNX_RUNTIME
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_myvideo_editor_core_ai_separation_DemucsWrapper_nativeInit(
+        JNIEnv *env, jobject /*thiz*/, jstring modelPath) {
+    LOGE("ONNX Runtime not available - Demucs nativeInit stub");
+    return 0;
+}
+
+extern "C" JNIEXPORT jobjectArray JNICALL
+Java_com_myvideo_editor_core_ai_separation_DemucsWrapper_nativeSeparate(
+        JNIEnv *env, jobject /*thiz*/,
+        jlong handle, jfloatArray audio) {
+    LOGE("ONNX Runtime not available - Demucs nativeSeparate stub");
+    return nullptr;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_myvideo_editor_core_ai_separation_DemucsWrapper_nativeRelease(
+        JNIEnv *env, jobject /*thiz*/, jlong handle) {
+    LOGE("ONNX Runtime not available - Demucs nativeRelease stub");
+}
+
+#endif // USE_ONNX_RUNTIME

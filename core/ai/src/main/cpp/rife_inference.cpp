@@ -4,11 +4,13 @@
 #include <string>
 #include <cmath>
 
-#include "onnxruntime_helper.h"
-
 #define TAG "RIFEInference"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+
+#if USE_ONNX_RUNTIME
+
+#include "onnxruntime_helper.h"
 
 struct RIFEContext {
     std::unique_ptr<ORTSession> session;
@@ -136,3 +138,29 @@ Java_com_myvideo_editor_core_ai_interpolation_RIFEWrapper_nativeRelease(
         LOGD("RIFE released");
     }
 }
+
+#else // !USE_ONNX_RUNTIME
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_myvideo_editor_core_ai_interpolation_RIFEWrapper_nativeInit(
+        JNIEnv *env, jobject /*thiz*/, jstring modelPath) {
+    LOGE("ONNX Runtime not available - RIFE nativeInit stub");
+    return 0;
+}
+
+extern "C" JNIEXPORT jfloatArray JNICALL
+Java_com_myvideo_editor_core_ai_interpolation_RIFEWrapper_nativeInterpolate(
+        JNIEnv *env, jobject /*thiz*/,
+        jlong handle, jfloatArray frame1, jfloatArray frame2,
+        jint width, jint height, jfloat t) {
+    LOGE("ONNX Runtime not available - RIFE nativeInterpolate stub");
+    return nullptr;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_myvideo_editor_core_ai_interpolation_RIFEWrapper_nativeRelease(
+        JNIEnv *env, jobject /*thiz*/, jlong handle) {
+    LOGE("ONNX Runtime not available - RIFE nativeRelease stub");
+}
+
+#endif // USE_ONNX_RUNTIME

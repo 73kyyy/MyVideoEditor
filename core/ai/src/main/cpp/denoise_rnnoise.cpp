@@ -6,8 +6,6 @@
 #include <complex>
 #include <algorithm>
 
-#include "onnxruntime_helper.h"
-
 #define TAG "RNNoise"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
@@ -18,6 +16,10 @@ static constexpr int FEATURE_SIZE = 22;     // features per frame
 static constexpr int SAMPLE_RATE = 48000;
 static constexpr int BANDS = 6;             // number of frequency bands
 static constexpr int FFT_SIZE = 512;        // next power of 2 >= FRAME_SIZE
+
+#if USE_ONNX_RUNTIME
+
+#include "onnxruntime_helper.h"
 
 struct RNNoiseContext {
     std::unique_ptr<ORTSession> session;
@@ -271,3 +273,28 @@ Java_com_myvideo_editor_core_ai_denoise_RNNoiseWrapper_nativeRelease(
         LOGD("RNNoise released");
     }
 }
+
+#else // !USE_ONNX_RUNTIME
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_myvideo_editor_core_ai_denoise_RNNoiseWrapper_nativeInit(
+        JNIEnv *env, jobject /*thiz*/, jstring modelPath) {
+    LOGE("ONNX Runtime not available - RNNoise nativeInit stub");
+    return 0;
+}
+
+extern "C" JNIEXPORT jfloatArray JNICALL
+Java_com_myvideo_editor_core_ai_denoise_RNNoiseWrapper_nativeProcess(
+        JNIEnv *env, jobject /*thiz*/,
+        jlong handle, jfloatArray pcm) {
+    LOGE("ONNX Runtime not available - RNNoise nativeProcess stub");
+    return nullptr;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_myvideo_editor_core_ai_denoise_RNNoiseWrapper_nativeRelease(
+        JNIEnv *env, jobject /*thiz*/, jlong handle) {
+    LOGE("ONNX Runtime not available - RNNoise nativeRelease stub");
+}
+
+#endif // USE_ONNX_RUNTIME

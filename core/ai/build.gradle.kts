@@ -17,7 +17,8 @@ android {
             cmake {
                 cppFlags += "-std=c++17"
                 arguments += listOf(
-                    "-DONNXRUNTIME_INCLUDE_DIR=${layout.buildDirectory.get()}/onnxruntime-headers"
+                    "-DONNXRUNTIME_INCLUDE_DIR=${layout.buildDirectory.get()}/onnxruntime-headers",
+                    "-DONNXRUNTIME_LIB_DIR=${layout.buildDirectory.get()}/onnxruntime-libs/\${ANDROID_ABI}"
                 )
             }
         }
@@ -55,27 +56,26 @@ dependencies {
     // ONNX Runtime
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")
 
-    // PyTorch Mobile
-
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
 }
 
-// ── Extract ONNX Runtime C++ headers from the AAR ────────────────────────────
-// The onnxruntime-android AAR bundles native headers under "headers/".
-// This task unzips them into the build directory so that CMake can find them
-// via the ONNXRUNTIME_INCLUDE_DIR argument set above.
+// ── Extract ONNX Runtime native libs + headers from the AAR ──────────────────
 val onnxruntimeHeadersDir = layout.buildDirectory.dir("onnxruntime-headers").map { it.asFile }
+val onnxruntimeLibsDir = layout.buildDirectory.dir("onnxruntime-libs").map { it.asFile }
 
 tasks.register("extractOnnxRuntimeHeaders") {
-    description = "Extract ONNX Runtime C++ headers from the AAR into the build directory"
+    description = "Extract ONNX Runtime C++ headers and native libs from the AAR"
     group = "build"
 
     outputs.dir(onnxruntimeHeadersDir)
+    outputs.dir(onnxruntimeLibsDir)
 
     doLast {
-        val outputDir = onnxruntimeHeadersDir.get()
-        outputDir.mkdirs()
+        val headersDir = onnxruntimeHeadersDir.get()
+        val libsDir = onnxruntimeLibsDir.get()
+        headersDir.mkdirs()
+        libsDir.mkdirs()
 
         val compileClasspath = configurations.getByName("releaseCompileClasspath")
         val aarFiles = compileClasspath.files.filter {
@@ -83,31 +83,52 @@ tasks.register("extractOnnxRuntimeHeaders") {
         }
 
         if (aarFiles.isEmpty()) {
-            logger.warn("ONNX Runtime AAR not found in releaseCompileClasspath – " +
-                    "header extraction skipped. CMake may fail to find headers.")
+            logger.warn("ONNX Runtime AAR not found – header/lib extraction skipped. " +
+                    "CMake will build in stub mode.")
             return@doLast
         }
 
         aarFiles.forEach { aar ->
-            logger.lifecycle("Extracting ONNX Runtime headers from ${aar.name}")
+            logger.lifecycle("Extracting ONNX Runtime from ${aar.name}")
+
+            // Extract headers (headers/** → strip prefix)
             copy {
                 from(zipTree(aar)) {
                     include("headers/**")
                     eachFile {
-                        // Strip the "headers/" prefix so files land directly in outputDir
                         relativePath = RelativePath(
                             true,
                             *relativePath.segments.drop(1).toTypedArray()
                         )
                     }
                 }
-                into(outputDir)
+                into(headersDir)
+            }
+
+            // Extract native libs (jni/**/libonnxruntime.so → abi/libonnxruntime.so)
+            copy {
+                from(zipTree(aar)) {
+                    include("jni/**/libonnxruntime.so")
+                    eachFile {
+                        // jni/arm64-v8a/libonnxruntime.so → arm64-v8a/libonnxruntime.so
+                        relativePath = RelativePath(
+                            true,
+                            *relativePath.segments.drop(1).toTypedArray()
+                        )
+                    }
+                }
+                into(libsDir)
             }
         }
+
+        // Verify extraction
+        val headerCount = headersDir.walkTopDown().filter { it.extension == "h" }.count()
+        val libCount = libsDir.walkTopDown().filter { it.name == "libonnxruntime.so" }.count()
+        logger.lifecycle("ONNX Runtime: $headerCount headers, $libCount native libs extracted")
     }
 }
 
-// Ensure headers are extracted before CMake configures / builds
+// Ensure extraction happens before CMake configures / builds
 afterEvaluate {
     tasks.filter { it.name.contains("externalNativeBuild") }.forEach { task ->
         task.dependsOn("extractOnnxRuntimeHeaders")

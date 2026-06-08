@@ -9,11 +9,13 @@
 #include <algorithm>
 #include <numeric>
 
-#include "onnxruntime_helper.h"
-
 #define TAG "WhisperInference"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+
+#if USE_ONNX_RUNTIME
+
+#include "onnxruntime_helper.h"
 
 // ── Whisper token constants ───────────────────────────────────────────────────
 static constexpr int64_t TOKEN_EOS        = 50257;
@@ -394,3 +396,28 @@ Java_com_myvideo_editor_core_ai_speech_WhisperWrapper_nativeRelease(
         LOGD("Whisper released");
     }
 }
+
+#else // !USE_ONNX_RUNTIME
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_myvideo_editor_core_ai_speech_WhisperWrapper_nativeInit(
+        JNIEnv *env, jobject /*thiz*/, jstring modelPath) {
+    LOGE("ONNX Runtime not available - Whisper nativeInit stub");
+    return 0;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_myvideo_editor_core_ai_speech_WhisperWrapper_nativeTranscribe(
+        JNIEnv *env, jobject /*thiz*/,
+        jlong handle, jfloatArray audio, jint sampleRate) {
+    LOGE("ONNX Runtime not available - Whisper nativeTranscribe stub");
+    return env->NewStringUTF("");
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_myvideo_editor_core_ai_speech_WhisperWrapper_nativeRelease(
+        JNIEnv *env, jobject /*thiz*/, jlong handle) {
+    LOGE("ONNX Runtime not available - Whisper nativeRelease stub");
+}
+
+#endif // USE_ONNX_RUNTIME

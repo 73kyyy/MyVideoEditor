@@ -1,6 +1,5 @@
 #pragma once
 
-#include <onnxruntime_cxx_api.h>
 #include <string>
 #include <vector>
 #include <memory>
@@ -10,6 +9,10 @@
 #define ORT_LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, ORT_TAG, __VA_ARGS__)
 #define ORT_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, ORT_TAG, __VA_ARGS__)
 #define ORT_LOGI(...) __android_log_print(ANDROID_LOG_INFO, ORT_TAG, __VA_ARGS__)
+
+#if USE_ONNX_RUNTIME
+
+#include <onnxruntime_cxx_api.h>
 
 /**
  * ORTEngine - Singleton providing shared ONNX Runtime environment and utilities.
@@ -118,3 +121,5 @@ struct ORTSession {
         );
     }
 };
+
+#endif // USE_ONNX_RUNTIME

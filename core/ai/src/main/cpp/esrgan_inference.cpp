@@ -3,11 +3,13 @@
 #include <vector>
 #include <string>
 
-#include "onnxruntime_helper.h"
-
 #define TAG "ESRGANInference"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+
+#if USE_ONNX_RUNTIME
+
+#include "onnxruntime_helper.h"
 
 struct ESRGANContext {
     std::unique_ptr<ORTSession> session;
@@ -115,3 +117,28 @@ Java_com_myvideo_editor_core_ai_enhancement_ESRGANWrapper_nativeRelease(
         LOGD("ESRGAN released");
     }
 }
+
+#else // !USE_ONNX_RUNTIME
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_myvideo_editor_core_ai_enhancement_ESRGANWrapper_nativeInit(
+        JNIEnv *env, jobject /*thiz*/, jstring modelPath) {
+    LOGE("ONNX Runtime not available - ESRGAN nativeInit stub");
+    return 0;
+}
+
+extern "C" JNIEXPORT jfloatArray JNICALL
+Java_com_myvideo_editor_core_ai_enhancement_ESRGANWrapper_nativeUpscale(
+        JNIEnv *env, jobject /*thiz*/,
+        jlong handle, jfloatArray input, jint inW, jint inH, jint scale) {
+    LOGE("ONNX Runtime not available - ESRGAN nativeUpscale stub");
+    return nullptr;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_myvideo_editor_core_ai_enhancement_ESRGANWrapper_nativeRelease(
+        JNIEnv *env, jobject /*thiz*/, jlong handle) {
+    LOGE("ONNX Runtime not available - ESRGAN nativeRelease stub");
+}
+
+#endif // USE_ONNX_RUNTIME
