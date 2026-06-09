@@ -35,6 +35,29 @@ class InferenceSessionManager {
         } catch (ex: Exception) { null }
     }
 
+    fun runMulti(modelId: String, inputs: Map<String, Pair<FloatArray, LongArray>>): FloatArray? {
+        val session = sessions[modelId] ?: return null
+        val e = env ?: return null
+        return try {
+            val inputTensors = inputs.map { (name, pair) ->
+                val (data, shape) = pair
+                name to OnnxTensor.createTensor(e, FloatBuffer.wrap(data), shape)
+            }.toMap()
+            val result = session.run(inputTensors)
+            val output = result[0].value
+            inputTensors.values.forEach { it.close() }
+            result.close()
+            when (output) {
+                is FloatArray -> output
+                is Array<*> -> {
+                    val arr = output as Array<FloatArray>
+                    arr.flatMap { it.toList() }.toFloatArray()
+                }
+                else -> null
+            }
+        } catch (ex: Exception) { null }
+    }
+
     fun release(modelId: String) { sessions.remove(modelId)?.close() }
     fun releaseAll() { sessions.values.forEach { it.close() }; sessions.clear() }
     fun isLoaded(modelId: String): Boolean = sessions.containsKey(modelId)

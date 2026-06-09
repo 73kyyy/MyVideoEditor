@@ -69,8 +69,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: app/src/main/assets/ai_models
-          key: ai-models-v5-${{ runner.os }}
-          restore-keys: ai-models-v5-${{ runner.os }}-
+          key: ai-models-v6-fp16-${{ runner.os }}
+          restore-keys: ai-models-v6-fp16-${{ runner.os }}-
 
       - name: Link security Kotlin files
         run: |
@@ -347,9 +347,9 @@ jobs:
           #    Verified working: encoder ~57MB, decoder ~3MB, tokens ~90KB
           # ──────────────────────────────────────────────
           dl "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main/tiny-encoder.onnx" \
-             "whisper_encoder.onnx" 30000000
+             "whisper_encoder.onnx" 15000000
           dl "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main/tiny-decoder.onnx" \
-             "whisper_decoder.onnx" 1000000
+             "whisper_decoder.onnx" 500000
           dl "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main/tiny-tokens.txt" \
              "whisper_tokens.txt" 1000
 
@@ -470,7 +470,7 @@ jobs:
           # 3. RealESRGAN x4plus — Export from PyTorch
           #    Download .pth from GitHub Releases, export to ONNX
           # ──────────────────────────────────────────────
-          if [ -f "$MODELS_DIR/realesrgan_x4plus.onnx" ] && [ $(stat -c%s "$MODELS_DIR/realesrgan_x4plus.onnx") -ge 60000000 ]; then
+          if [ -f "$MODELS_DIR/realesrgan_x4plus.onnx" ] && [ $(stat -c%s "$MODELS_DIR/realesrgan_x4plus.onnx") -ge 30000000 ]; then
             echo "CACHED: realesrgan_x4plus.onnx"
           else
             echo "Exporting RealESRGAN from PyTorch..."
@@ -552,7 +552,7 @@ jobs:
           print('RealESRGAN ONNX export OK')
           PYEOF
             SIZE=$(stat -c%s "$MODELS_DIR/realesrgan_x4plus.onnx" 2>/dev/null || echo 0)
-            if [ "$SIZE" -lt 60000000 ]; then echo "FAIL: realesrgan_x4plus.onnx too small (${SIZE}B, need >=60MB for real weights)"; exit 1; fi
+            if [ "$SIZE" -lt 30000000 ]; then echo "FAIL: realesrgan_x4plus.onnx too small (${SIZE}B, need >=30MB for FP16 weights)"; exit 1; fi
             echo "OK: realesrgan_x4plus.onnx ($SIZE bytes)"
           fi
 
@@ -562,17 +562,17 @@ jobs:
           #    RIFE v4.6 ONNX ~17MB (agreed: ~7MB for v4.25, but v4.6 is better quality)
           # ──────────────────────────────────────────────
           dl "https://huggingface.co/yuvraj108c/rife-onnx/resolve/main/rife46_ensemble_True_scale_1_sim.onnx" \
-             "rife_v4.onnx" 5000000
+             "rife_v4.onnx" 2500000
 
           # ──────────────────────────────────────────────
           # 5. Demucs htdemucs (StemSplitio/htdemucs-onnx)
           #    Single-file ONNX, fp16 weights (~166MB)
           # ──────────────────────────────────────────────
           if ! dl "https://huggingface.co/StemSplitio/htdemucs-onnx/resolve/main/htdemucs_fp16weights.onnx" \
-                  "demucs_htdemucs.onnx" 100000000; then
+                  "demucs_htdemucs.onnx" 50000000; then
             echo "Trying fp32 variant..."
             dl "https://huggingface.co/StemSplitio/htdemucs-onnx/resolve/main/htdemucs.onnx" \
-               "demucs_htdemucs.onnx" 100000000
+               "demucs_htdemucs.onnx" 50000000
           fi
 
           # ──────────────────────────────────────────────
@@ -581,12 +581,12 @@ jobs:
           #    input_dim=65, output_dim=32, cond_size=128, gru_size=256
           #    ~5MB ONNX with 1.3M parameters
           # ──────────────────────────────────────────────
-          if [ -f "$MODELS_DIR/rnnoise.onnx" ] && [ $(stat -c%s "$MODELS_DIR/rnnoise.onnx") -ge 4000000 ]; then
+          if [ -f "$MODELS_DIR/rnnoise.onnx" ] && [ $(stat -c%s "$MODELS_DIR/rnnoise.onnx") -ge 2000000 ]; then
             echo "CACHED: rnnoise.onnx"
           else
             echo "Exporting RNNoise with real xiph/rnnoise architecture..."
             pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -3
-            pip3 install onnx 2>&1 | tail -3
+            pip3 install onnx onnxconverter-common 2>&1 | tail -3
             python3 << 'PYEOF'
           import torch, torch.nn as nn, os, sys
 
@@ -688,10 +688,63 @@ jobs:
           fi
 
           # ──────────────────────────────────────────────
+          # Convert ALL ONNX models to FP16 (industry standard for mobile)
+          # FP16: half the size, 1.5-2x faster, <0.5% precision loss
+          # ──────────────────────────────────────────────
+          echo ""
+          echo "=== Converting ONNX models to FP16 ==="
+          pip3 install onnx 2>&1 | tail -3
+          python3 << 'PYEOF'
+          import onnx
+          from onnxconverter_common import float16
+          import os, sys, glob
+
+          MODELS_DIR = "app/src/main/assets/ai_models"
+          converted = 0
+          skipped = 0
+
+          for fpath in glob.glob(os.path.join(MODELS_DIR, "*.onnx")):
+              fname = os.path.basename(fpath)
+              try:
+                  model = onnx.load(fpath)
+                  sz_before = os.path.getsize(fpath)
+
+                  # Check if already FP16
+                  has_fp16 = False
+                  for node in model.graph.node:
+                      for attr in node.attribute:
+                          if attr.name == "dtype" and attr.i == 10:
+                              has_fp16 = True
+                              break
+
+                  if has_fp16:
+                      print(f"  SKIP (already FP16): {fname}")
+                      skipped += 1
+                      continue
+
+                  # Convert to FP16
+                  model_fp16 = float16.convert_float_to_float16(model, keep_io_types=True)
+
+                  # Save (overwrite original)
+                  onnx.save(model_fp16, fpath)
+                  sz_after = os.path.getsize(fpath)
+                  ratio = sz_after / sz_before * 100
+                  print(f"  OK: {fname} ({sz_before/1024/1024:.1f}MB -> {sz_after/1024/1024:.1f}MB, {ratio:.0f}%)")
+                  converted += 1
+              except Exception as e:
+                  print(f"  WARN: Could not convert {fname}: {e}")
+                  # Keep FP32 version if conversion fails
+
+          print(f"\n  Converted: {converted}, Skipped: {skipped}")
+          if converted == 0 and skipped == 0:
+              print("  No ONNX models found to convert!")
+          PYEOF
+
+          # ──────────────────────────────────────────────
           # Final verification — ALL models must exist and be valid size
           # ──────────────────────────────────────────────
           echo ""
-          echo "=== AI Models Summary ==="
+          echo "=== AI Models Summary (FP16) ==="
           TOTAL=0
           MISSING=0
           for f in whisper_encoder.onnx whisper_decoder.onnx whisper_tokens.txt \

@@ -15,17 +15,16 @@ class RIFEWrapper(private val sessionManager: InferenceSessionManager) {
     fun interpolate(frame1: Bitmap, frame2: Bitmap, t: Float = 0.5f): Bitmap? {
         if (!isReady) return null
         val w = frame1.width; val h = frame1.height
-        val p1 = IntArray(w * h); frame1.getPixels(p1, 0, w, 0, 0, w, h)
-        val p2 = IntArray(w * h); frame2.getPixels(p2, 0, w, 0, 0, w, h)
-        val result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        val out = IntArray(w * h) { i ->
-            val r = ((p1[i] shr 16 and 0xFF) * (1 - t) + (p2[i] shr 16 and 0xFF) * t).toInt().coerceIn(0, 255)
-            val g = ((p1[i] shr 8 and 0xFF) * (1 - t) + (p2[i] shr 8 and 0xFF) * t).toInt().coerceIn(0, 255)
-            val b = ((p1[i] and 0xFF) * (1 - t) + (p2[i] and 0xFF) * t).toInt().coerceIn(0, 255)
-            0xFF000000.toInt() or (r shl 16) or (g shl 8) or b
-        }
-        result.setPixels(out, 0, w, 0, 0, w, h)
-        return result
+        val img0 = bitmapToFloatArray(frame1)
+        val img1 = bitmapToFloatArray(frame2)
+        val timestep = floatArrayOf(t)
+        val shape = longArrayOf(1, 3, h.toLong(), w.toLong())
+        val result = sessionManager.runMulti(modelId, mapOf(
+            "img0" to (img0 to shape),
+            "img1" to (img1 to shape),
+            "timestep" to (timestep to longArrayOf(1))
+        ))
+        return result?.let { floatArrayToBitmap(it, w, h) }
     }
 
     fun interpolate2x(frames: List<Bitmap>): List<Bitmap> {
@@ -50,6 +49,33 @@ class RIFEWrapper(private val sessionManager: InferenceSessionManager) {
         }
         result.add(frames.last())
         return result
+    }
+
+    private fun bitmapToFloatArray(bitmap: Bitmap): FloatArray {
+        val w = bitmap.width; val h = bitmap.height
+        val pixels = IntArray(w * h)
+        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+        val data = FloatArray(3 * w * h)
+        for (i in pixels.indices) {
+            data[i] = (pixels[i] shr 16 and 0xFF) / 255f          // R
+            data[w * h + i] = (pixels[i] shr 8 and 0xFF) / 255f   // G
+            data[2 * w * h + i] = (pixels[i] and 0xFF) / 255f     // B
+        }
+        return data
+    }
+
+    private fun floatArrayToBitmap(data: FloatArray, w: Int, h: Int): Bitmap {
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val pixels = IntArray(w * h)
+        val size = w * h
+        for (i in 0 until size) {
+            val r = (data[i].coerceIn(0f, 1f) * 255).toInt()
+            val g = (data[size + i].coerceIn(0f, 1f) * 255).toInt()
+            val b = (data[2 * size + i].coerceIn(0f, 1f) * 255).toInt()
+            pixels[i] = 0xFF000000.toInt() or (r shl 16) or (g shl 8) or b
+        }
+        bmp.setPixels(pixels, 0, w, 0, 0, w, h)
+        return bmp
     }
 
     fun release() { sessionManager.release(modelId); isReady = false }
