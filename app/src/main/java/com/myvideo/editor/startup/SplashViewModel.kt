@@ -11,7 +11,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.myvideo.editor.core.ai.DeviceTierDetector
 import com.myvideo.editor.core.ai.ModelRegistry
-import com.myvideo.editor.core.common.constants.FeatureFlags
 import com.myvideo.editor.core.security.membership.MembershipValidator
 import com.myvideo.editor.core.security.membership.TokenManager
 import kotlinx.coroutines.delay
@@ -72,15 +71,11 @@ class SplashViewModel(application: Application) : AndroidViewModel(application) 
                 statusText = if (isOnline) "网络已连接" else "未连接网络"
                 delay(300)
 
-                // 第3步：检查会员状态
+                // 第3步：检查会员状态（强制联网验证，无后门）
                 state = SplashState.CHECKING_MEMBERSHIP
                 statusText = "正在验证会员状态..."
 
-                if (FeatureFlags.TEST_MODE) {
-                    // 测试模式：跳过服务器验证
-                    isMember = true
-                    statusText = "测试模式 - 所有功能可用"
-                } else if (isOnline) {
+                if (isOnline) {
                     val tokenManager = TokenManager(getApplication())
                     val token = tokenManager.loadToken()
                     if (token != null) {

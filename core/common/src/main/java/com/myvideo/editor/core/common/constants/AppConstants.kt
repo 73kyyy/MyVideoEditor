@@ -28,7 +28,4 @@ object FeatureFlags {
     const val ADVANCED_COLOR = true
     const val STABILIZATION = true
     const val AUTO_SUBTITLE = true
-
-    /** 测试模式：无服务器时设为true，跳过会员验证，所有功能可用 */
-    const val TEST_MODE = true
 }

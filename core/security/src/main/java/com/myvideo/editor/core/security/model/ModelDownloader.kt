@@ -1,15 +1,14 @@
 package com.myvideo.editor.core.security.model
 
 import android.content.Context
-import com.myvideo.editor.core.common.constants.FeatureFlags
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
 /**
  * 模型下载器
- * 测试模式(TEST_MODE=true)：从本地assets复制模型，无需服务器
- * 正式模式(TEST_MODE=false)：从CDN下载加密模型，需会员验证
+ * 从CDN下载加密模型，需会员验证
+ * 优先从本地assets读取（CI/CD已打包加密模型）
  */
 class ModelDownloader(private val context: Context) {
     data class ModelInfo(val id: String, val url: String, val sizeMb: Int, val checksum: String)
@@ -24,11 +23,11 @@ class ModelDownloader(private val context: Context) {
         val dest = File(modelDir, "${model.id}.bin")
         if (dest.exists() && verifyChecksum(dest, model.checksum)) return true
 
-        if (FeatureFlags.TEST_MODE) {
-            // 测试模式：从assets复制模型文件
-            return copyFromAssets(model, dest)
-        }
+        // 优先从assets读取（CI/CD已打包加密模型到assets）
+        val fromAssets = copyFromAssets(model, dest)
+        if (fromAssets) return true
 
+        // assets中没有则从CDN下载
         return try {
             val url = URL(model.url)
             val conn = url.openConnection() as HttpURLConnection
@@ -51,18 +50,15 @@ class ModelDownloader(private val context: Context) {
     }
 
     /**
-     * 从assets目录复制模型文件（测试模式）
+     * 从assets目录复制模型文件
      */
     private fun copyFromAssets(model: ModelInfo, dest: File): Boolean {
         return try {
-            // 尝试多个可能的assets路径
             val possiblePaths = listOf(
                 "ai_models/${model.id}.onnx",
                 "ai_models/${model.id}.bin",
                 "models/${model.id}.onnx",
-                "models/${model.id}.bin",
-                "${model.id}.onnx",
-                "${model.id}.bin"
+                "models/${model.id}.bin"
             )
 
             var sourcePath: String? = null
@@ -89,9 +85,7 @@ class ModelDownloader(private val context: Context) {
                 }
                 true
             } else {
-                // assets中没有模型文件，创建占位文件让应用不崩溃
-                dest.writeText("test_placeholder_${model.id}")
-                true
+                false
             }
         } catch (e: Exception) {
             false
@@ -104,7 +98,7 @@ class ModelDownloader(private val context: Context) {
     fun getDownloadedSize(): Long = modelDir.listFiles()?.sumOf { it.length() } ?: 0
 
     private fun verifyChecksum(file: File, expected: String): Boolean {
-        if (FeatureFlags.TEST_MODE) return true // 测试模式跳过校验
+        if (expected.isEmpty()) return true
         val hash = file.inputStream().use {
             val md = java.security.MessageDigest.getInstance("SHA-256")
             val buffer = ByteArray(8192)
@@ -112,6 +106,6 @@ class ModelDownloader(private val context: Context) {
             while (it.read(buffer).also { r -> read = r } != -1) md.update(buffer, 0, read)
             md.digest().joinToString("") { "%02x".format(it) }
         }
-        return hash == expected || expected.isEmpty()
+        return hash == expected
     }
 }
