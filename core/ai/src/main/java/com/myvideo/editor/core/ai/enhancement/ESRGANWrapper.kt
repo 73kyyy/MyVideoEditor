@@ -12,6 +12,12 @@ class ESRGANWrapper(private val sessionManager: InferenceSessionManager) {
         return isReady
     }
 
+    fun initFromSession(modelId: String = "esrgan"): Boolean {
+        this.modelId = modelId
+        isReady = sessionManager.isLoaded(modelId)
+        return isReady
+    }
+
     fun upscale4x(bitmap: Bitmap): Bitmap? {
         if (!isReady) return null
         val w = bitmap.width; val h = bitmap.height

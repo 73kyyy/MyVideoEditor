@@ -14,11 +14,27 @@ class InferenceSessionManager {
         catch (e: Exception) { false }
     }
 
+    /**
+     * 从文件路径加载模型（未加密模型或调试用）
+     */
     fun loadModel(modelPath: String, modelId: String): Boolean {
         val e = env ?: return false
         return try {
             val opts = OrtSession.SessionOptions().apply { setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT) }
             sessions[modelId] = e.createSession(modelPath, opts)
+            true
+        } catch (ex: Exception) { false }
+    }
+
+    /**
+     * 从字节数组加载模型（安全模式：C++解密后的模型数据）
+     * 模型不落盘，直接从内存加载，防止文件被提取
+     */
+    fun loadModelFromBytes(modelId: String, modelBytes: ByteArray): Boolean {
+        val e = env ?: return false
+        return try {
+            val opts = OrtSession.SessionOptions().apply { setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT) }
+            sessions[modelId] = e.createSession(modelBytes, opts)
             true
         } catch (ex: Exception) { false }
     }

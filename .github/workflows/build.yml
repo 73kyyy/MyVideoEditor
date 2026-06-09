@@ -741,6 +741,81 @@ jobs:
           PYEOF
 
           # ──────────────────────────────────────────────
+          # Encrypt ALL ONNX models (AES-256-GCM + PBKDF2)
+          # Prevents model extraction from APK and membership bypass
+          # ──────────────────────────────────────────────
+          echo ""
+          echo "=== Encrypting ONNX models ==="
+          pip3 install cryptography 2>&1 | tail -3
+          python3 << 'PYEOF'
+          import os, hashlib, glob
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+          from cryptography.hazmat.primitives import hashes
+
+          MODELS_DIR = "app/src/main/assets/ai_models"
+
+          # Master key (must match C++ ObfuscatedKey in secure_inference_jni.cpp)
+          # In production, use GitHub Secret: $MODEL_ENCRYPTION_KEY
+          MASTER_KEY = os.environ.get('MODEL_ENCRYPTION_KEY', 'NexClip2024!SecureModelProtectionKey!')
+
+          # Derive encryption key using PBKDF2 (same as C++)
+          salt = hashlib.sha256(b'NexClip_Model_v1').digest()
+          kdf = PBKDF2HMAC(
+              algorithm=hashes.SHA256(),
+              length=32,
+              salt=salt,
+              iterations=100000,
+          )
+          key = kdf.derive(MASTER_KEY.encode('utf-8'))
+
+          # Magic bytes: "NXC1"
+          MAGIC = b'NXC1'
+          encrypted_count = 0
+
+          for fpath in glob.glob(os.path.join(MODELS_DIR, "*.onnx")):
+              fname = os.path.basename(fpath)
+              try:
+                  with open(fpath, 'rb') as f:
+                      data = f.read()
+
+                  # Check if already encrypted (starts with NXC1 magic)
+                  if data[:4] == MAGIC:
+                      print(f"  SKIP (already encrypted): {fname}")
+                      continue
+
+                  # Generate random IV (12 bytes for GCM)
+                  iv = os.urandom(12)
+
+                  # Encrypt with AES-256-GCM
+                  aesgcm = AESGCM(key)
+                  ciphertext = aesgcm.encrypt(iv, data, None)
+
+                  # GCM appends 16-byte tag to ciphertext
+                  # Format: NXC1 + IV(12) + Tag(16) + Ciphertext
+                  # But cryptography lib returns ciphertext+tag concatenated
+                  # Split: last 16 bytes = tag, rest = ciphertext
+                  tag = ciphertext[-16:]
+                  ct = ciphertext[:-16]
+
+                  # Write encrypted file
+                  with open(fpath, 'wb') as f:
+                      f.write(MAGIC)     # 4 bytes
+                      f.write(iv)        # 12 bytes
+                      f.write(tag)       # 16 bytes
+                      f.write(ct)        # N bytes
+
+                  sz = os.path.getsize(fpath)
+                  print(f"  OK: {fname} -> encrypted ({sz/1024/1024:.1f}MB)")
+                  encrypted_count += 1
+
+              except Exception as e:
+                  print(f"  WARN: Could not encrypt {fname}: {e}")
+
+          print(f"\n  Encrypted: {encrypted_count}")
+          PYEOF
+
+          # ──────────────────────────────────────────────
           # Final verification — ALL models must exist and be valid size
           # ──────────────────────────────────────────────
           echo ""

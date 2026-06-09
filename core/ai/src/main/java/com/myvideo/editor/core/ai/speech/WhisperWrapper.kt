@@ -40,6 +40,23 @@ class WhisperWrapper(private val sessionManager: InferenceSessionManager) {
         return init(encPath, decPath, tokPath)
     }
 
+    fun initFromSession(encoderModelId: String = "whisper_encoder", decoderModelId: String = "whisper_decoder", tokensPath: String, context: android.content.Context): Boolean {
+        this.encoderModelId = encoderModelId
+        this.decoderModelId = decoderModelId
+        // Load tokens from assets
+        this.tokens = loadTokensFromAssets(tokensPath, context)
+        // Decoder session needs to be loaded separately (it uses int64 inputs)
+        // For now, we'll load it from the session manager if available
+        isReady = sessionManager.isLoaded(encoderModelId)
+        return isReady
+    }
+
+    private fun loadTokensFromAssets(path: String, context: android.content.Context): List<String> {
+        return try {
+            context.assets.open(path).bufferedReader().use { it.lineSequence().toList() }
+        } catch (e: Exception) { emptyList() }
+    }
+
     private fun loadDecoder(path: String): Boolean {
         return try {
             val e = env ?: return false

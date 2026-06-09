@@ -12,6 +12,12 @@ class RIFEWrapper(private val sessionManager: InferenceSessionManager) {
         return isReady
     }
 
+    fun initFromSession(modelId: String = "rife"): Boolean {
+        this.modelId = modelId
+        isReady = sessionManager.isLoaded(modelId)
+        return isReady
+    }
+
     fun interpolate(frame1: Bitmap, frame2: Bitmap, t: Float = 0.5f): Bitmap? {
         if (!isReady) return null
         val w = frame1.width; val h = frame1.height

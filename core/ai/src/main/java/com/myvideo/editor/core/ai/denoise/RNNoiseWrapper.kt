@@ -22,6 +22,12 @@ class RNNoiseWrapper(private val sessionManager: InferenceSessionManager) {
         return isReady
     }
 
+    fun initFromSession(modelId: String = "rnnoise"): Boolean {
+        this.modelId = modelId
+        isReady = sessionManager.isLoaded(modelId)
+        return isReady
+    }
+
     fun denoise(pcmData: FloatArray): FloatArray? {
         if (!isReady) return null
         val numFrames = pcmData.size / FRAME_SIZE

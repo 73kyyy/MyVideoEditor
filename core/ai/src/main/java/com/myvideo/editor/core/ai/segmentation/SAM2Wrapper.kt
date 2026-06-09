@@ -26,6 +26,13 @@ class SAM2Wrapper(private val sessionManager: InferenceSessionManager) {
         return init(encPath, decPath)
     }
 
+    fun initFromSession(encoderModelId: String = "sam_encoder", decoderModelId: String = "sam_decoder"): Boolean {
+        this.encoderModelId = encoderModelId
+        this.decoderModelId = decoderModelId
+        isReady = sessionManager.isLoaded(encoderModelId) && sessionManager.isLoaded(decoderModelId)
+        return isReady
+    }
+
     fun segment(bitmap: Bitmap, point: PointF): Bitmap? {
         if (!isReady) return null
         val w = bitmap.width; val h = bitmap.height

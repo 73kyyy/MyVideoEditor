@@ -17,6 +17,12 @@ class DemucsWrapper(private val sessionManager: InferenceSessionManager) {
         return isReady
     }
 
+    fun initFromSession(modelId: String = "demucs"): Boolean {
+        this.modelId = modelId
+        isReady = sessionManager.isLoaded(modelId)
+        return isReady
+    }
+
     fun separate(monoAudio: FloatArray, sampleRate: Int = 44100): SeparatedTracks? {
         if (!isReady) return null
         return separateStereo(monoToStereo(monoAudio), sampleRate)
