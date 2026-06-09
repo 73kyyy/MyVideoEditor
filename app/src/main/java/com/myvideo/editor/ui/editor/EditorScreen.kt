@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -27,9 +28,13 @@ import androidx.compose.ui.unit.sp
 import com.myvideo.editor.ui.editor.panels.*
 import com.myvideo.editor.engine.rememberVideoPlayer
 import com.myvideo.editor.core.security.membership.MembershipValidator
-import android.net.Uri
+import com.myvideo.editor.ui.layout.currentLayoutMode
+import com.myvideo.editor.ui.layout.LayoutMode
+import com.myvideo.editor.ui.layout.PhonePortraitLayout
+import com.myvideo.editor.ui.layout.PhoneLandscapeLayout
+import com.myvideo.editor.ui.layout.TabletLayout
 
-private object EC {
+internal object EC {
     val Bg = Color(0xFF1E1E1E); val Surf = Color(0xFF282828)
     val Card = Color(0xFF2C2C2C); val CardH = Color(0xFF323232)
     val Line = Color(0xFF3A3A3A); val Line2 = Color(0xFF444444)
@@ -50,6 +55,9 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
     var showRecordWarning by remember { mutableStateOf(false) }
     var showMembershipBanner by remember { mutableStateOf(!validator.isMember()) }
 
+    // Detect layout mode reactively — LocalConfiguration.current updates on rotation
+    val layoutMode = currentLayoutMode()
+
     // 定时检查录屏状态
     LaunchedEffect(Unit) {
         while (true) {
@@ -64,37 +72,22 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
     LaunchedEffect(vm.showToast) { if (vm.showToast) { kotlinx.coroutines.delay(2000); vm.showToast = false } }
 
     Box(modifier = Modifier.fillMaxSize().background(EC.Bg)) {
+        // Membership banner and quota (above layout, only for non-tablet)
         Column(modifier = Modifier.fillMaxSize()) {
-            // 会员横幅
             if (showMembershipBanner) {
                 MembershipBanner(aiHelper, isOnline.value)
             }
-            // AI次数显示
             if (!validator.isMember()) {
                 Box(modifier = Modifier.fillMaxWidth().height(28.dp).background(Color(0xFF1A1A1A))
                     .padding(horizontal = 12.dp), contentAlignment = Alignment.CenterStart) {
                     Text(aiHelper.getQuotaText(isOnline.value), fontSize = 9.sp, color = EC.Gold)
                 }
             }
-            Box(modifier = Modifier.fillMaxWidth().height(vm.previewHeightPx.dp).background(Color.Black)) {
-                PreviewCanvas(vm)
-            }
-            Box(modifier = Modifier.fillMaxWidth().height(12.dp).background(EC.Surf)
-                .border(1.dp, EC.Line), contentAlignment = Alignment.Center) {
-                Box(modifier = Modifier.width(36.dp).height(3.dp).clip(RoundedCornerShape(2.dp)).background(EC.Line2))
-            }
-            EditorToolbar(vm)
-            Box(modifier = Modifier.weight(1f).fillMaxWidth().background(EC.Card)) {
-                TimelineView(vm)
-            }
-            PlaybackBar(vm)
-        }
-        if (vm.selectedClipId != null) {
-            Box(modifier = Modifier.align(Alignment.Center).padding(bottom = 60.dp)
-                .size(36.dp).clip(RoundedCornerShape(18.dp))
-                .background(Brush.linearGradient(listOf(EC.Acc, EC.AccL)))
-                .clickable { vm.showFxPopup = !vm.showFxPopup }, contentAlignment = Alignment.Center) {
-                Text("+", fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Bold)
+            // Adaptive layout switching
+            when (layoutMode) {
+                LayoutMode.PHONE_PORTRAIT -> PhonePortraitLayout(vm)
+                LayoutMode.PHONE_LANDSCAPE -> PhoneLandscapeLayout(vm)
+                LayoutMode.TABLET -> TabletLayout(vm)
             }
         }
         // 录屏虚化遮罩
@@ -131,7 +124,6 @@ fun EditorScreen(vm: EditorViewModel = EditorViewModel()) {
                 }
             }
         }
-        PanelOverlay(vm)
     }
 }
 
@@ -162,7 +154,7 @@ private fun MembershipBanner(aiHelper: AIFeatureUIHelper, isOnline: Boolean) {
 }
 
 @Composable
-private fun PreviewCanvas(vm: EditorViewModel) {
+internal fun PreviewCanvas(vm: EditorViewModel) {
     val ratio = vm.getCanvasRatioFloat()
     val isLandscape = ratio >= 1f
     var previewScale by remember { mutableStateOf(1f) }
@@ -228,7 +220,7 @@ private fun PreviewCanvas(vm: EditorViewModel) {
 }
 
 @Composable
-private fun PlaybackBar(vm: EditorViewModel) {
+internal fun PlaybackBar(vm: EditorViewModel) {
     val context = LocalContext.current
     val playerManager = rememberVideoPlayer(context, vm)
     Row(modifier = Modifier.fillMaxWidth().height(44.dp).background(EC.Surf)
@@ -276,15 +268,15 @@ private fun CtxItem(label: String, danger: Boolean = false, onClick: () -> Unit)
 
 
 @Composable
-private fun EditorToolbar(vm: EditorViewModel) {
+internal fun EditorToolbar(vm: EditorViewModel) {
     val context = LocalContext.current
     val aiHelper = remember { AIFeatureUIHelper(context) }
     val isOnline = checkOnline(context)
     Row(modifier = Modifier.fillMaxWidth().height(40.dp).background(EC.Surf)
         .border(1.dp, EC.Line).padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        ToolbarBtn("撤销") { vm.showToast("已撤销") }
-        ToolbarBtn("重做") { vm.showToast("已重做") }
+        ToolbarBtn("撤销") { vm.activePanel = "history" }
+        ToolbarBtn("重做") { vm.activePanel = "history" }
         Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
         ToolbarBtn("分割") { vm.splitSelectedClip(); vm.showToast("已分割") }
         ToolbarBtn("删除") { vm.deleteSelectedClip(); vm.showToast("已删除") }
@@ -292,7 +284,12 @@ private fun EditorToolbar(vm: EditorViewModel) {
         ToolbarBtn("钢笔", vm.penMode) { vm.penMode = !vm.penMode }
         ToolbarBtn("清除") { vm.maskPoints.clear(); vm.maskClosed = false }
         Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
-        ToolbarBtn("关键帧") { vm.addKeyframe(); vm.showToast("已添加关键帧") }
+        ToolbarBtn("关键帧") { vm.activePanel = "keyframe" }
+        ToolbarBtn("裁剪") { vm.activePanel = "crop" }
+        ToolbarBtn("变速曲线") { vm.activePanel = "speed_curve" }
+        ToolbarBtn("倒放") { vm.activePanel = "reverse" }
+        ToolbarBtn("画面比例") { vm.activePanel = "aspect_ratio" }
+        Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
         ToolbarBtn("调色") { vm.activePanel = "color" }
         ToolbarBtn("效果") { vm.activePanel = "fx" }
         ToolbarBtn("文字") { vm.activePanel = "text" }
@@ -309,6 +306,9 @@ private fun EditorToolbar(vm: EditorViewModel) {
         ToolbarBtn("画中画") { vm.activePanel = "pip" }
         ToolbarBtn("导出") { vm.activePanel = "export" }
         ToolbarBtn("转场") { vm.activePanel = "transitions" }
+        Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
+        ToolbarBtn("历史") { vm.activePanel = "history" }
+        ToolbarBtn("设置") { vm.activePanel = "settings" }
     }
 }
 
@@ -333,7 +333,7 @@ private fun ToolbarBtn(label: String, active: Boolean = false, onClick: () -> Un
 }
 
 @Composable
-private fun PanelOverlay(vm: EditorViewModel) {
+internal fun PanelOverlay(vm: EditorViewModel) {
     if (vm.activePanel == null) return
     Box(modifier = Modifier.fillMaxSize().background(Color(0x80000000))
         .clickable { vm.activePanel = null }) {
@@ -344,18 +344,7 @@ private fun PanelOverlay(vm: EditorViewModel) {
                 .border(1.dp, EC.Line),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
-                Text(when (vm.activePanel) {
-                    "color" -> "调色 · AE级"; "speed" -> "变速"; "text" -> "文字编辑"
-                    "fx" -> "效果"; "blend" -> "混合模式"; "audio" -> "音频"
-                    "export" -> "导出"; "transitions" -> "转场"; "tracking" -> "运动追踪"
-                    "stabilizer" -> "视频稳定器"; "pip" -> "画中画"; "chroma" -> "绿幕抠像"
-                    "motionblur" -> "动态模糊"; "particles" -> "粒子效果"
-                    "lens" -> "镜头效果"; "film" -> "胶片颗粒"; "template" -> "项目模板"
-                    "ai_interpolation" -> "AI智能补帧"; "ai_superres" -> "AI超分辨率"
-                    "ai_segment" -> "AI智能抠图"; "ai_speech" -> "AI语音转字幕"
-                    "ai_separation" -> "AI人声分离"; "ai_denoise" -> "AI智能降噪"
-                    else -> "面板"
-                }, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = EC.T1)
+                Text(panelTitle(vm.activePanel), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = EC.T1)
                 Box(modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp))
                     .background(EC.Card).clickable { vm.activePanel = null },
                     contentAlignment = Alignment.Center) {
@@ -363,35 +352,64 @@ private fun PanelOverlay(vm: EditorViewModel) {
                 }
             }
             Box(modifier = Modifier.fillMaxWidth().heightIn(max = 500.dp)) {
-                when (vm.activePanel) {
-                    "color" -> ColorGradingPanel(vm = vm) { vm.activePanel = null }
-                    "speed" -> SpeedPanel(vm = vm) { vm.activePanel = null }
-                    "text" -> TextPanel(vm = vm) { vm.activePanel = null }
-                    "fx" -> EffectsPanel(vm = vm) { vm.activePanel = null }
-                    "blend" -> BlendPanel(vm = vm) { vm.activePanel = null }
-                    "audio" -> AudioPanel(vm = vm) { vm.activePanel = null }
-                    "export" -> ExportPanel(vm = vm) { vm.activePanel = null }
-                    "transitions" -> TransitionPanel(vm = vm) { vm.activePanel = null }
-                    "tracking" -> TrackingPanel(vm = vm) { vm.activePanel = null }
-                    "stabilizer" -> StabilizerPanel(vm = vm) { vm.activePanel = null }
-                    "pip" -> InlinePiPPanel(vm = vm) { vm.activePanel = null }
-                    "chroma" -> ChromaPanel(vm = vm) { vm.activePanel = null }
-                    "motionblur" -> MotionBlurPanel(vm = vm) { vm.activePanel = null }
-                    "particles" -> ParticlePanel(vm = vm) { vm.activePanel = null }
-                    "lens" -> LensPanel(vm = vm) { vm.activePanel = null }
-                    "film" -> FilmPanel(vm = vm) { vm.activePanel = null }
-                    "template" -> TemplatePanel(vm = vm, onApply = { vm.showToast("已套用: $it") }) {
-                        vm.activePanel = null
-                    }
-                    "ai_interpolation" -> AIInterpolationPanel(vm = vm) { vm.activePanel = null }
-                    "ai_superres" -> AISuperResPanel(vm = vm) { vm.activePanel = null }
-                    "ai_segment" -> AISegmentPanel(vm = vm) { vm.activePanel = null }
-                    "ai_speech" -> AISpeechPanel(vm = vm) { vm.activePanel = null }
-                    "ai_separation" -> AISeparationPanel(vm = vm) { vm.activePanel = null }
-                    "ai_denoise" -> AIDenoisePanel(vm = vm) { vm.activePanel = null }
-                }
+                PanelContent(vm)
             }
         }
+    }
+}
+
+internal fun panelTitle(activePanel: String?): String = when (activePanel) {
+    "color" -> "调色 · AE级"; "speed" -> "变速"; "text" -> "文字编辑"
+    "fx" -> "效果"; "blend" -> "混合模式"; "audio" -> "音频"
+    "export" -> "导出"; "transitions" -> "转场"; "tracking" -> "运动追踪"
+    "stabilizer" -> "视频稳定器"; "pip" -> "画中画"; "chroma" -> "绿幕抠像"
+    "motionblur" -> "动态模糊"; "particles" -> "粒子效果"
+    "lens" -> "镜头效果"; "film" -> "胶片颗粒"; "template" -> "项目模板"
+    "ai_interpolation" -> "AI智能补帧"; "ai_superres" -> "AI超分辨率"
+    "ai_segment" -> "AI智能抠图"; "ai_speech" -> "AI语音转字幕"
+    "ai_separation" -> "AI人声分离"; "ai_denoise" -> "AI智能降噪"
+    "keyframe" -> "关键帧动画"; "crop" -> "裁剪与旋转"
+    "speed_curve" -> "变速曲线"; "reverse" -> "倒放"
+    "aspect_ratio" -> "画面比例"; "history" -> "操作历史"
+    "settings" -> "设置"
+    else -> "面板"
+}
+
+@Composable
+internal fun PanelContent(vm: EditorViewModel) {
+    when (vm.activePanel) {
+        "color" -> ColorGradingPanel(vm = vm) { vm.activePanel = null }
+        "speed" -> SpeedPanel(vm = vm) { vm.activePanel = null }
+        "text" -> TextPanel(vm = vm) { vm.activePanel = null }
+        "fx" -> EffectsPanel(vm = vm) { vm.activePanel = null }
+        "blend" -> BlendPanel(vm = vm) { vm.activePanel = null }
+        "audio" -> AudioPanel(vm = vm) { vm.activePanel = null }
+        "export" -> ExportPanel(vm = vm) { vm.activePanel = null }
+        "transitions" -> TransitionPanel(vm = vm) { vm.activePanel = null }
+        "tracking" -> TrackingPanel(vm = vm) { vm.activePanel = null }
+        "stabilizer" -> StabilizerPanel(vm = vm) { vm.activePanel = null }
+        "pip" -> InlinePiPPanel(vm = vm) { vm.activePanel = null }
+        "chroma" -> ChromaPanel(vm = vm) { vm.activePanel = null }
+        "motionblur" -> MotionBlurPanel(vm = vm) { vm.activePanel = null }
+        "particles" -> ParticlePanel(vm = vm) { vm.activePanel = null }
+        "lens" -> LensPanel(vm = vm) { vm.activePanel = null }
+        "film" -> FilmPanel(vm = vm) { vm.activePanel = null }
+        "template" -> TemplatePanel(vm = vm, onApply = { vm.showToast("已套用: $it") }) {
+            vm.activePanel = null
+        }
+        "ai_interpolation" -> AIInterpolationPanel(vm = vm) { vm.activePanel = null }
+        "ai_superres" -> AISuperResPanel(vm = vm) { vm.activePanel = null }
+        "ai_segment" -> AISegmentPanel(vm = vm) { vm.activePanel = null }
+        "ai_speech" -> AISpeechPanel(vm = vm) { vm.activePanel = null }
+        "ai_separation" -> AISeparationPanel(vm = vm) { vm.activePanel = null }
+        "ai_denoise" -> AIDenoisePanel(vm = vm) { vm.activePanel = null }
+        "keyframe" -> KeyframePanel(vm = vm) { vm.activePanel = null }
+        "crop" -> CropPanel(vm = vm) { vm.activePanel = null }
+        "speed_curve" -> SpeedCurvePanel(vm = vm) { vm.activePanel = null }
+        "reverse" -> ReversePanel(vm = vm) { vm.activePanel = null }
+        "aspect_ratio" -> AspectRatioPanel(vm = vm) { vm.activePanel = null }
+        "history" -> HistoryPanel(vm = vm) { vm.activePanel = null }
+        "settings" -> { AutoSavePanel(vm = vm); Spacer(modifier = Modifier.height(8.dp)) }
     }
 }
 
