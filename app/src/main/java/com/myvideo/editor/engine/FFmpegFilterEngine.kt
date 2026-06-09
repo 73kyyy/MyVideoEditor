@@ -56,4 +56,50 @@ class FFmpegFilterEngine(private val engine: FFmpegRenderEngine) {
         val amount = (grain / 100f * 50).toInt().coerceIn(0, 50)
         engine.run("-i $input -vf noise=alls=$amount:allf=t+u -c:v libx264 -preset fast -c:a copy -y $output", cb)
     }
+
+    private val propertyStore = mutableMapOf<String, MutableMap<String, Float>>()
+    private val effectStore = mutableMapOf<String, Map<String, Any>>()
+
+    fun applyEffect(effectId: String, params: Map<String, Any>) {
+        effectStore[effectId] = params
+    }
+
+    fun setProperty(trackId: String, property: String, value: Float) {
+        propertyStore.getOrPut(trackId) { mutableMapOf() }[property] = value
+    }
+
+    fun getProperty(trackId: String, property: String): Float {
+        return propertyStore[trackId]?.get(property) ?: 0f
+    }
+
+    fun buildFilterChain(trackId: String): String {
+        val props = propertyStore[trackId] ?: return ""
+        val parts = mutableListOf<String>()
+        props.forEach { (prop, value) ->
+            when (prop) {
+                "brightness" -> parts.add("eq=brightness=${value / 100f}")
+                "contrast" -> parts.add("eq=contrast=${1f + value / 100f}")
+                "saturation" -> parts.add("eq=saturation=${1f + value / 100f}")
+                "temperature" -> {
+                    val b = if (value > 0) value / 200f else 0f
+                    val r = if (value < 0) -value / 200f else 0f
+                    parts.add("colorbalance=rs=$r:bs=$b")
+                }
+                "tint" -> parts.add("colorbalance=gs=${value / 200f}")
+                "gamma" -> parts.add("eq=gamma=${1f + value / 100f}")
+                "hue" -> parts.add("hue=h=${value}")
+                "shadows_hue", "midtones_hue", "highlights_hue" -> { /* handled by colorbalance */ }
+                "shadows_lift" -> parts.add("colorbalance=rs=${value/100f}:gs=${value/100f}:bs=${value/100f}")
+                "midtones_gamma" -> parts.add("colorbalance=rm=${value/100f}:gm=${value/100f}:bm=${value/100f}")
+                "highlights_gain" -> parts.add("colorbalance=rh=${value/100f}:gh=${value/100f}:bh=${value/100f}")
+                "input_black" -> parts.add("curves=all='${(value/255f).coerceIn(0f,1f)}'")
+                "input_white" -> parts.add("curves=all='0/${(value/255f).coerceIn(0f,1f)}'")
+                "input_gamma" -> parts.add("eq=gamma=${1f + (value - 128f) / 128f}")
+                "output_black" -> parts.add("curves=all='${(value/255f).coerceIn(0f,1f)}'")
+                "output_white" -> parts.add("curves=all='0/${(value/255f).coerceIn(0f,1f)}'")
+                "filter_intensity" -> { /* applied as mix factor */ }
+            }
+        }
+        return parts.joinToString(",")
+    }
 }

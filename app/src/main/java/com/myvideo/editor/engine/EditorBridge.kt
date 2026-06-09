@@ -235,6 +235,20 @@ class EditorBridge(private val context: Context) {
         renderEngine.concat(paths, output, makeCallback(vm, null, output, onComplete, onError))
     }
 
+    fun applyEffect(effectId: String, params: Map<String, Any>): Boolean {
+        return try {
+            filterEngine.applyEffect(effectId, params)
+            true
+        } catch (e: Exception) { false }
+    }
+
+    fun setTrackProperty(trackId: String, property: String, value: Float): Boolean {
+        return try {
+            filterEngine.setProperty(trackId, property, value)
+            true
+        } catch (e: Exception) { false }
+    }
+
     fun getVideoInfo(path: String): String? = renderEngine.getMediaInfo(path)
     fun getAIHelper() = aiHelper
     fun release() { renderEngine.release(); aiBridge.release(); aiHelper.release() }

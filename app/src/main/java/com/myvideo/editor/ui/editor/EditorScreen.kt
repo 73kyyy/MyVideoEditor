@@ -3,6 +3,7 @@ package com.myvideo.editor.ui.editor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -297,14 +298,15 @@ private fun EditorToolbar(vm: EditorViewModel) {
         ToolbarBtn("文字") { vm.activePanel = "text" }
         ToolbarBtn("音频") { vm.activePanel = "audio" }
         Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
-        ToolbarBtn("AI抠图") { aiToolbarClick(vm, aiHelper, "segment", isOnline) }
-        ToolbarBtn("AI超分") { aiToolbarClick(vm, aiHelper, "superres", isOnline) }
-        ToolbarBtn("AI插帧") { aiToolbarClick(vm, aiHelper, "interpolate", isOnline) }
-        ToolbarBtn("AI语音") { aiToolbarClick(vm, aiHelper, "whisper", isOnline) }
-        ToolbarBtn("AI降噪") { aiToolbarClick(vm, aiHelper, "denoise", isOnline) }
-        ToolbarBtn("AI分离") { aiToolbarClick(vm, aiHelper, "separate", isOnline) }
+        ToolbarBtn("AI抠图") { vm.activePanel = "ai_segment" }
+        ToolbarBtn("AI超分") { vm.activePanel = "ai_superres" }
+        ToolbarBtn("AI插帧") { vm.activePanel = "ai_interpolation" }
+        ToolbarBtn("AI语音") { vm.activePanel = "ai_speech" }
+        ToolbarBtn("AI降噪") { vm.activePanel = "ai_denoise" }
+        ToolbarBtn("AI分离") { vm.activePanel = "ai_separation" }
         Spacer(modifier = Modifier.width(1.dp).height(16.dp).background(EC.Line2))
         ToolbarBtn("混合") { vm.activePanel = "blend" }
+        ToolbarBtn("画中画") { vm.activePanel = "pip" }
         ToolbarBtn("导出") { vm.activePanel = "export" }
         ToolbarBtn("转场") { vm.activePanel = "transitions" }
     }
@@ -349,6 +351,9 @@ private fun PanelOverlay(vm: EditorViewModel) {
                     "stabilizer" -> "视频稳定器"; "pip" -> "画中画"; "chroma" -> "绿幕抠像"
                     "motionblur" -> "动态模糊"; "particles" -> "粒子效果"
                     "lens" -> "镜头效果"; "film" -> "胶片颗粒"; "template" -> "项目模板"
+                    "ai_interpolation" -> "AI智能补帧"; "ai_superres" -> "AI超分辨率"
+                    "ai_segment" -> "AI智能抠图"; "ai_speech" -> "AI语音转字幕"
+                    "ai_separation" -> "AI人声分离"; "ai_denoise" -> "AI智能降噪"
                     else -> "面板"
                 }, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = EC.T1)
                 Box(modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp))
@@ -369,7 +374,7 @@ private fun PanelOverlay(vm: EditorViewModel) {
                     "transitions" -> TransitionPanel(vm = vm) { vm.activePanel = null }
                     "tracking" -> TrackingPanel(vm = vm) { vm.activePanel = null }
                     "stabilizer" -> StabilizerPanel(vm = vm) { vm.activePanel = null }
-                    "pip" -> PiPPanel(vm = vm) { vm.activePanel = null }
+                    "pip" -> InlinePiPPanel(vm = vm) { vm.activePanel = null }
                     "chroma" -> ChromaPanel(vm = vm) { vm.activePanel = null }
                     "motionblur" -> MotionBlurPanel(vm = vm) { vm.activePanel = null }
                     "particles" -> ParticlePanel(vm = vm) { vm.activePanel = null }
@@ -378,8 +383,155 @@ private fun PanelOverlay(vm: EditorViewModel) {
                     "template" -> TemplatePanel(vm = vm, onApply = { vm.showToast("已套用: $it") }) {
                         vm.activePanel = null
                     }
+                    "ai_interpolation" -> AIInterpolationPanel(vm = vm) { vm.activePanel = null }
+                    "ai_superres" -> AISuperResPanel(vm = vm) { vm.activePanel = null }
+                    "ai_segment" -> AISegmentPanel(vm = vm) { vm.activePanel = null }
+                    "ai_speech" -> AISpeechPanel(vm = vm) { vm.activePanel = null }
+                    "ai_separation" -> AISeparationPanel(vm = vm) { vm.activePanel = null }
+                    "ai_denoise" -> AIDenoisePanel(vm = vm) { vm.activePanel = null }
                 }
             }
         }
+    }
+}
+
+// ===== 画中画内联面板 =====
+@Composable
+private fun InlinePiPPanel(vm: EditorViewModel, onClose: () -> Unit) {
+    var pipSize by remember { mutableStateOf(30) }
+    var pipOpacity by remember { mutableStateOf(100) }
+    var pipBorder by remember { mutableStateOf("无") }
+    var pipCornerRadius by remember { mutableStateOf(8) }
+    var hasOverlay by remember { mutableStateOf(false) }
+    var position by remember { mutableStateOf(Offset(200f, 150f)) }
+
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Text("在主画面上叠加第二个视频画面", fontSize = 8.sp, color = EC.T3)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 添加叠加素材
+        if (!hasOverlay) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(modifier = Modifier.weight(1f).height(40.dp)
+                    .clip(RoundedCornerShape(8.dp)).background(EC.Card)
+                    .border(1.dp, EC.Line2, RoundedCornerShape(8.dp))
+                    .clickable { hasOverlay = true; vm.showToast("已添加视频叠加") },
+                    contentAlignment = Alignment.Center) {
+                    Text("📹 添加视频", fontSize = 11.sp, color = EC.T2)
+                }
+                Box(modifier = Modifier.weight(1f).height(40.dp)
+                    .clip(RoundedCornerShape(8.dp)).background(EC.Card)
+                    .border(1.dp, EC.Line2, RoundedCornerShape(8.dp))
+                    .clickable { hasOverlay = true; vm.showToast("已添加图片叠加") },
+                    contentAlignment = Alignment.Center) {
+                    Text("🖼 添加图片", fontSize = 11.sp, color = EC.T2)
+                }
+            }
+        } else {
+            // 位置预览（可拖拽）
+            Text("位置预览", fontSize = 9.sp, color = EC.T4, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(6.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(120.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF1A1A2E))
+                .border(1.dp, EC.Line, RoundedCornerShape(8.dp))
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        position = Offset(
+                            (position.x + dragAmount.x).coerceIn(0f, size.width.toFloat() - 60f),
+                            (position.y + dragAmount.y).coerceIn(0f, size.height.toFloat() - 45f)
+                        )
+                    }
+                }) {
+                val borderColor = when (pipBorder) {
+                    "白色" -> Color.White; "黑色" -> Color.Black; else -> Color.Transparent
+                }
+                Box(modifier = Modifier.offset(position.x.dp, position.y.dp)
+                    .size((pipSize * 0.6f).dp, (pipSize * 0.45f).dp)
+                    .clip(RoundedCornerShape(pipCornerRadius.dp))
+                    .background(EC.Acc.copy(alpha = pipOpacity / 100f))
+                    .then(
+                        if (pipBorder == "阴影") Modifier.border(2.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(pipCornerRadius.dp))
+                        else if (borderColor != Color.Transparent) Modifier.border(2.dp, borderColor, RoundedCornerShape(pipCornerRadius.dp))
+                        else Modifier
+                    ),
+                    contentAlignment = Alignment.Center) {
+                    Text("PiP", fontSize = 8.sp, color = Color.White.copy(alpha = 0.6f))
+                }
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 尺寸滑块
+            PanelSlider("尺寸", 10, pipSize, 60) { pipSize = it }
+            // 透明度滑块
+            PanelSlider("透明度", 10, pipOpacity, 100) { pipOpacity = it }
+            // 圆角滑块
+            PanelSlider("圆角", 0, pipCornerRadius, 50) { pipCornerRadius = it }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            // 边框选项
+            Text("边框", fontSize = 9.sp, color = EC.T4, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("无", "白色", "黑色", "阴影").forEach { option ->
+                    Box(modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                        .background(if (pipBorder == option) EC.AccS else EC.Card)
+                        .then(if (pipBorder == option) Modifier.border(1.5.dp, EC.Acc, RoundedCornerShape(8.dp)) else Modifier)
+                        .clickable { pipBorder = option }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center) {
+                        Text(option, fontSize = 10.sp, fontWeight = FontWeight.Medium,
+                            color = if (pipBorder == option) EC.AccL else EC.T2)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 移除画中画
+            Box(modifier = Modifier.fillMaxWidth().height(36.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(EC.Red.copy(alpha = 0.15f))
+                .border(1.dp, EC.Red.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                .clickable {
+                    hasOverlay = false
+                    position = Offset(200f, 150f)
+                    vm.showToast("已移除画中画")
+                },
+                contentAlignment = Alignment.Center) {
+                Text("移除画中画", fontSize = 12.sp, color = EC.Red, fontWeight = FontWeight.Medium)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 应用按钮
+            Box(modifier = Modifier.fillMaxWidth().height(36.dp)
+                .clip(RoundedCornerShape(8.dp)).background(EC.Acc)
+                .clickable {
+                    vm.showToast("画中画已设置: 尺寸${pipSize}% 透明度${pipOpacity}%")
+                    onClose()
+                },
+                contentAlignment = Alignment.Center) {
+                Text("应用画中画", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PanelSlider(label: String, min: Int, value: Int, max: Int, onValueChange: (Int) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, fontSize = 9.sp, color = EC.T3)
+            Text("$value", fontSize = 9.sp, color = EC.T2)
+        }
+        androidx.compose.material3.Slider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.toInt()) },
+            valueRange = min.toFloat()..max.toFloat(),
+            colors = androidx.compose.material3.SliderDefaults.colors(
+                thumbColor = EC.Acc, activeTrackColor = EC.Acc, inactiveTrackColor = EC.Line
+            ),
+            modifier = Modifier.fillMaxWidth().height(20.dp)
+        )
     }
 }

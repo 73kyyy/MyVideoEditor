@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -22,124 +23,199 @@ import com.myvideo.editor.ui.editor.EditorViewModel
 fun AudioPanel(vm: EditorViewModel, onClose: () -> Unit) {
     val context = LocalContext.current
     val bridge = remember { EditorBridge(context) }
-    var selectedAudio by remember { mutableStateOf<String?>(null) }
-    var effect by remember { mutableStateOf("无") }
-    var volume by remember { mutableStateOf(80) }
+
+    var volume by remember { mutableStateOf(100) }
     var fadeIn by remember { mutableStateOf(0) }
     var fadeOut by remember { mutableStateOf(0) }
-    var eqPreset by remember { mutableStateOf("平坦") }
-    var denoiseStrength by remember { mutableStateOf(0) }
-    var pitchShift by remember { mutableStateOf(0) }
-    var reverbRoom by remember { mutableStateOf(50) }
-    var echoDelay by remember { mutableStateOf(0) }
-    var echoFeedback by remember { mutableStateOf(30) }
-
-    val audios = listOf(
-        Triple("背景音乐 01", "0:15", "轻松"),
-        Triple("背景音乐 02", "0:23", "动感"),
-        Triple("环境音", "0:31", "自然"),
-        Triple("鼓点节奏", "0:39", "节拍"),
-        Triple("钢琴旋律", "0:47", "古典"),
-        Triple("电子氛围", "0:55", "电子"),
-        Triple("嘻哈节拍", "0:28", "嘻哈"),
-        Triple("摇滚吉他", "0:35", "摇滚"),
-        Triple("爵士萨克斯", "0:42", "爵士"),
-        Triple("民谣吉他", "0:38", "民谣")
-    )
+    var eqPreset by remember { mutableStateOf("无") }
+    var pan by remember { mutableStateOf(0) }
+    var speed by remember { mutableStateOf(100) }
+    var showAIDenoise by remember { mutableStateOf(false) }
+    var showAISeparation by remember { mutableStateOf(false) }
+    var isProcessing by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("音频素材", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.height(6.dp))
-        audios.forEach { (name, dur, tag) ->
-            val sel = selectedAudio == name
-            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(if (sel) CG.AccS else CG.Card)
-                .then(if (sel) Modifier.border(1.dp, CG.Acc, RoundedCornerShape(8.dp)) else Modifier)
-                .clickable { selectedAudio = name }
-                .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("▶", fontSize = 12.sp, color = CG.T3)
-                Spacer(modifier = Modifier.width(8.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(name, fontSize = 11.sp, color = CG.T1, fontWeight = FontWeight.Medium)
-                    Text("$dur · $tag · 免费", fontSize = 8.sp, color = CG.T3)
-                }
-                Box(modifier = Modifier.clip(RoundedCornerShape(3.dp)).background(CG.AccS)
-                    .clickable { vm.showToast("已选择: $name") }
-                    .padding(horizontal = 6.dp, vertical = 2.dp)) {
-                    Text("使用", fontSize = 8.sp, color = CG.AccL, fontWeight = FontWeight.SemiBold)
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(14.dp))
+        // 音量控制
         Text("音量控制", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(6.dp))
-        CgSlider("主音量", 0, volume, 150) { volume = it }
-        CgSlider("淡入(ms)", 0, fadeIn, 3000) { fadeIn = it }
-        CgSlider("淡出(ms)", 0, fadeOut, 3000) { fadeOut = it }
+        CgSlider("音量", 0, volume, 200) { volume = it }
+        Text("${volume}%", fontSize = 8.sp, color = CG.T3)
         Spacer(modifier = Modifier.height(14.dp))
-        Text("音效", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+
+        // 淡入淡出
+        Text("淡入淡出", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("无", "混响", "回声", "均衡器", "降噪", "变速不变调").forEach { e ->
-                OptionChip(e, effect == e) { effect = e }
+        CgSlider("淡入时长", 0, fadeIn, 5000) { fadeIn = it }
+        Text("${String.format("%.1f", fadeIn / 1000f)}s", fontSize = 8.sp, color = CG.T3)
+        CgSlider("淡出时长", 0, fadeOut, 5000) { fadeOut = it }
+        Text("${String.format("%.1f", fadeOut / 1000f)}s", fontSize = 8.sp, color = CG.T3)
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // 音频波形显示
+        Text("音频波形", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(60.dp).clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFF1A1A2E)).border(1.dp, CG.Line, RoundedCornerShape(8.dp)),
+            contentAlignment = Alignment.Center) {
+            // 波形渐变占位
+            Row(modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically) {
+                val barHeights = listOf(12, 20, 28, 35, 22, 40, 30, 18, 25, 38, 15, 32, 26, 20, 34, 12, 28, 36, 22, 14)
+                barHeights.forEach { h ->
+                    Box(modifier = Modifier.width(4.dp).height(h.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Brush.verticalGradient(
+                            listOf(CG.Acc.copy(alpha = 0.8f), CG.AccL.copy(alpha = 0.3f)))))
+                }
+            }
+            Text("波形预览", fontSize = 8.sp, color = CG.T3,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp))
+        }
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // AI功能按钮
+        Text("AI音频", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier.weight(1f).height(32.dp).clip(RoundedCornerShape(8.dp))
+                .background(CG.Card).border(1.dp, CG.Acc.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .clickable { showAIDenoise = true },
+                contentAlignment = Alignment.Center) {
+                Text("AI 降噪", fontSize = 10.sp, color = CG.AccL, fontWeight = FontWeight.Medium)
+            }
+            Box(modifier = Modifier.weight(1f).height(32.dp).clip(RoundedCornerShape(8.dp))
+                .background(CG.Card).border(1.dp, CG.Acc.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .clickable { showAISeparation = true },
+                contentAlignment = Alignment.Center) {
+                Text("AI 人声分离", fontSize = 10.sp, color = CG.AccL, fontWeight = FontWeight.Medium)
             }
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        when (effect) {
-            "混响" -> {
-                Text("混响设置", fontSize = 9.sp, color = CG.T4)
-                CgSlider("房间大小", 0, reverbRoom, 100) { reverbRoom = it }
-                CgSlider("衰减", 0, 50, 100)
-                CgSlider("湿信号", 0, 30, 100)
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // 均衡器预设
+        Text("均衡器预设", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            listOf("无", "人声", "音乐", "低音增强", "高音增强").forEach { preset ->
+                OptionChip(preset, eqPreset == preset) { eqPreset = preset }
             }
-            "回声" -> {
-                Text("回声设置", fontSize = 9.sp, color = CG.T4)
-                CgSlider("延迟(ms)", 50, echoDelay, 1000) { echoDelay = it }
-                CgSlider("反馈", 0, echoFeedback, 90) { echoFeedback = it }
-                CgSlider("混合", 0, 50, 100)
-            }
-            "均衡器" -> {
-                Text("EQ预设", fontSize = 9.sp, color = CG.T4)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("平坦", "低音增强", "高音增强", "人声", "摇滚", "流行", "古典").forEach { p ->
-                        OptionChip(p, eqPreset == p) { eqPreset = p }
-                    }
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                CgSlider("60Hz", -12, 0, 12)
-                CgSlider("230Hz", -12, 0, 12)
-                CgSlider("910Hz", -12, 0, 12)
-                CgSlider("3.6kHz", -12, 0, 12)
-                CgSlider("14kHz", -12, 0, 12)
-            }
-            "降噪" -> {
-                Text("降噪设置", fontSize = 9.sp, color = CG.T4)
-                CgSlider("降噪强度", 0, denoiseStrength, 100) { denoiseStrength = it }
-                CgSlider("阈值", -80, -40, 0)
-                CgSlider("衰减", 0, 50, 100)
-            }
-            "变速不变调" -> {
-                Text("时间拉伸", fontSize = 9.sp, color = CG.T4)
-                CgSlider("速度", 25, 100, 400)
-                CgSlider("音调", -12, pitchShift, 12) { pitchShift = it }
+        }
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // 声道控制
+        Text("声道控制", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        CgSlider("声相 (左-右)", -100, pan, 100) { pan = it }
+        Text(if (pan < 0) "左 ${-pan}%" else if (pan > 0) "右 ${pan}%" else "居中",
+            fontSize = 8.sp, color = CG.T3)
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // 变速控制
+        Text("变速控制", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        CgSlider("速度", 50, speed, 200) { speed = it }
+        Text("${String.format("%.2f", speed / 100f)}x", fontSize = 8.sp, color = CG.T3)
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf("0.5x" to 50, "0.75x" to 75, "1.0x" to 100, "1.5x" to 150, "2.0x" to 200).forEach { (label, v) ->
+                OptionChip(label, speed == v) { speed = v }
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        ApplyButton("添加到时间轴") {
-            if (effect == "降噪" && denoiseStrength > 0) {
-                bridge.applyAudioDenoise(vm,
-                    onComplete = { vm.showToast("降噪完成") },
-                    onError = { vm.showToast("降噪失败: $it") })
-            }
+
+        // 应用按钮
+        ApplyButton(if (isProcessing) "处理中..." else "应用音频设置") {
+            if (isProcessing) return@ApplyButton
+            isProcessing = true
+            val params = mutableMapOf<String, Any>(
+                "volume" to (volume / 100f),
+                "fadeIn" to fadeIn,
+                "fadeOut" to fadeOut,
+                "eqPreset" to eqPreset,
+                "pan" to (pan / 100f),
+                "speed" to (speed / 100f)
+            )
+            bridge.applyEffect("audio_adjust", params)
             if (volume != 100) {
                 bridge.applyAudioVolume(vm, volume / 100f,
-                    onComplete = { vm.showToast("音量调整完成") },
-                    onError = { vm.showToast("音量调整失败: $it") })
+                    onComplete = { isProcessing = false; vm.showToast("音量调整完成") },
+                    onError = { isProcessing = false; vm.showToast("音量调整失败: $it") })
             }
-            vm.showToast("已添加到时间轴: ${selectedAudio ?: effect}")
+            if (speed != 100) {
+                bridge.applySpeed(vm, speed / 100f,
+                    onComplete = { isProcessing = false; vm.showToast("变速完成") },
+                    onError = { isProcessing = false; vm.showToast("变速失败: $it") })
+            }
+            vm.showToast("音频设置已应用")
+            isProcessing = false
             onClose()
+        }
+    }
+
+    // AI降噪面板
+    if (showAIDenoise) {
+        AIDenoisePanel(vm) { showAIDenoise = false }
+    }
+
+    // AI人声分离面板
+    if (showAISeparation) {
+        AISeparationPanel(vm) { showAISeparation = false }
+    }
+}
+
+@Composable
+private fun AIDenoisePanel(vm: EditorViewModel, onClose: () -> Unit) {
+    val context = LocalContext.current
+    val bridge = remember { EditorBridge(context) }
+    var isProcessing by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+        .background(CG.Surf).border(1.dp, CG.Line, RoundedCornerShape(8.dp)).padding(12.dp)) {
+        Text("AI 降噪", fontSize = 11.sp, color = CG.T1, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text("使用AI模型自动去除背景噪声，保留清晰人声", fontSize = 8.sp, color = CG.T3)
+        Spacer(modifier = Modifier.height(12.dp))
+        ApplyButton(if (isProcessing) "处理中..." else "开始降噪") {
+            if (isProcessing) return@ApplyButton
+            isProcessing = true
+            bridge.aiDenoise(vm, true,
+                onComplete = { isProcessing = false; vm.showToast("AI降噪完成") },
+                onError = { isProcessing = false; vm.showToast("AI降噪失败: $it") })
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(28.dp).clip(RoundedCornerShape(6.dp))
+            .background(CG.Card).clickable { onClose() },
+            contentAlignment = Alignment.Center) {
+            Text("关闭", fontSize = 10.sp, color = CG.T2)
+        }
+    }
+}
+
+@Composable
+private fun AISeparationPanel(vm: EditorViewModel, onClose: () -> Unit) {
+    val context = LocalContext.current
+    val bridge = remember { EditorBridge(context) }
+    var isProcessing by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+        .background(CG.Surf).border(1.dp, CG.Line, RoundedCornerShape(8.dp)).padding(12.dp)) {
+        Text("AI 人声分离", fontSize = 11.sp, color = CG.T1, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text("将音频中的人声与伴奏分离为独立轨道", fontSize = 8.sp, color = CG.T3)
+        Spacer(modifier = Modifier.height(12.dp))
+        ApplyButton(if (isProcessing) "处理中..." else "开始分离") {
+            if (isProcessing) return@ApplyButton
+            isProcessing = true
+            bridge.aiSeparate(vm, true,
+                onComplete = { isProcessing = false; vm.showToast("人声分离完成") },
+                onError = { isProcessing = false; vm.showToast("人声分离失败: $it") })
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(28.dp).clip(RoundedCornerShape(6.dp))
+            .background(CG.Card).clickable { onClose() },
+            contentAlignment = Alignment.Center) {
+            Text("关闭", fontSize = 10.sp, color = CG.T2)
         }
     }
 }

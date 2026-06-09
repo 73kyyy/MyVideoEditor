@@ -10,7 +10,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -23,64 +22,106 @@ import com.myvideo.editor.ui.editor.EditorViewModel
 fun ColorGradingPanel(vm: EditorViewModel, onClose: () -> Unit) {
     val context = LocalContext.current
     val bridge = remember { EditorBridge(context) }
+
     var tab by remember { mutableStateOf(0) }
-    var selectedFilter by remember { mutableStateOf("自然") }
-    var brightness by remember { mutableStateOf(50) }
-    var contrast by remember { mutableStateOf(50) }
-    var saturation by remember { mutableStateOf(50) }
-    var temperature by remember { mutableStateOf(0) }
-    var vignetteStrength by remember { mutableStateOf(0) }
-    var grain by remember { mutableStateOf(0) }
-    var sharpen by remember { mutableStateOf(0) }
-    var lutPreset by remember { mutableStateOf("无") }
-    var lutStrength by remember { mutableStateOf(100) }
-    val tabs = listOf("滤镜", "色轮", "曲线", "HSL", "色阶", "LUT")
+    var intensity by remember { mutableStateOf(100) }
+    var selectedPreset by remember { mutableStateOf<String?>(null) }
+    val tabs = listOf("色轮", "曲线", "HSL", "色阶", "LUT")
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth().height(30.dp).border(1.dp, CG.Line)) {
+        // 预设芯片
+        Text("预设", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            listOf("电影感", "复古", "暖色", "冷色", "青橙", "黑白").forEach { preset ->
+                val sel = selectedPreset == preset
+                Box(modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                    .background(if (sel) CG.AccS else CG.Card)
+                    .then(if (sel) Modifier.border(1.5.dp, CG.Acc, RoundedCornerShape(8.dp)) else Modifier)
+                    .clickable {
+                        selectedPreset = if (sel) null else preset
+                        if (!sel) {
+                            bridge.applyEffect("color_preset", mapOf("preset" to preset, "intensity" to (intensity / 100f)))
+                        }
+                    }
+                    .padding(horizontal = 8.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
+                    Text(preset, fontSize = 10.sp, color = if (sel) CG.AccL else CG.T2, fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // 标签页
+        Row(modifier = Modifier.fillMaxWidth().height(30.dp).clip(RoundedCornerShape(8.dp))
+            .background(CG.Card).border(1.dp, CG.Line, RoundedCornerShape(8.dp))) {
             tabs.forEachIndexed { i, t ->
-                Box(modifier = Modifier.weight(1f).fillMaxHeight().clickable { tab = i },
+                Box(modifier = Modifier.weight(1f).fillMaxHeight()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (tab == i) CG.AccS else Color.Transparent)
+                    .clickable { tab = i },
                     contentAlignment = Alignment.Center) {
                     Text(t, fontSize = 9.sp, fontWeight = FontWeight.SemiBold,
                         color = if (tab == i) CG.Acc else CG.T3)
                 }
             }
         }
-        Box(modifier = Modifier.fillMaxWidth().padding(12.dp, 16.dp)
-            .heightIn(max = 400.dp)) {
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 标签页内容
+        Box(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
             when (tab) {
-                0 -> FilterTab(selectedFilter) { selectedFilter = it }
-                1 -> WheelsTab()
-                2 -> CurvesTab()
-                3 -> HSLTab()
-                4 -> LevelsTab()
-                5 -> LUTTab()
+                0 -> WheelsTab(vm, bridge)
+                1 -> CurvesTab(vm, bridge)
+                2 -> HSLTab(vm, bridge)
+                3 -> LevelsTab(vm, bridge)
+                4 -> LUTTab()
             }
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        ApplyButton("应用调色") {
-            val filters = mutableListOf<String>()
-            if (selectedFilter != "自然") filters.add(selectedFilter)
-            if (brightness != 50) filters.add("brightness=${(brightness - 50) * 2}")
-            if (contrast != 50) filters.add("contrast=${(contrast - 50) * 2}")
-            if (saturation != 50) filters.add("saturation=${saturation * 2}")
-            if (temperature != 0) filters.add("colortemperature=$temperature")
-            if (sharpen > 0) filters.add("unsharp=$sharpen")
-            if (vignetteStrength > 0) filters.add("vignette=$vignetteStrength")
-            if (grain > 0) filters.add("noise=$grain")
+        Spacer(modifier = Modifier.height(14.dp))
 
-            if (filters.isEmpty()) {
-                vm.showToast("请调整参数")
-            } else if (filters.size == 1) {
-                bridge.applyFilter(vm, filters[0],
-                    onComplete = { vm.showToast("调色完成") },
-                    onError = { vm.showToast("调色失败: $it") })
-            } else {
-                bridge.applyMultipleFilters(vm, filters,
-                    onComplete = { vm.showToast("调色完成") },
-                    onError = { vm.showToast("调色失败: $it") })
+        // 全局强度
+        Text("全局强度", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        CgSlider("强度", 0, intensity, 100) { intensity = it }
+        Text("${intensity}%", fontSize = 8.sp, color = CG.T3)
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // 重置按钮
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier.weight(1f).height(32.dp).clip(RoundedCornerShape(8.dp))
+                .background(CG.Card).border(1.dp, CG.Line, RoundedCornerShape(8.dp))
+                .clickable {
+                    intensity = 100
+                    selectedPreset = null
+                    bridge.applyEffect("color_reset", emptyMap())
+                    vm.showToast("调色已重置")
+                },
+                contentAlignment = Alignment.Center) {
+                Text("重置", fontSize = 11.sp, color = CG.T2, fontWeight = FontWeight.Medium)
             }
-            onClose()
+
+            // 应用按钮
+            Box(modifier = Modifier.weight(1f).height(32.dp).clip(RoundedCornerShape(8.dp))
+                .background(CG.Acc).clickable {
+                    val filters = mutableListOf<String>()
+                    selectedPreset?.let { filters.add("preset=$it") }
+                    if (intensity != 100) filters.add("intensity=${intensity / 100f}")
+                    if (filters.isEmpty()) {
+                        vm.showToast("请调整参数")
+                    } else if (filters.size == 1) {
+                        bridge.applyFilter(vm, filters[0],
+                            onComplete = { vm.showToast("调色完成") },
+                            onError = { vm.showToast("调色失败: $it") })
+                    } else {
+                        bridge.applyMultipleFilters(vm, filters,
+                            onComplete = { vm.showToast("调色完成") },
+                            onError = { vm.showToast("调色失败: $it") })
+                    }
+                    onClose()
+                },
+                contentAlignment = Alignment.Center) {
+                Text("应用调色", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

@@ -23,57 +23,39 @@ import com.myvideo.editor.ui.editor.EditorViewModel
 fun TransitionPanel(vm: EditorViewModel, onClose: () -> Unit) {
     val context = LocalContext.current
     val bridge = remember { EditorBridge(context) }
-    var selected by remember { mutableStateOf("淡入淡出") }
-    var duration by remember { mutableStateOf(500) }
-    var easing by remember { mutableStateOf("线性") }
-    var autoApply by remember { mutableStateOf(false) }
 
-    data class TransitionItem(val name: String, val category: String, val color1: Color, val color2: Color)
+    var selected by remember { mutableStateOf("淡入淡出") }
+    var duration by remember { mutableStateOf(500) } // ms
+    var easing by remember { mutableStateOf("线性") }
+    var previewOn by remember { mutableStateOf(false) }
+
+    data class TransitionItem(val name: String, val color1: Color, val color2: Color)
 
     val transitions = listOf(
-        TransitionItem("淡入淡出", "溶解", Color(0xFF4A4A4A), Color(0xFF888888)),
-        TransitionItem("交叉溶解", "溶解", Color(0xFF5C6BC0), Color(0xFF7986CB)),
-        TransitionItem("闪白", "溶解", Color(0xFFE0E0E0), Color(0xFFFFFFFF)),
-        TransitionItem("抖动", "溶解", Color(0xFFEF5350), Color(0xFFE57373)),
-        TransitionItem("滑动左", "滑动", Color(0xFF26A69A), Color(0xFF4DB6AC)),
-        TransitionItem("滑动右", "滑动", Color(0xFF26A69A), Color(0xFF80CBC4)),
-        TransitionItem("滑动上", "滑动", Color(0xFF42A5F5), Color(0xFF64B5F6)),
-        TransitionItem("滑动下", "滑动", Color(0xFF42A5F5), Color(0xFF90CAF9)),
-        TransitionItem("擦除", "擦除", Color(0xFFAB47BC), Color(0xFFBA68C8)),
-        TransitionItem("擦除左", "擦除", Color(0xFFAB47BC), Color(0xFFCE93D8)),
-        TransitionItem("擦除右", "擦除", Color(0xFF7E57C2), Color(0xFF9575CD)),
-        TransitionItem("缩放", "缩放", Color(0xFFFFCA28), Color(0xFFFFE082)),
-        TransitionItem("缩放入", "缩放", Color(0xFFFFA726), Color(0xFFFFB74D)),
-        TransitionItem("缩放出", "缩放", Color(0xFFFF7043), Color(0xFFFF8A65)),
-        TransitionItem("旋转", "旋转", Color(0xFF66BB6A), Color(0xFF81C784)),
-        TransitionItem("旋转缩放", "旋转", Color(0xFF4CAF50), Color(0xFFA5D6A7)),
-        TransitionItem("百叶窗", "图案", Color(0xFF78909C), Color(0xFF90A4AE)),
-        TransitionItem("棋盘格", "图案", Color(0xFF8D6E63), Color(0xFFA1887F)),
-        TransitionItem("径向", "图案", Color(0xFFEC407A), Color(0xFFF48FB1)),
-        TransitionItem("菱形", "图案", Color(0xFF29B6F6), Color(0xFF81D4FA)),
-        TransitionItem("推挤", "推挤", Color(0xFF5C6BC0), Color(0xFF9FA8DA)),
-        TransitionItem("覆盖", "推挤", Color(0xFF26A69A), Color(0xFF80CBC4))
+        TransitionItem("无", Color(0xFF3A3A3A), Color(0xFF4A4A4A)),
+        TransitionItem("淡入淡出", Color(0xFF4A4A4A), Color(0xFF888888)),
+        TransitionItem("交叉溶解", Color(0xFF5C6BC0), Color(0xFF7986CB)),
+        TransitionItem("向左擦除", Color(0xFF26A69A), Color(0xFF4DB6AC)),
+        TransitionItem("向右擦除", Color(0xFF26A69A), Color(0xFF80CBC4)),
+        TransitionItem("向上擦除", Color(0xFF42A5F5), Color(0xFF64B5F6)),
+        TransitionItem("向下擦除", Color(0xFF42A5F5), Color(0xFF90CAF9)),
+        TransitionItem("滑动", Color(0xFF5C6BC0), Color(0xFF9FA8DA)),
+        TransitionItem("缩放", Color(0xFFFFCA28), Color(0xFFFFE082)),
+        TransitionItem("旋转", Color(0xFF66BB6A), Color(0xFF81C784)),
+        TransitionItem("模糊", Color(0xFF78909C), Color(0xFF90A4AE)),
+        TransitionItem("闪白", Color(0xFFE0E0E0), Color(0xFFFFFFFF))
     )
 
-    var category by remember { mutableStateOf("全部") }
-    val categories = listOf("全部", "溶解", "滑动", "擦除", "缩放", "旋转", "图案", "推挤")
-    val filtered = if (category == "全部") transitions else transitions.filter { it.category == category }
-
     Column(modifier = Modifier.fillMaxWidth()) {
+        // 转场类型网格
         Text("转场类型", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            categories.forEach { cat ->
-                OptionChip(cat, category == cat) { category = cat }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        filtered.chunked(4).forEach { row ->
+        transitions.chunked(4).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                 row.forEach { t ->
                     val sel = selected == t.name
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(modifier = Modifier.weight(1f).fillMaxWidth().height(48.dp)
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth().height(40.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(Brush.linearGradient(listOf(t.color1, t.color2)))
                             .then(if (sel) Modifier.border(2.dp, Color.White, RoundedCornerShape(8.dp)) else Modifier)
@@ -84,49 +66,71 @@ fun TransitionPanel(vm: EditorViewModel, onClose: () -> Unit) {
                     }
                 }
                 repeat(4 - row.size) {
-                    Column { Spacer(modifier = Modifier.weight(1f).fillMaxWidth().height(48.dp)) }
+                    Column { Spacer(modifier = Modifier.weight(1f).fillMaxWidth().height(40.dp)) }
                 }
             }
             Spacer(modifier = Modifier.height(4.dp))
         }
         Spacer(modifier = Modifier.height(14.dp))
-        Text("时长", fontSize = 9.sp, color = CG.T4)
-        Spacer(modifier = Modifier.height(4.dp))
-        CgSlider("转场时长", 100, duration, 3000) { duration = it }
-        Spacer(modifier = Modifier.height(4.dp))
+
+        // 时长滑块 (0.1s - 2.0s)
+        Text("时长", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        CgSlider("转场时长", 100, duration, 2000) { duration = it }
+        Text("${String.format("%.1f", duration / 1000f)}s", fontSize = 8.sp, color = CG.T3)
+        Spacer(modifier = Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("300ms", "500ms", "800ms", "1000ms", "1500ms").forEach { preset ->
-                val ms = preset.replace("ms", "").toIntOrNull() ?: 500
-                OptionChip(preset, duration == ms) { duration = ms }
+            listOf("0.1s" to 100, "0.3s" to 300, "0.5s" to 500, "1.0s" to 1000, "2.0s" to 2000).forEach { (label, ms) ->
+                OptionChip(label, duration == ms) { duration = ms }
             }
         }
         Spacer(modifier = Modifier.height(14.dp))
-        Text("缓动曲线", fontSize = 9.sp, color = CG.T4)
+
+        // 缓动曲线
+        Text("缓动曲线", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("线性", "缓入", "缓出", "缓入缓出", "弹性", "弹跳").forEach { e ->
+            listOf("线性", "缓入", "缓出", "缓入缓出").forEach { e ->
                 OptionChip(e, easing == e) { easing = e }
             }
         }
         Spacer(modifier = Modifier.height(14.dp))
-        Text("预览", fontSize = 9.sp, color = CG.T4)
-        Spacer(modifier = Modifier.height(6.dp))
-        Box(modifier = Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(8.dp))
-            .background(Color.Black), contentAlignment = Alignment.Center) {
-            Row(modifier = Modifier.fillMaxSize()) {
-                Box(modifier = Modifier.weight(0.5f).fillMaxHeight().background(Color(0xFF4A90D9).copy(alpha = 0.3f)))
-                Box(modifier = Modifier.weight(0.5f).fillMaxHeight().background(Color(0xFFE85050).copy(alpha = 0.3f)))
+
+        // 预览切换
+        ToggleRow("预览转场效果", previewOn) { previewOn = it }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 预览区域
+        if (previewOn) {
+            Text("预览", fontSize = 9.sp, color = CG.T4, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(6.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(8.dp))
+                .background(Color.Black), contentAlignment = Alignment.Center) {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.weight(0.5f).fillMaxHeight()
+                        .background(Color(0xFF4A90D9).copy(alpha = 0.3f)))
+                    Box(modifier = Modifier.weight(0.5f).fillMaxHeight()
+                        .background(Color(0xFFE85050).copy(alpha = 0.3f)))
+                }
+                Box(modifier = Modifier.align(Alignment.Center).width(1.dp).height(48.dp)
+                    .background(Color.White.copy(alpha = 0.3f)))
+                Text(selected, fontSize = 9.sp, color = Color.White.copy(alpha = 0.6f))
             }
-            Box(modifier = Modifier.align(Alignment.Center).width(1.dp).height(48.dp).background(Color.White.copy(alpha = 0.3f)))
-            Text(selected, fontSize = 9.sp, color = Color.White.copy(alpha = 0.6f))
+            Spacer(modifier = Modifier.height(14.dp))
         }
-        Spacer(modifier = Modifier.height(16.dp))
+
+        // 应用按钮
         ApplyButton("应用转场") {
             if (vm.clips.size < 2) {
                 vm.showToast("需要至少两个片段才能添加转场")
             } else {
+                bridge.applyEffect("transition", mapOf(
+                    "type" to selected,
+                    "duration" to duration,
+                    "easing" to easing
+                ))
                 bridge.applyTransition(vm, selected, duration.toLong(),
-                    onComplete = { vm.showToast("转场已应用: $selected ($duration ms)") },
+                    onComplete = { vm.showToast("转场已应用: $selected") },
                     onError = { vm.showToast("转场失败: $it") })
             }
             onClose()

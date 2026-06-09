@@ -30,6 +30,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,26 +78,48 @@ fun DashboardScreen(
     var ctxPos by remember { mutableStateOf(Offset.Zero) }
     var toast by remember { mutableStateOf("") }
     var showToast by remember { mutableStateOf(false) }
+    var selectedNav by remember { mutableStateOf(0) }
     LaunchedEffect(showToast) { if (showToast) { delay(2000); showToast = false } }
+
+    val drafts = allProjects.filter { it.isDraft }
+    val projects = allProjects.filter { !it.isDraft }
+    val filteredProjects = if (searchQuery.isEmpty()) projects else projects.filter { it.name.contains(searchQuery, ignoreCase = true) }
 
     Box(modifier = Modifier.fillMaxSize().background(DC.Bg)) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // 标题栏
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
-                horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("项目", style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.5).sp, color = DC.T1))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(DC.Card)
-                        .clickable { showSearch = !showSearch }, contentAlignment = Alignment.Center) {
-                        Text("搜", fontSize = 10.sp, color = DC.T3)
-                    }
-                    Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(DC.Card)
-                        .clickable { onOpenSettings() }, contentAlignment = Alignment.Center) {
-                        GearIcon()
-                    }
+            // 顶部：App logo + 名称 + 操作
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Logo
+                Box(
+                    modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
+                        .background(Brush.linearGradient(listOf(DC.Acc, Color(0xFF6EC850)))),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("N", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text("NexClip", style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = DC.T1, letterSpacing = (-0.5).sp))
+                    Text("AI 智能视频编辑器", fontSize = 9.sp, color = DC.T3)
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                // 搜索按钮
+                Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(DC.Card)
+                    .clickable { showSearch = !showSearch }, contentAlignment = Alignment.Center) {
+                    Text("搜", fontSize = 10.sp, color = DC.T3)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                // 设置按钮
+                Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(DC.Card)
+                    .clickable { onOpenSettings() }, contentAlignment = Alignment.Center) {
+                    GearIcon()
                 }
             }
 
+            // 搜索栏
             AnimatedVisibility(visible = showSearch, enter = fadeIn(tween(250)), exit = fadeOut(tween(250))) {
                 val fr = remember { FocusRequester() }
                 LaunchedEffect(Unit) { delay(100); fr.requestFocus() }
@@ -118,56 +141,94 @@ fun DashboardScreen(
                 }
             }
 
-            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = if (showSearch) 0.dp else 16.dp)
+            // 新建项目按钮
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)
                 .height(48.dp).clip(RoundedCornerShape(14.dp))
                 .background(Brush.linearGradient(listOf(DC.Acc, DC.AccL)))
                 .clickable { showModal = true }, contentAlignment = Alignment.Center) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("+", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                    Text("开始创建项目", fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text("+", fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("新建项目", fontSize = 15.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
                 }
             }
 
-            Text("草稿箱", style = TextStyle(fontSize = 11.sp, color = DC.T4, fontWeight = FontWeight.Medium, letterSpacing = 1.sp),
-                modifier = Modifier.padding(start = 20.dp, top = 14.dp, bottom = 10.dp))
-            LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(recentProjects.filter { it.isDraft }) { p ->
-                    DraftCard(DraftItem(p.id, p.name, p.duration, p.lastModified, false, p.thumbnailColors)) { onOpenProject(p.id) }
+            // 草稿箱
+            if (drafts.isNotEmpty()) {
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Text("草稿箱", style = TextStyle(fontSize = 12.sp, color = DC.T4, fontWeight = FontWeight.Medium, letterSpacing = 1.sp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("${drafts.size}", fontSize = 9.sp, color = DC.Acc, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(DC.AccS).padding(horizontal = 5.dp, vertical = 1.dp))
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text("查看全部", fontSize = 9.sp, color = DC.Acc,
+                        modifier = Modifier.clickable { onOpenDraftBox() })
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(drafts) { p ->
+                        DraftCard(DraftItem(p.id, p.name, p.duration, p.lastModified, false, p.thumbnailColors)) { onOpenProject(p.id) }
+                    }
                 }
             }
 
-            Text("全部项目", style = TextStyle(fontSize = 11.sp, color = DC.T4, fontWeight = FontWeight.Medium, letterSpacing = 1.sp),
-                modifier = Modifier.padding(start = 20.dp, top = 4.dp, bottom = 10.dp))
-            val filtered = if (searchQuery.isEmpty()) allProjects else allProjects.filter { it.name.contains(searchQuery, ignoreCase = true) }
-            if (filtered.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 40.dp), contentAlignment = Alignment.Center) {
-                    Text(if (searchQuery.isEmpty()) "还没有项目，点击上方按钮新建" else "没有找到匹配的项目", color = DC.T4, fontSize = 12.sp)
+            // 最近项目
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, top = 12.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Text("最近项目", style = TextStyle(fontSize = 12.sp, color = DC.T4, fontWeight = FontWeight.Medium, letterSpacing = 1.sp))
+                if (filteredProjects.isNotEmpty()) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("${filteredProjects.size}", fontSize = 9.sp, color = DC.Acc, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(DC.AccS).padding(horizontal = 5.dp, vertical = 1.dp))
+                }
+            }
+
+            if (filteredProjects.isEmpty() && drafts.isEmpty()) {
+                // 空状态
+                Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        EmptyStateIcon()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("还没有项目", fontSize = 16.sp, color = DC.T3, fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("点击上方「新建项目」开始创作", fontSize = 12.sp, color = DC.T4)
+                    }
+                }
+            } else if (filteredProjects.isEmpty()) {
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp), contentAlignment = Alignment.Center) {
+                    Text(if (searchQuery.isEmpty()) "暂无项目" else "没有找到匹配的项目", color = DC.T4, fontSize = 12.sp)
                 }
             } else {
-                LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 80.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    items(filtered) { p ->
+                LazyColumn(
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 80.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(filteredProjects) { p ->
                         ProjectListItem(p, { onOpenProject(p.id) }, { o -> ctxTarget = p; ctxPos = o; showCtx = true })
                     }
                 }
             }
         }
 
+        // 底部导航：项目 / 模板 / 设置
         Row(modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(60.dp)
             .background(DC.Surf).border(1.dp, DC.Line),
             horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
-            NavItem("项目", true) {}
-            NavItem("教程素材", false) { onOpenTutorial() }
-            NavItem("设置", false) { onOpenSettings() }
+            BottomNavItem("项目", selectedNav == 0) { selectedNav = 0 }
+            BottomNavItem("模板", selectedNav == 1) { selectedNav = 1; onOpenTemplateCenter() }
+            BottomNavItem("设置", selectedNav == 2) { selectedNav = 2; onOpenSettings() }
         }
 
+        // 新建项目弹窗
         if (showModal) CreateModal(onDismiss = { showModal = false }) { name, _, _, _ ->
             onCreateProject(); showModal = false; toast = "项目 \"$name\" 已创建"; showToast = true
         }
 
+        // 上下文菜单
         if (showCtx && ctxTarget != null) {
             Box(modifier = Modifier.fillMaxSize().clickable { showCtx = false }) {
                 Column(modifier = Modifier.offset((ctxPos.x / 2).dp, (ctxPos.y / 2).dp)
-                    .width(130.dp).clip(RoundedCornerShape(10.dp)).background(DC.CardH)
+                    .width(140.dp).clip(RoundedCornerShape(10.dp)).background(DC.CardH)
                     .border(1.dp, DC.Line2, RoundedCornerShape(10.dp)).padding(4.dp)) {
                     CtxItem("重命名", false) { ctxTarget?.let { onRenameProject(it.id, it.name) }; showCtx = false }
                     CtxItem("复制项目", false) { ctxTarget?.let { onDuplicateProject(it.id) }; showCtx = false; toast = "已复制项目"; showToast = true }
@@ -176,6 +237,7 @@ fun DashboardScreen(
             }
         }
 
+        // Toast
         if (showToast) {
             Box(modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
                 .clip(RoundedCornerShape(10.dp)).background(DC.CardH).border(1.dp, DC.Line2, RoundedCornerShape(10.dp))
@@ -187,13 +249,40 @@ fun DashboardScreen(
 }
 
 @Composable
+private fun EmptyStateIcon() {
+    Canvas(modifier = Modifier.size(80.dp)) {
+        val c = Offset(size.width / 2, size.height / 2)
+        val r = size.width * 0.35f
+        // Film frame
+        drawRoundRect(DC.T4.copy(alpha = 0.3f), Offset(size.width * 0.15f, size.height * 0.2f),
+            Size(size.width * 0.7f, size.height * 0.6f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(8.dp.toPx()))
+        // Play triangle
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(c.x - 10.dp.toPx(), c.y - 12.dp.toPx())
+            lineTo(c.x - 10.dp.toPx(), c.y + 12.dp.toPx())
+            lineTo(c.x + 14.dp.toPx(), c.y)
+            close()
+        }
+        drawPath(path, DC.T4.copy(alpha = 0.5f))
+        // Plus circle
+        drawCircle(DC.Acc.copy(alpha = 0.6f), 12.dp.toPx(), Offset(size.width * 0.75f, size.height * 0.75f))
+        drawLine(Color.White.copy(alpha = 0.8f),
+            Offset(size.width * 0.75f - 5.dp.toPx(), size.height * 0.75f),
+            Offset(size.width * 0.75f + 5.dp.toPx(), size.height * 0.75f), strokeWidth = 2.dp.toPx())
+        drawLine(Color.White.copy(alpha = 0.8f),
+            Offset(size.width * 0.75f, size.height * 0.75f - 5.dp.toPx()),
+            Offset(size.width * 0.75f, size.height * 0.75f + 5.dp.toPx()), strokeWidth = 2.dp.toPx())
+    }
+}
+
+@Composable
 private fun DraftCard(draft: DraftItem, onClick: () -> Unit) {
     Box(modifier = Modifier.width(160.dp).height(100.dp).clip(RoundedCornerShape(14.dp))
         .pointerInput(Unit) { detectTapGestures(onTap = { onClick() }) }) {
         Box(modifier = Modifier.fillMaxSize().background(Brush.linearGradient(draft.thumbnailColors)))
         Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC000000)), startY = 60f)))
         Column(modifier = Modifier.align(Alignment.BottomStart).padding(8.dp, 6.dp)) {
-            Text(draft.name, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            Text(draft.name, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("${draft.duration} · ${draft.lastSaved}", fontSize = 9.sp, color = DC.T2, fontFamily = FontFamily.Monospace, modifier = Modifier.padding(top = 2.dp))
         }
     }
@@ -204,31 +293,37 @@ private fun ProjectListItem(project: ProjectItem, onClick: () -> Unit, onLongCli
     Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(DC.Card)
         .pointerInput(Unit) { detectTapGestures(onTap = { onClick() }, onLongPress = { o -> onLongClick(o) }) }
         .padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)).background(Brush.linearGradient(project.thumbnailColors)),
-            contentAlignment = Alignment.Center) { Text("▶", fontSize = 16.sp, color = Color.White.copy(alpha = 0.5f)) }
+        // 缩略图
+        Box(modifier = Modifier.size(56.dp, 32.dp).clip(RoundedCornerShape(6.dp)).background(Brush.linearGradient(project.thumbnailColors)),
+            contentAlignment = Alignment.Center) { Text("▶", fontSize = 14.sp, color = Color.White.copy(alpha = 0.5f)) }
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(project.name, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DC.T1, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, false))
-                if (project.isDraft) Text("草稿", fontSize = 7.sp, color = DC.Gold, fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 4.dp).clip(RoundedCornerShape(3.dp)).background(DC.AccS).padding(horizontal = 4.dp, vertical = 1.dp))
             }
-            Row(modifier = Modifier.padding(top = 2.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(modifier = Modifier.padding(top = 3.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(project.duration, fontSize = 9.sp, color = DC.T3, fontFamily = FontFamily.Monospace)
                 Text(project.resolution, fontSize = 9.sp, color = DC.T3, fontFamily = FontFamily.Monospace)
+                Text(project.lastModified, fontSize = 9.sp, color = DC.T3)
             }
         }
-        Text(project.lastModified, fontSize = 9.sp, color = DC.AccL, fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.clip(RoundedCornerShape(3.dp)).background(DC.AccS).padding(horizontal = 6.dp, vertical = 2.dp))
+        // 三点菜单
+        Box(modifier = Modifier.size(28.dp).clip(RoundedCornerShape(6.dp)).background(DC.Card)
+            .clickable { onLongClick(Offset(0f, 0f)) }, contentAlignment = Alignment.Center) {
+            Text("⋮", fontSize = 16.sp, color = DC.T3)
+        }
     }
 }
 
 @Composable
-private fun NavItem(label: String, selected: Boolean, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onClick() }.padding(vertical = 8.dp, horizontal = 16.dp)) {
-        Text(label, fontSize = 12.sp, color = if (selected) DC.Acc else DC.T3, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
-        Spacer(modifier = Modifier.height(3.dp))
-        Text(label, fontSize = 9.sp, color = if (selected) DC.Acc else DC.T3, fontWeight = FontWeight.Medium)
-        if (selected) { Spacer(modifier = Modifier.height(4.dp)); Box(modifier = Modifier.width(20.dp).height(2.dp).clip(RoundedCornerShape(1.dp)).background(DC.Acc)) }
+private fun BottomNavItem(label: String, selected: Boolean, onClick: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable { onClick() }.padding(vertical = 6.dp, horizontal = 24.dp)) {
+        Text(label, fontSize = 12.sp, color = if (selected) DC.Acc else DC.T3,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+        if (selected) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(modifier = Modifier.width(20.dp).height(2.dp).clip(RoundedCornerShape(1.dp)).background(DC.Acc))
+        }
     }
 }
 
@@ -248,11 +343,8 @@ private fun GearIcon() {
         val innerR = size.width * 0.15f
         val color = Color(0xFF666666)
         val strokeW = size.width * 0.07f
-        // 外圈
         drawCircle(color = color, radius = outerR, center = Offset(c, c), style = Stroke(strokeW))
-        // 内圈
         drawCircle(color = color, radius = innerR, center = Offset(c, c), style = Stroke(strokeW))
-        // 齿轮齿（8个）
         val teeth = 8
         val toothLen = size.width * 0.1f
         val toothW = size.width * 0.08f
