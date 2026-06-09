@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexClip 自适应布局预览</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a0a; color: #e0e0e0; font-family: -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif; overflow: hidden; height: 100vh; }
+
+/* Mode Switcher */
+.mode-bar { position: fixed; top: 0; left: 0; right: 0; height: 48px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 100; }
+.mode-btn { padding: 6px 18px; border-radius: 20px; border: 1px solid #444; background: transparent; color: #999; cursor: pointer; font-size: 13px; transition: all 0.3s; }
+.mode-btn.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border-color: transparent; }
+.mode-btn:hover { border-color: #6366f1; color: #fff; }
+
+/* Phone Frame */
+.phone-frame { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); background: #111; border-radius: 24px; border: 3px solid #333; overflow: hidden; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.phone-frame.portrait { width: 375px; height: 740px; }
+.phone-frame.landscape { width: 740px; height: 375px; }
+.phone-frame.tablet { width: 1024px; height: 680px; border-radius: 16px; }
+
+.notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 24px; background: #000; border-radius: 0 0 16px 16px; z-index: 10; }
+.landscape .notch { width: 24px; height: 80px; border-radius: 0 16px 16px 0; top: 50%; left: 0; transform: translateY(-50%); }
+.tablet .notch { display: none; }
+
+/* Layout Content */
+.layout { display: flex; width: 100%; height: 100%; }
+
+/* Portrait Layout */
+.portrait-layout { flex-direction: column; }
+.portrait-layout .preview-area { flex: 0 0 42%; background: #000; position: relative; }
+.portrait-layout .toolbar { flex: 0 0 auto; background: #1a1a1a; border-top: 1px solid #222; border-bottom: 1px solid #222; padding: 6px 8px; }
+.portrait-layout .timeline-area { flex: 1; background: #141414; position: relative; }
+.portrait-layout .playback-bar { flex: 0 0 auto; background: #1a1a1a; border-top: 1px solid #222; padding: 8px; }
+
+/* Landscape Layout */
+.landscape-layout { flex-direction: row; }
+.landscape-layout .preview-area { flex: 0 0 55%; background: #000; position: relative; border-right: 1px solid #222; }
+.landscape-layout .right-col { flex: 1; display: flex; flex-direction: column; }
+.landscape-layout .toolbar { flex: 0 0 auto; background: #1a1a1a; border-bottom: 1px solid #222; padding: 6px 8px; }
+.landscape-layout .timeline-area { flex: 1; background: #141414; position: relative; }
+.landscape-layout .playback-bar { flex: 0 0 auto; background: #1a1a1a; border-top: 1px solid #222; padding: 8px; }
+
+/* Tablet Layout */
+.tablet-layout { flex-direction: row; }
+.tablet-layout .side-toolbar { flex: 0 0 48px; background: #111; border-right: 1px solid #222; display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 4px; }
+.tablet-layout .center-col { flex: 1; display: flex; flex-direction: column; }
+.tablet-layout .preview-area { flex: 0 0 50%; background: #000; position: relative; }
+.tablet-layout .timeline-area { flex: 1; background: #141414; position: relative; border-top: 1px solid #222; }
+.tablet-layout .playback-bar { flex: 0 0 auto; background: #1a1a1a; border-top: 1px solid #222; padding: 8px; }
+.tablet-layout .panel-area { flex: 0 0 280px; background: #181818; border-left: 1px solid #222; overflow-y: auto; }
+
+/* Preview Area */
+.preview-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
+.preview-rect { width: 85%; aspect-ratio: 16/9; background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 4px; position: relative; overflow: hidden; }
+.preview-rect::before { content: ''; position: absolute; inset: 0; background: linear-gradient(45deg, transparent 40%, rgba(99,102,241,0.1) 50%, transparent 60%); animation: shimmer 3s infinite; }
+@keyframes shimmer { 0%,100% { transform: translateX(-100%); } 50% { transform: translateX(100%); } }
+.preview-label { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 4px; font-size: 10px; color: #888; }
+.fps-label { position: absolute; bottom: 8px; left: 8px; font-size: 10px; color: #6366f1; }
+.member-banner { position: absolute; top: 0; left: 0; right: 0; height: 28px; background: linear-gradient(90deg, #b8860b, #daa520, #b8860b); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #000; font-weight: 600; }
+
+/* Toolbar */
+.toolbar-scroll { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.toolbar-scroll::-webkit-scrollbar { display: none; }
+.tool-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 8px; border-radius: 6px; cursor: pointer; min-width: 48px; transition: background 0.2s; }
+.tool-btn:hover { background: #252525; }
+.tool-btn.active { background: #6366f1; }
+.tool-icon { font-size: 16px; }
+.tool-label { font-size: 9px; color: #888; white-space: nowrap; }
+.tool-btn.active .tool-label { color: #fff; }
+
+/* Timeline */
+.timeline-content { padding: 8px; height: 100%; }
+.track { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+.track-label { font-size: 9px; color: #666; width: 28px; text-align: right; flex-shrink: 0; }
+.track-bar { flex: 1; height: 28px; background: #1e1e1e; border-radius: 4px; position: relative; overflow: hidden; }
+.clip { position: absolute; height: 100%; border-radius: 3px; display: flex; align-items: center; padding: 0 6px; font-size: 9px; color: #fff; }
+.clip-video { background: linear-gradient(90deg, #4338ca, #6366f1); left: 5%; width: 35%; }
+.clip-video2 { background: linear-gradient(90deg, #6366f1, #818cf8); left: 42%; width: 28%; }
+.clip-video3 { background: linear-gradient(90deg, #818cf8, #6366f1); left: 72%; width: 23%; }
+.clip-audio { background: linear-gradient(90deg, #065f46, #059669); left: 5%; width: 90%; height: 20px; top: 4px; }
+.clip-sub { background: linear-gradient(90deg, #92400e, #d97706); left: 15%; width: 20%; height: 20px; top: 4px; }
+.clip-sub2 { background: linear-gradient(90deg, #92400e, #d97706); left: 55%; width: 15%; height: 20px; top: 4px; }
+.playhead { position: absolute; top: 0; bottom: 0; left: 35%; width: 2px; background: #ef4444; z-index: 5; }
+.playhead::before { content: ''; position: absolute; top: -2px; left: -4px; width: 10px; height: 6px; background: #ef4444; border-radius: 2px; }
+.time-ruler { height: 16px; background: #1a1a1a; border-radius: 2px; margin-bottom: 4px; position: relative; }
+.time-mark { position: absolute; top: 0; height: 100%; border-left: 1px solid #333; font-size: 8px; color: #555; padding-left: 2px; }
+
+/* Playback Bar */
+.playback-row { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.pb-btn { width: 32px; height: 32px; border-radius: 50%; background: #252525; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+.pb-btn:hover { background: #333; }
+.pb-btn.play { width: 40px; height: 40px; background: #6366f1; font-size: 18px; }
+.pb-btn.play:hover { background: #5558e6; }
+.time-display { font-size: 12px; color: #888; font-variant-numeric: tabular-nums; }
+
+/* Side Toolbar (Tablet) */
+.side-btn { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; transition: background 0.2s; }
+.side-btn:hover { background: #252525; }
+.side-btn.active { background: #6366f1; }
+
+/* Panel Area (Tablet) */
+.panel-header { padding: 12px; border-bottom: 1px solid #222; font-size: 14px; font-weight: 600; color: #fff; }
+.panel-body { padding: 12px; }
+.panel-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.panel-label { font-size: 12px; color: #999; }
+.panel-slider { width: 120px; height: 4px; background: #333; border-radius: 2px; position: relative; }
+.panel-slider-fill { height: 100%; background: #6366f1; border-radius: 2px; }
+.panel-slider-thumb { width: 12px; height: 12px; background: #fff; border-radius: 50%; position: absolute; top: -4px; right: -6px; }
+.panel-chip { display: inline-block; padding: 4px 10px; border-radius: 12px; background: #252525; font-size: 11px; color: #aaa; margin: 2px; }
+.panel-chip.active { background: #6366f1; color: #fff; }
+.panel-btn { width: 100%; padding: 10px; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; font-size: 13px; cursor: pointer; margin-top: 8px; }
+
+/* Info Label */
+.info-label { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 6px 16px; font-size: 11px; color: #888; z-index: 100; }
+.info-label span { color: #6366f1; font-weight: 600; }
+
+/* Responsive hint */
+.size-info { position: fixed; bottom: 12px; right: 12px; font-size: 10px; color: #444; z-index: 100; }
+</style>
+</head>
+<body>
+
+<div class="mode-bar">
+  <button class="mode-btn active" onclick="setMode('portrait')">📱 竖屏手机</button>
+  <button class="mode-btn" onclick="setMode('landscape')">📱 横屏手机</button>
+  <button class="mode-btn" onclick="setMode('tablet')">💻 平板</button>
+</div>
+
+<div class="phone-frame portrait" id="frame">
+  <div class="notch"></div>
+  <div class="layout portrait-layout" id="layout">
+    <!-- Filled by JS -->
+  </div>
+</div>
+
+<div class="info-label">当前模式: <span id="modeName">竖屏手机</span> · <span id="sizeInfo">375×740dp</span></div>
+<div class="size-info">NexClip 自适应布局预览</div>
+
+<script>
+const modes = {
+  portrait: { name: '竖屏手机', size: '375×740dp', class: 'portrait', layout: 'portrait-layout' },
+  landscape: { name: '横屏手机', size: '740×375dp', class: 'landscape', layout: 'landscape-layout' },
+  tablet: { name: '平板', size: '1024×680dp', class: 'tablet', layout: 'tablet-layout' }
+};
+
+function setMode(mode) {
+  const m = modes[mode];
+  const frame = document.getElementById('frame');
+  const layout = document.getElementById('layout');
+
+  // Update buttons
+  document.querySelectorAll('.mode-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['portrait','landscape','tablet'][i] === mode);
+  });
+
+  // Update frame
+  frame.className = 'phone-frame ' + m.class;
+  layout.className = 'layout ' + m.layout;
+
+  // Update info
+  document.getElementById('modeName').textContent = m.name;
+  document.getElementById('sizeInfo').textContent = m.size;
+
+  // Render layout
+  if (mode === 'portrait') renderPortrait(layout);
+  else if (mode === 'landscape') renderLandscape(layout);
+  else renderTablet(layout);
+}
+
+function previewHTML() {
+  return `
+    <div class="preview-content">
+      <div class="member-banner">⭐ 会员 · AI配额: 3/5</div>
+      <div class="preview-rect">
+        <div class="preview-label">16:9</div>
+        <div class="fps-label">30fps</div>
+      </div>
+    </div>`;
+}
+
+function toolbarHTML() {
+  const tools = [
+    ['↩️','撤销'],['↪️','重做'],['✂️','分割'],['🗑️','删除'],
+    ['🤖','AI'],['🎨','特效'],['🎞️','调色'],['📝','文字'],
+    ['🔊','音频'],['⏩','变速'],['🔀','转场'],['🎯','追踪'],
+    ['📐','裁剪'],['↔️','比例'],['🔑','关键帧'],['🔄','倒放'],
+    ['💫','模糊'],['🔀','混合'],['🖼️','画中画'],['📦','导出']
+  ];
+  return `<div class="toolbar-scroll">${tools.map(t =>
+    `<div class="tool-btn"><span class="tool-icon">${t[0]}</span><span class="tool-label">${t[1]}</span></div>`
+  ).join('')}</div>`;
+}
+
+function timelineHTML() {
+  return `
+    <div class="timeline-content">
+      <div class="time-ruler">
+        <div class="time-mark" style="left:0%">0:00</div>
+        <div class="time-mark" style="left:25%">0:08</div>
+        <div class="time-mark" style="left:50%">0:15</div>
+        <div class="time-mark" style="left:75%">0:23</div>
+      </div>
+      <div class="track" style="position:relative">
+        <div class="playhead"></div>
+        <span class="track-label">🎬</span>
+        <div class="track-bar">
+          <div class="clip clip-video">片段1</div>
+          <div class="clip clip-video2">片段2</div>
+          <div class="clip clip-video3">片段3</div>
+        </div>
+      </div>
+      <div class="track">
+        <span class="track-label">🎵</span>
+        <div class="track-bar">
+          <div class="clip clip-audio">背景音乐.mp3</div>
+        </div>
+      </div>
+      <div class="track">
+        <span class="track-label">💬</span>
+        <div class="track-bar">
+          <div class="clip clip-sub">字幕1</div>
+          <div class="clip clip-sub2">字幕2</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function playbackHTML() {
+  return `
+    <div class="playback-row">
+      <div class="pb-btn">⏮</div>
+      <div class="pb-btn">⏪</div>
+      <div class="pb-btn play">▶</div>
+      <div class="pb-btn">⏩</div>
+      <div class="pb-btn">⏭</div>
+      <span class="time-display">00:12 / 01:30</span>
+    </div>`;
+}
+
+function renderPortrait(el) {
+  el.innerHTML = `
+    ${previewHTML()}
+    ${toolbarHTML()}
+    ${timelineHTML()}
+    ${playbackHTML()}
+  `;
+}
+
+function renderLandscape(el) {
+  el.innerHTML = `
+    <div class="preview-area">${previewHTML()}</div>
+    <div class="right-col">
+      ${toolbarHTML()}
+      ${timelineHTML()}
+      ${playbackHTML()}
+    </div>
+  `;
+}
+
+function renderTablet(el) {
+  const sideTools = ['↩️','↪️','✂️','🗑️','🤖','🎨','🎞️','📝','🔊','⏩','🔀','🎯','📐','↔️','🔑','🔄','💫','🔀','🖼️','📦'];
+  el.innerHTML = `
+    <div class="side-toolbar">
+      ${sideTools.map(t => `<div class="side-btn">${t}</div>`).join('')}
+    </div>
+    <div class="center-col">
+      ${previewHTML()}
+      ${timelineHTML()}
+      ${playbackHTML()}
+    </div>
+    <div class="panel-area">
+      <div class="panel-header">🎨 特效</div>
+      <div class="panel-body">
+        <div class="panel-row">
+          <span class="panel-label">强度</span>
+          <div class="panel-slider"><div class="panel-slider-fill" style="width:65%"><div class="panel-slider-thumb"></div></div></div>
+        </div>
+        <div class="panel-row">
+          <span class="panel-label">模糊</span>
+          <div class="panel-slider"><div class="panel-slider-fill" style="width:30%"><div class="panel-slider-thumb"></div></div></div>
+        </div>
+        <div class="panel-row">
+          <span class="panel-label">饱和度</span>
+          <div class="panel-slider"><div class="panel-slider-fill" style="width:80%"><div class="panel-slider-thumb"></div></div></div>
+        </div>
+        <div style="margin-bottom:8px">
+          <span class="panel-label">预设</span><br>
+          <span class="panel-chip active">鲜艳</span>
+          <span class="panel-chip">暖色</span>
+          <span class="panel-chip">冷色</span>
+          <span class="panel-chip">复古</span>
+          <span class="panel-chip">胶片</span>
+        </div>
+        <button class="panel-btn">应用</button>
+      </div>
+    </div>
+  `;
+}
+
+// Init
+setMode('portrait');
+</script>
+</body>
+</html>
