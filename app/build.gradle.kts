@@ -25,7 +25,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                cppFlags += "-std=c++17 -O2 -fvisibility=hidden -fno-exceptions -fno-rtti"
+                cppFlags += "-std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections -flto -Wall -Wextra -Wformat=2 -Werror=format-security"
                 arguments += listOf(
                     "-DANDROID_STL=c++_static",
                     "-DCMAKE_BUILD_TYPE=Release"

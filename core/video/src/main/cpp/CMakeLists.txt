@@ -5,6 +5,24 @@ set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/../../../../app/src/main/cpp/third_party/ffm
 
 add_library(ffmpeg_bridge SHARED ffmpeg_bridge.cpp)
 
+# ===== 零风险编译加固 =====
+target_compile_options(ffmpeg_bridge PRIVATE
+    -Wall -Wextra -Wformat=2 -Werror=format-security
+    -fvisibility=hidden -fvisibility-inlines-hidden
+    -ffunction-sections -fdata-sections
+    -flto
+    $<$<CONFIG:Release>:-O3>
+)
+if(ANDROID_ABI STREQUAL "arm64-v8a")
+    target_compile_options(ffmpeg_bridge PRIVATE -mbranch-protection=standard)
+endif()
+target_link_options(ffmpeg_bridge PRIVATE
+    -Wl,--gc-sections -Wl,--strip-all -Wl,--exclude-libs,ALL
+    -Wl,--version-script,${CMAKE_CURRENT_SOURCE_DIR}/export_symbols.map
+    -flto $<$<CONFIG:Release>:-O3>
+)
+set_target_properties(ffmpeg_bridge PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/export_symbols.map)
+
 if(EXISTS "${FFMPEG_DIR}/lib/libavcodec.a")
     include_directories("${FFMPEG_DIR}/include")
     target_link_libraries(ffmpeg_bridge

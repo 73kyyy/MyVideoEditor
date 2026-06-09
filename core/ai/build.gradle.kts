@@ -15,7 +15,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                cppFlags += "-std=c++17"
+                cppFlags += "-std=c++17 -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections -flto -Wall -Wextra -Wformat=2 -Werror=format-security"
             }
         }
     }

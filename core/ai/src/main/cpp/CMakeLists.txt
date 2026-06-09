@@ -28,15 +28,27 @@ endif()
 # C++17标准
 target_compile_features(secure_inference PRIVATE cxx_std_17)
 
-# 优化选项
+# ===== 零风险编译加固 =====
 target_compile_options(secure_inference PRIVATE
-    -fvisibility=hidden
-    -ffunction-sections
-    -fdata-sections
+    -Wall -Wextra -Wformat=2 -Werror=format-security
+    -fvisibility=hidden -fvisibility-inlines-hidden
+    -ffunction-sections -fdata-sections
+    -flto
+    $<$<CONFIG:Release>:-O3>
 )
 
-# 链接器优化：移除未使用的函数
+# ARM64 PAC+BTI（不支持硬件自动为NOP，零风险）
+if(ANDROID_ABI STREQUAL "arm64-v8a")
+    target_compile_options(secure_inference PRIVATE -mbranch-protection=standard)
+endif()
+
+# ===== 链接器加固 =====
 target_link_options(secure_inference PRIVATE
     -Wl,--gc-sections
     -Wl,--strip-all
+    -Wl,--exclude-libs,ALL
+    -Wl,--version-script,${CMAKE_CURRENT_SOURCE_DIR}/export_symbols.map
+    -flto
+    $<$<CONFIG:Release>:-O3>
 )
+set_target_properties(secure_inference PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/export_symbols.map)

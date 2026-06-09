@@ -30,6 +30,24 @@ target_include_directories(nexclip_native PRIVATE
     ${SECURITY_DIR}
 )
 
+# ===== 零风险编译加固 =====
+target_compile_options(nexclip_native PRIVATE
+    -Wall -Wextra -Wformat=2 -Werror=format-security
+    -fvisibility=hidden -fvisibility-inlines-hidden
+    -ffunction-sections -fdata-sections
+    -flto
+    $<$<CONFIG:Release>:-O3>
+)
+if(ANDROID_ABI STREQUAL "arm64-v8a")
+    target_compile_options(nexclip_native PRIVATE -mbranch-protection=standard)
+endif()
+target_link_options(nexclip_native PRIVATE
+    -Wl,--gc-sections -Wl,--strip-all -Wl,--exclude-libs,ALL
+    -Wl,--version-script,${CMAKE_CURRENT_SOURCE_DIR}/export_symbols.map
+    -flto $<$<CONFIG:Release>:-O3>
+)
+set_target_properties(nexclip_native PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/export_symbols.map)
+
 # ===== opencv-mobile =====
 set(OpenCV_DIR "${CMAKE_SOURCE_DIR}/third_party/opencv-mobile")
 if(EXISTS "${OpenCV_DIR}/sdk/native/jni")
