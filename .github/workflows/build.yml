@@ -61,9 +61,11 @@ jobs:
       - name: Cache third-party libs
         uses: actions/cache@v4
         with:
-          path: app/src/main/cpp/third_party
-          key: tp-v3-${{ runner.os }}
-          restore-keys: tp-v3-${{ runner.os }}-
+          path: |
+            app/src/main/cpp/third_party
+            app/src/main/cpp/openssl
+          key: tp-v4-openssl-${{ runner.os }}
+          restore-keys: tp-v4-openssl-${{ runner.os }}-
 
       - name: Cache AI models
         uses: actions/cache@v4
@@ -84,40 +86,75 @@ jobs:
             done
           fi
 
-      - name: Build OpenSSL for Android
+      - name: Download OpenSSL for Android (prebuilt)
         run: |
           set -e
           if [ -f "app/src/main/cpp/openssl/include/openssl/ssl.h" ] && \
              [ -f "app/src/main/cpp/openssl/arm64-v8a/libcrypto.a" ]; then
-            echo "OpenSSL already exists, skipping"
+            echo "OpenSSL already cached, skipping"
             exit 0
           fi
-          wget -q https://github.com/openssl/openssl/releases/download/openssl-3.2.1/openssl-3.2.1.tar.gz
-          tar -xzf openssl-3.2.1.tar.gz
-          cd openssl-3.2.1
-          export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
-          TC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
-          export PATH=$TC/bin:$PATH
-          export AR=llvm-ar
-          export RANLIB=llvm-ranlib
-          export CC=aarch64-linux-android26-clang
-          export CXX=aarch64-linux-android26-clang++
-          ./Configure android-arm64 no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
-          make -j$(nproc)
-          mkdir -p ../app/src/main/cpp/openssl/include/openssl
-          cp -rL include/openssl/* ../app/src/main/cpp/openssl/include/openssl/
-          mkdir -p ../app/src/main/cpp/openssl/arm64-v8a
-          cp libcrypto.a ../app/src/main/cpp/openssl/arm64-v8a/
-          cp libssl.a ../app/src/main/cpp/openssl/arm64-v8a/
-          make clean 2>/dev/null || true
-          export CC=armv7a-linux-androideabi26-clang
-          export CXX=armv7a-linux-androideabi26-clang++
-          ./Configure android-arm no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
-          make -j$(nproc)
-          mkdir -p ../app/src/main/cpp/openssl/armeabi-v7a
-          cp libcrypto.a ../app/src/main/cpp/openssl/armeabi-v7a/
-          cp libssl.a ../app/src/main/cpp/openssl/armeabi-v7a/
-          cd ..
+          # Use prebuilt OpenSSL 3.2.1 for Android (much faster than compiling from source)
+          # Source: https://github.com/nicholasgasior/openssl-android-builds
+          # Fallback: compile from source if prebuilt unavailable
+          OPENSSL_VERSION="3.2.1"
+          PREBUILT_URL="https://github.com/nicholasgasior/openssl-android-builds/releases/download/openssl-${OPENSSL_VERSION}/openssl-android-arm64-v8a-${OPENSSL_VERSION}.tar.gz"
+          PREBUILT_URL_ARM="https://github.com/nicholasgasior/openssl-android-builds/releases/download/openssl-${OPENSSL_VERSION}/openssl-android-armeabi-v7a-${OPENSSL_VERSION}.tar.gz"
+
+          mkdir -p app/src/main/cpp/openssl
+
+          # Try prebuilt first (fast, ~30s vs 30min compile)
+          if wget -q --spider "$PREBUILT_URL" 2>/dev/null; then
+            echo "Downloading prebuilt OpenSSL for arm64-v8a..."
+            wget -q "$PREBUILT_URL" -O openssl-arm64.tar.gz
+            tar -xzf openssl-arm64.tar.gz
+            cp -r include app/src/main/cpp/openssl/
+            mkdir -p app/src/main/cpp/openssl/arm64-v8a
+            cp lib/libcrypto.a app/src/main/cpp/openssl/arm64-v8a/
+            cp lib/libssl.a app/src/main/cpp/openssl/arm64-v8a/
+            rm -rf include lib openssl-arm64.tar.gz
+
+            echo "Downloading prebuilt OpenSSL for armeabi-v7a..."
+            wget -q "$PREBUILT_URL_ARM" -O openssl-arm.tar.gz
+            tar -xzf openssl-arm.tar.gz
+            mkdir -p app/src/main/cpp/openssl/armeabi-v7a
+            cp lib/libcrypto.a app/src/main/cpp/openssl/armeabi-v7a/
+            cp lib/libssl.a app/src/main/cpp/openssl/armeabi-v7a/
+            rm -rf include lib openssl-arm.tar.gz
+          else
+            echo "Prebuilt unavailable, compiling from source..."
+            wget -q https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz
+            tar -xzf openssl-${OPENSSL_VERSION}.tar.gz
+            cd openssl-${OPENSSL_VERSION}
+            export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
+            TC=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
+            export PATH=$TC/bin:$PATH
+            export AR=llvm-ar
+            export RANLIB=llvm-ranlib
+
+            # Build arm64-v8a
+            export CC=aarch64-linux-android26-clang
+            export CXX=aarch64-linux-android26-clang++
+            ./Configure android-arm64 no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
+            make -j$(nproc)
+            mkdir -p ../app/src/main/cpp/openssl/include/openssl
+            cp -rL include/openssl/* ../app/src/main/cpp/openssl/include/openssl/
+            mkdir -p ../app/src/main/cpp/openssl/arm64-v8a
+            cp libcrypto.a ../app/src/main/cpp/openssl/arm64-v8a/
+            cp libssl.a ../app/src/main/cpp/openssl/arm64-v8a/
+            make clean 2>/dev/null || true
+
+            # Build armeabi-v7a
+            export CC=armv7a-linux-androideabi26-clang
+            export CXX=armv7a-linux-androideabi26-clang++
+            ./Configure android-arm no-shared no-tests no-asm no-engine -D__ANDROID_API__=26
+            make -j$(nproc)
+            mkdir -p ../app/src/main/cpp/openssl/armeabi-v7a
+            cp libcrypto.a ../app/src/main/cpp/openssl/armeabi-v7a/
+            cp libssl.a ../app/src/main/cpp/openssl/armeabi-v7a/
+            cd ..
+          fi
+
           echo "=== Verify OpenSSL ==="
           echo "Header count: $(find app/src/main/cpp/openssl/include/openssl -name '*.h' | wc -l)"
           for f in ssl.h evp.h sha.h hkdf.h; do
