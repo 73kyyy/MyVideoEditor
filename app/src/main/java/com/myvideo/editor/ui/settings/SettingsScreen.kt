@@ -116,6 +116,9 @@ fun SettingsScreen(
                     ToggleRow("⏱", "使用数据统计", checked = analyticsEnabled) { analyticsEnabled = it }
                     GroupSep()
                     ToggleRow("🔒", "应用锁", checked = appLockEnabled) { appLockEnabled = it }
+                    GroupSep()
+                    // 开源许可 - 隐藏式，半透明灰色
+                    SettingRow("💎", "开源许可", onClick = onOpenLicenses, subtle = true)
                 }
             }
 
@@ -147,9 +150,6 @@ fun SettingsScreen(
                         fontWeight = FontWeight.SemiBold, letterSpacing = 2.sp)
                     Text("v1.0.0", fontSize = 11.sp, color = Color(0xFF1C1C1E),
                         modifier = Modifier.padding(top = 4.dp))
-                    // 开源许可 - 隐藏式，颜色极淡
-                    Text("开源许可", fontSize = 10.sp, color = Color(0xFF1C1C1E),
-                        modifier = Modifier.padding(top = 16.dp).clickable { onOpenLicenses() })
                 }
             }
         }
@@ -245,13 +245,13 @@ private fun SettingsGroup(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun SettingRow(icon: String, title: String, value: String = "", onClick: () -> Unit = {}) {
+private fun SettingRow(icon: String, title: String, value: String = "", onClick: () -> Unit = {}, subtle: Boolean = false) {
     Row(modifier = Modifier.fillMaxWidth().clickable { onClick() }
         .padding(horizontal = 16.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Text(icon, fontSize = 16.sp, modifier = Modifier.width(22.dp))
         Spacer(modifier = Modifier.width(12.dp))
-        Text(title, fontSize = 15.sp, color = T1, modifier = Modifier.weight(1f))
+        Text(title, fontSize = 15.sp, color = if (subtle) Icon else T1, modifier = Modifier.weight(1f))
         if (value.isNotEmpty()) {
             Text(value, fontSize = 13.sp, color = T2, modifier = Modifier.padding(end = 2.dp))
         }
