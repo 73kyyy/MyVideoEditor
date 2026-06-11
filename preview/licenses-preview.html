@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexClip 开源许可预览</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif; }
+
+.phone {
+  width: 390px; height: 844px; background: #000; border-radius: 44px;
+  border: 3px solid #222; overflow: hidden; position: relative;
+  box-shadow: 0 0 80px rgba(0,0,0,0.9);
+}
+
+.status-bar {
+  height: 54px; display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 0 28px 8px; color: #fff; font-size: 15px; font-weight: 600;
+}
+
+.page {
+  height: calc(100% - 54px); overflow-y: auto; padding: 0 0 40px;
+  scrollbar-width: none;
+}
+.page::-webkit-scrollbar { display: none; }
+
+.nav { display: flex; align-items: center; height: 44px; padding: 0 16px; }
+.nav-back { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.nav-back svg { width: 20px; height: 20px; }
+.nav-title { flex: 1; text-align: center; font-size: 16px; font-weight: 600; color: #fff; margin-right: 28px; }
+
+/* 许可证分类 */
+.section-label {
+  font-size: 11px; color: #48484A; font-weight: 600; letter-spacing: 0.5px;
+  padding: 16px 16px 6px; text-transform: uppercase;
+}
+
+/* 许可证卡片 */
+.lic-group {
+  margin: 0 16px 8px; background: #1C1C1E; border-radius: 12px; overflow: hidden;
+}
+.lic-item {
+  padding: 14px 16px; cursor: pointer; transition: background 0.12s;
+}
+.lic-item:active { background: rgba(255,255,255,0.04); }
+.lic-name { font-size: 14px; color: #E0E0E0; font-weight: 500; }
+.lic-desc { font-size: 11px; color: #636366; margin-top: 2px; }
+.lic-badge {
+  display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 6px;
+  border-radius: 4px; margin-top: 6px; letter-spacing: 0.3px;
+}
+.badge-mit { background: rgba(52,199,89,0.12); color: #34C759; }
+.badge-apache { background: rgba(0,122,255,0.12); color: #0A84FF; }
+.badge-bsd { background: rgba(255,159,10,0.12); color: #FF9F0A; }
+.badge-lgpl { background: rgba(175,82,222,0.12); color: #AF52DE; }
+
+.sep { height: 0.33px; background: #2C2C2E; margin: 0 16px; }
+
+/* 许可证详情弹窗 */
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: flex-end; justify-content: center; z-index: 100;
+}
+.modal-overlay.show { display: flex; }
+.modal-sheet {
+  width: 100%; max-height: 70%; background: #1C1C1E; border-radius: 20px 20px 0 0;
+  padding: 20px 20px 40px; animation: slideUp 0.3s ease; overflow-y: auto;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 16px; }
+.modal-lic-name { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.modal-lic-type { font-size: 12px; color: #636366; margin-bottom: 16px; }
+.modal-lic-text {
+  font-size: 11px; color: #8E8E93; line-height: 1.7;
+  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  white-space: pre-wrap; word-break: break-word;
+}
+.modal-close {
+  width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E;
+  border: none; color: #8E8E93; font-size: 15px; font-weight: 500;
+  cursor: pointer; text-align: center; margin-top: 16px;
+}
+
+/* 底部 */
+.bottom { text-align: center; padding: 20px 16px 0; }
+.bottom-text { font-size: 10px; color: #2C2C2E; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span style="display:flex;gap:5px;align-items:center;">
+      <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="5" width="3" height="7" rx="0.5" fill="#fff"/><rect x="4.5" y="3" width="3" height="9" rx="0.5" fill="#fff"/><rect x="9" y="1" width="3" height="11" rx="0.5" fill="#fff"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" fill="#fff" opacity="0.3"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" stroke="#fff" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#34C759"/></svg>
+    </span>
+  </div>
+
+  <div class="page">
+    <div class="nav">
+      <div class="nav-back" onclick="history.back()">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10L12 16" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="nav-title">开源许可</span>
+    </div>
+
+    <!-- AI 框架 -->
+    <div class="section-label">AI 框架</div>
+    <div class="lic-group">
+      <div class="lic-item" onclick="showLic('onnx')">
+        <div class="lic-name">ONNX Runtime</div>
+        <div class="lic-desc">跨平台高性能推理引擎</div>
+        <span class="lic-badge badge-mit">MIT</span>
+      </div>
+      <div class="sep"></div>
+      <div class="lic-item" onclick="showLic('tflite')">
+        <div class="lic-name">TensorFlow Lite</div>
+        <div class="lic-desc">移动端机器学习推理框架</div>
+        <span class="lic-badge badge-apache">Apache 2.0</span>
+      </div>
+      <div class="sep"></div>
+      <div class="lic-item" onclick="showLic('pytorch')">
+        <div class="lic-name">PyTorch Mobile</div>
+        <div class="lic-desc">端侧深度学习推理框架</div>
+        <span class="lic-badge badge-bsd">BSD 3-Clause</span>
+      </div>
+    </div>
+
+    <!-- AI 模型 -->
+    <div class="section-label">AI 模型</div>
+    <div class="lic-group">
+      <div class="lic-item" onclick="showLic('whisper')">
+        <div class="lic-name">OpenAI Whisper</div>
+        <div class="lic-desc">语音识别模型</div>
+        <span class="lic-badge badge-mit">MIT</span>
+      </div>
+      <div class="sep"></div>
+      <div class="lic-item" onclick="showLic('rnnoise')">
+        <div class="lic-name">RNNoise</div>
+        <div class="lic-desc">基于RNN的语音降噪</div>
+        <span class="lic-badge badge-bsd">BSD 3-Clause</span>
+      </div>
+      <div class="sep"></div>
+      <div class="lic-item" onclick="showLic('rife')">
+        <div class="lic-name">RIFE</div>
+        <div class="lic-desc">实时视频插帧模型</div>
+        <span class="lic-badge badge-mit">MIT</span>
+      </div>
+    </div>
+
+    <!-- 多媒体处理 -->
+    <div class="section-label">多媒体处理</div>
+    <div class="lic-group">
+      <div class="lic-item" onclick="showLic('ffmpeg')">
+        <div class="lic-name">FFmpeg</div>
+        <div class="lic-desc">音视频编解码库</div>
+        <span class="lic-badge badge-lgpl">LGPL 2.1+</span>
+      </div>
+      <div class="sep"></div>
+      <div class="lic-item" onclick="showLic('opencv')">
+        <div class="lic-name">OpenCV</div>
+        <div class="lic-desc">计算机视觉库</div>
+        <span class="lic-badge badge-apache">Apache 2.0</span>
+      </div>
+    </div>
+
+    <!-- Android 框架 -->
+    <div class="section-label">Android 框架</div>
+    <div class="lic-group">
+      <div class="lic-item" onclick="showLic('jetpack')">
+        <div class="lic-name">Jetpack Compose</div>
+        <div class="lic-desc">Android 现代 UI 工具包</div>
+        <span class="lic-badge badge-apache">Apache 2.0</span>
+      </div>
+      <div class="sep"></div>
+      <div class="lic-item" onclick="showLic('kotlin')">
+        <div class="lic-name">Kotlin / Kotlin Coroutines</div>
+        <div class="lic-desc">编程语言与协程库</div>
+        <span class="lic-badge badge-apache">Apache 2.0</span>
+      </div>
+      <div class="sep"></div>
+      <div class="lic-item" onclick="showLic('okhttp')">
+        <div class="lic-name">OkHttp</div>
+        <div class="lic-desc">HTTP 客户端</div>
+        <span class="lic-badge badge-apache">Apache 2.0</span>
+      </div>
+    </div>
+
+    <!-- 底部 -->
+    <div class="bottom">
+      <div class="bottom-text">NexClip 使用了上述开源软件。<br>感谢开源社区的贡献。</div>
+    </div>
+  </div>
+
+  <!-- 许可证详情弹窗 -->
+  <div class="modal-overlay" id="licModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-lic-name" id="licName"></div>
+      <div class="modal-lic-type" id="licType"></div>
+      <div class="modal-lic-text" id="licText"></div>
+      <button class="modal-close" onclick="closeLic()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const licenses = {
+  onnx: {
+    name: 'ONNX Runtime',
+    type: 'MIT License',
+    text: `Copyright (c) Microsoft Corporation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`
+  },
+  tflite: {
+    name: 'TensorFlow Lite',
+    type: 'Apache License 2.0',
+    text: `Copyright 2017 The TensorFlow Authors
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.`
+  },
+  pytorch: {
+    name: 'PyTorch Mobile',
+    type: 'BSD 3-Clause License',
+    text: `Copyright (c) 2016, Meta Platforms, Inc. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.`
+  },
+  whisper: {
+    name: 'OpenAI Whisper',
+    type: 'MIT License',
+    text: `Copyright (c) 2022 OpenAI
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.`
+  },
+  rnnoise: {
+    name: 'RNNoise',
+    type: 'BSD 3-Clause License',
+    text: `Copyright (c) 2017, Mozilla Corporation
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.`
+  },
+  rife: {
+    name: 'RIFE',
+    type: 'MIT License',
+    text: `Copyright (c) 2021 Megvii Research
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.`
+  },
+  ffmpeg: {
+    name: 'FFmpeg',
+    type: 'GNU Lesser General Public License v2.1+',
+    text: `FFmpeg is licensed under the GNU Lesser General Public License (LGPL) version 2.1 or later.
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.`
+  },
+  opencv: {
+    name: 'OpenCV',
+    type: 'Apache License 2.0',
+    text: `Copyright (c) 2000-2023 Intel Corporation
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.`
+  },
+  jetpack: {
+    name: 'Jetpack Compose',
+    type: 'Apache License 2.0',
+    text: `Copyright 2019 The Android Open Source Project
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.`
+  },
+  kotlin: {
+    name: 'Kotlin / Kotlin Coroutines',
+    type: 'Apache License 2.0',
+    text: `Copyright 2010-2023 JetBrains s.r.o.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.`
+  },
+  okhttp: {
+    name: 'OkHttp',
+    type: 'Apache License 2.0',
+    text: `Copyright 2014 Square, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.`
+  }
+};
+
+function showLic(key) {
+  const lic = licenses[key];
+  if (!lic) return;
+  document.getElementById('licName').textContent = lic.name;
+  document.getElementById('licType').textContent = lic.type;
+  document.getElementById('licText').textContent = lic.text;
+  document.getElementById('licModal').classList.add('show');
+}
+function closeLic() {
+  document.getElementById('licModal').classList.remove('show');
+}
+</script>
+</body>
+</html>
