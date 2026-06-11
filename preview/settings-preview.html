@@ -30,65 +30,32 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .nav-back svg { width: 20px; height: 20px; }
 .nav-title { flex: 1; text-align: center; font-size: 16px; font-weight: 600; color: #fff; margin-right: 28px; }
 
-.profile {
-  display: flex; align-items: center; padding: 8px 20px 24px; cursor: pointer;
-}
-.profile-avatar {
-  width: 60px; height: 60px; border-radius: 50%; flex-shrink: 0;
-  background: #1C1C1E; display: flex; align-items: center; justify-content: center;
-}
+.profile { display: flex; align-items: center; padding: 8px 20px 24px; cursor: pointer; }
+.profile-avatar { width: 60px; height: 60px; border-radius: 50%; flex-shrink: 0; background: #1C1C1E; display: flex; align-items: center; justify-content: center; }
 .profile-avatar svg { width: 30px; height: 30px; }
 .profile-meta { flex: 1; margin-left: 14px; }
 .profile-name { font-size: 18px; font-weight: 600; color: #fff; }
 .profile-id { font-size: 12px; color: #666; margin-top: 3px; }
 .profile-arrow { color: #3A3A3C; font-size: 20px; margin-left: 4px; }
 
-.vip-card {
-  margin: 0 16px 20px; border-radius: 12px; padding: 0; overflow: hidden;
-  background: linear-gradient(135deg, #2A1F0A 0%, #1F170A 50%, #18120A 100%);
-  cursor: pointer;
-}
+.vip-card { margin: 0 16px 20px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #2A1F0A, #1F170A, #18120A); cursor: pointer; }
 .vip-inner { padding: 16px 18px; position: relative; }
-.vip-inner::after {
-  content: ''; position: absolute; top: -20px; right: -10px;
-  width: 100px; height: 100px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%);
-  pointer-events: none;
-}
+.vip-inner::after { content: ''; position: absolute; top: -20px; right: -10px; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%); pointer-events: none; }
 .vip-row1 { display: flex; align-items: center; position: relative; z-index: 1; }
-.vip-crown {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: linear-gradient(135deg, #D4AF37, #B8962E);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
+.vip-crown { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #D4AF37, #B8962E); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .vip-crown svg { width: 18px; height: 18px; }
 .vip-label { margin-left: 10px; flex: 1; }
 .vip-label-title { font-size: 15px; font-weight: 600; color: #E8D5A0; }
 .vip-label-sub { font-size: 11px; color: #8A7A5A; margin-top: 2px; }
-.vip-btn {
-  font-size: 13px; font-weight: 600; color: #1A1008;
-  background: linear-gradient(135deg, #D4AF37, #E8C84A);
-  padding: 7px 20px; border-radius: 18px; border: none; cursor: pointer;
-}
-.vip-perks {
-  display: flex; gap: 0; margin-top: 14px; padding-top: 12px;
-  border-top: 1px solid rgba(212,175,55,0.1); position: relative; z-index: 1;
-}
+.vip-btn { font-size: 13px; font-weight: 600; color: #1A1008; background: linear-gradient(135deg, #D4AF37, #E8C84A); padding: 7px 20px; border-radius: 18px; border: none; cursor: pointer; }
+.vip-perks { display: flex; gap: 0; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(212,175,55,0.1); position: relative; z-index: 1; }
 .vip-perk { flex: 1; text-align: center; }
-.vip-perk-icon {
-  width: 32px; height: 32px; border-radius: 8px; margin: 0 auto 4px;
-  display: flex; align-items: center; justify-content: center;
-}
+.vip-perk-icon { width: 32px; height: 32px; border-radius: 8px; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; }
 .vip-perk-icon svg { width: 16px; height: 16px; }
 .vip-perk span { font-size: 10px; color: #8A7A5A; }
 
-.group {
-  margin: 0 16px 10px; background: #1C1C1E; border-radius: 12px; overflow: hidden;
-}
-.item {
-  display: flex; align-items: center; padding: 13px 16px; cursor: pointer;
-  transition: background 0.12s;
-}
+.group { margin: 0 16px 10px; background: #1C1C1E; border-radius: 12px; overflow: hidden; }
+.item { display: flex; align-items: center; padding: 13px 16px; cursor: pointer; transition: background 0.12s; }
 .item:active { background: rgba(255,255,255,0.04); }
 .item-icon { width: 22px; height: 22px; margin-right: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .item-icon svg { width: 20px; height: 20px; }
@@ -102,96 +69,51 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .toggle-item .item-icon { width: 22px; height: 22px; margin-right: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .toggle-item .item-icon svg { width: 20px; height: 20px; }
 .toggle-item .item-title { font-size: 15px; color: #fff; flex: 1; }
-.sw {
-  width: 46px; height: 28px; border-radius: 14px; position: relative;
-  cursor: pointer; transition: background 0.25s;
-}
+.sw { width: 46px; height: 28px; border-radius: 14px; position: relative; cursor: pointer; transition: background 0.25s; }
 .sw.on { background: #D4AF37; }
 .sw.off { background: #39393D; }
-.sw-dot {
-  width: 24px; height: 24px; border-radius: 12px; background: #fff;
-  position: absolute; top: 2px; transition: left 0.25s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
+.sw-dot { width: 24px; height: 24px; border-radius: 12px; background: #fff; position: absolute; top: 2px; transition: left 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 .sw.on .sw-dot { left: 20px; }
 .sw.off .sw-dot { left: 2px; }
 
-.logout {
-  margin: 20px 16px 0; background: #1C1C1E; border-radius: 12px;
-  text-align: center; padding: 14px; cursor: pointer;
-}
+.logout { margin: 20px 16px 0; background: #1C1C1E; border-radius: 12px; text-align: center; padding: 14px; cursor: pointer; }
 .logout span { font-size: 15px; color: #FF453A; font-weight: 500; }
 
 .bottom { text-align: center; padding: 24px 0 0; }
 .bottom-name { font-size: 13px; color: #2C2C2E; font-weight: 600; letter-spacing: 2px; }
 .bottom-ver { font-size: 11px; color: #1C1C1E; margin-top: 4px; }
 
-/* 登录弹窗 */
-.modal-overlay {
-  position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-  display: none; align-items: flex-end; justify-content: center; z-index: 100;
-}
-.modal-overlay.show { display: flex; }
-.modal-sheet {
-  width: 100%; background: #1C1C1E; border-radius: 20px 20px 0 0;
-  padding: 20px 24px 40px; animation: slideUp 0.3s ease;
-}
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.modal-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 20px; }
-.modal-title { font-size: 18px; font-weight: 600; color: #fff; text-align: center; margin-bottom: 6px; }
-.modal-subtitle { font-size: 13px; color: #636366; text-align: center; margin-bottom: 28px; }
-.modal-logins { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
-.modal-login-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
-.modal-login-circle {
-  width: 50px; height: 50px; border-radius: 50%;
-  background: #2C2C2E; display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-}
-.modal-login-circle.disabled { opacity: 0.3; pointer-events: none; }
-.modal-login-circle:not(.disabled):hover { background: #3A3A3C; }
-.modal-login-circle svg { width: 26px; height: 26px; }
-.modal-login-item span { font-size: 11px; color: #8E8E93; }
-.modal-cancel {
-  width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E;
-  border: none; color: #8E8E93; font-size: 15px; font-weight: 500;
-  cursor: pointer; text-align: center;
-}
-.modal-cancel:hover { background: #3A3A3C; }
-.modal-terms { text-align: center; margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.modal-terms span { font-size: 10px; color: #48484A; }
-.modal-terms a { color: #636366; text-decoration: none; }
-.modal-check {
-  width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid #48484A;
-  background: transparent; cursor: pointer; display: flex; align-items: center;
-  justify-content: center; flex-shrink: 0; transition: all 0.2s;
-}
-.modal-check.checked { background: #D4AF37; border-color: #D4AF37; }
-.modal-check svg { width: 10px; height: 10px; opacity: 0; transition: opacity 0.15s; }
-.modal-check.checked svg { opacity: 1; }
+/* ===== 通用底部弹窗 ===== */
+.sheet-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 100; }
+.sheet-overlay.show { display: block; }
+.sheet-wrap { position: absolute; bottom: 0; left: 0; right: 0; display: flex; flex-direction: column; background: #1C1C1E; border-radius: 20px 20px 0 0; transform: translateY(0); transition: transform 0.35s cubic-bezier(0.32,0.72,0,1); }
+.sheet-wrap.dragging { transition: none; }
+.sheet-wrap.closing { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); }
+.sheet-handle-area { padding: 12px 0 8px; cursor: grab; touch-action: none; flex-shrink: 0; }
+.sheet-handle-bar { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto; }
+.sheet-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding: 0 20px 20px; }
+.sheet-scroll::-webkit-scrollbar { display: none; }
 
-/* 开源许可弹窗 */
-.lic-modal-overlay {
-  position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-  display: none; z-index: 100;
-}
-.lic-modal-overlay.show { display: block; }
-.lic-sheet-wrap {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  max-height: 75%; display: flex; flex-direction: column;
-  background: #1C1C1E; border-radius: 20px 20px 0 0;
-  transform: translateY(0); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-}
-.lic-sheet-wrap.dragging { transition: none; }
-.lic-sheet-wrap.closing { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
-.lic-handle-area {
-  padding: 12px 0 8px; cursor: grab; touch-action: none; flex-shrink: 0;
-}
-.lic-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto; }
-.lic-scroll {
-  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: 0 20px 20px; overscroll-behavior-y: contain;
-}
-.lic-scroll::-webkit-scrollbar { display: none; }
+/* 登录弹窗 */
+.login-title { font-size: 18px; font-weight: 600; color: #fff; text-align: center; margin-bottom: 6px; }
+.login-subtitle { font-size: 13px; color: #636366; text-align: center; margin-bottom: 28px; }
+.login-grid { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
+.login-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+.login-circle { width: 50px; height: 50px; border-radius: 50%; background: #2C2C2E; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.login-circle.disabled { opacity: 0.3; pointer-events: none; }
+.login-circle:not(.disabled):hover { background: #3A3A3C; }
+.login-circle svg { width: 26px; height: 26px; }
+.login-item span { font-size: 11px; color: #8E8E93; }
+.login-cancel { width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E; border: none; color: #8E8E93; font-size: 15px; font-weight: 500; cursor: pointer; text-align: center; }
+.login-terms { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 14px; }
+.login-terms span { font-size: 10px; color: #48484A; }
+.login-terms a { color: #636366; text-decoration: none; }
+.check-box { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid #48484A; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+.check-box.checked { background: #D4AF37; border-color: #D4AF37; }
+.check-box svg { width: 10px; height: 10px; opacity: 0; transition: opacity 0.15s; }
+.check-box.checked svg { opacity: 1; }
+
+/* 许可证 */
 .lic-section { margin-bottom: 16px; }
 .lic-section-title { font-size: 11px; color: #48484A; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px; }
 .lic-entry { padding: 10px 0; border-bottom: 0.33px solid #2C2C2E; cursor: pointer; transition: background 0.12s; }
@@ -199,55 +121,20 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .lic-entry:last-child { border-bottom: none; }
 .lic-entry-name { font-size: 13px; color: #E0E0E0; font-weight: 500; }
 .lic-entry-desc { font-size: 10px; color: #636366; margin-top: 1px; }
-.lic-badge {
-  display: inline-block; font-size: 9px; font-weight: 600; padding: 1px 5px;
-  border-radius: 3px; margin-top: 4px;
-}
+.lic-badge { display: inline-block; font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 3px; margin-top: 4px; }
 .badge-mit { background: rgba(52,199,89,0.12); color: #34C759; }
 .badge-apache { background: rgba(0,122,255,0.12); color: #0A84FF; }
 .badge-bsd { background: rgba(255,159,10,0.12); color: #FF9F0A; }
 .badge-lgpl { background: rgba(175,82,222,0.12); color: #AF52DE; }
-.lic-close {
-  width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E;
-  border: none; color: #8E8E93; font-size: 15px; font-weight: 500;
-  cursor: pointer; text-align: center; margin-top: 8px;
-}
 
-/* 许可证详情弹窗 */
-.lic-detail-overlay {
-  position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-  display: none; z-index: 200;
-}
-.lic-detail-overlay.show { display: block; }
-.lic-detail-wrap {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  max-height: 80%; display: flex; flex-direction: column;
-  background: #1C1C1E; border-radius: 20px 20px 0 0;
-  transform: translateY(0); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-}
-.lic-detail-wrap.dragging { transition: none; }
-.lic-detail-wrap.closing { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
-.lic-detail-handle-area {
-  padding: 12px 0 8px; cursor: grab; touch-action: none; flex-shrink: 0;
-}
-.lic-detail-handle-bar { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto; }
-.lic-detail-scroll {
-  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-  padding: 0 20px 20px; overscroll-behavior-y: contain;
-}
-.lic-detail-scroll::-webkit-scrollbar { display: none; }
-.lic-detail-name { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 4px; }
-.lic-detail-type { font-size: 12px; color: #636366; margin-bottom: 16px; }
-.lic-detail-text {
-  font-size: 11px; color: #8E8E93; line-height: 1.7;
-  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
-  white-space: pre-wrap; word-break: break-word;
-}
-.lic-detail-close {
-  width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E;
-  border: none; color: #8E8E93; font-size: 15px; font-weight: 500;
-  cursor: pointer; text-align: center; margin-top: 16px;
-}
+/* 文本详情 */
+.detail-name { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.detail-type { font-size: 12px; color: #636366; margin-bottom: 16px; }
+.detail-text { font-size: 11px; color: #8E8E93; line-height: 1.7; font-family: 'SF Mono', 'Menlo', 'Courier New', monospace; white-space: pre-wrap; word-break: break-word; }
+
+/* Toast */
+.toast { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%) translateY(20px); background: #2C2C2E; color: #E0E0E0; font-size: 13px; font-weight: 500; padding: 10px 24px; border-radius: 20px; opacity: 0; transition: all 0.3s cubic-bezier(0.32,0.72,0,1); pointer-events: none; z-index: 300; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -263,329 +150,283 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 
   <div class="page">
     <div class="nav">
-      <div class="nav-back">
-        <svg viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10L12 16" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
+      <div class="nav-back"><svg viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10L12 16" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <span class="nav-title">设置</span>
     </div>
 
-    <!-- 用户信息 - 点击弹出登录 -->
-    <div class="profile" onclick="showLogin()">
-      <div class="profile-avatar">
-        <svg viewBox="0 0 30 30" fill="none">
-          <circle cx="15" cy="12" r="5" stroke="#555" stroke-width="1.5"/>
-          <path d="M5 27c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="#555" stroke-width="1.5" fill="none"/>
-        </svg>
-      </div>
-      <div class="profile-meta">
-        <div class="profile-name">未登录</div>
-        <div class="profile-id">点击登录账号</div>
-      </div>
+    <div class="profile" onclick="openSheet('login')">
+      <div class="profile-avatar"><svg viewBox="0 0 30 30" fill="none"><circle cx="15" cy="12" r="5" stroke="#555" stroke-width="1.5"/><path d="M5 27c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="#555" stroke-width="1.5" fill="none"/></svg></div>
+      <div class="profile-meta"><div class="profile-name">未登录</div><div class="profile-id">点击登录账号</div></div>
       <span class="profile-arrow">›</span>
     </div>
 
-    <!-- VIP 会员卡 -->
     <div class="vip-card">
       <div class="vip-inner">
         <div class="vip-row1">
-          <div class="vip-crown">
-            <svg viewBox="0 0 18 18" fill="none">
-              <path d="M9 2L11.5 7L17 7.5L13 11.5L14 17L9 14.5L4 17L5 11.5L1 7.5L6.5 7L9 2Z" fill="#1A1008"/>
-            </svg>
-          </div>
-          <div class="vip-label">
-            <div class="vip-label-title">NexClip 会员</div>
-            <div class="vip-label-sub">解锁全部 AI 智能功能</div>
-          </div>
+          <div class="vip-crown"><svg viewBox="0 0 18 18" fill="none"><path d="M9 2L11.5 7L17 7.5L13 11.5L14 17L9 14.5L4 17L5 11.5L1 7.5L6.5 7L9 2Z" fill="#1A1008"/></svg></div>
+          <div class="vip-label"><div class="vip-label-title">NexClip 会员</div><div class="vip-label-sub">解锁全部 AI 智能功能</div></div>
           <button class="vip-btn">开通</button>
         </div>
         <div class="vip-perks">
-          <div class="vip-perk">
-            <div class="vip-perk-icon" style="background:rgba(212,175,55,0.1);">
-              <svg viewBox="0 0 16 16" fill="none"><path d="M8 1L14 5L14 11L8 15L2 11L2 5Z" stroke="#D4AF37" stroke-width="1.2"/><path d="M8 4L11 6V10L8 12L5 10V6Z" fill="#D4AF37" opacity="0.3"/></svg>
-            </div>
-            <span>AI 抠图</span>
-          </div>
-          <div class="vip-perk">
-            <div class="vip-perk-icon" style="background:rgba(212,175,55,0.1);">
-              <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="#D4AF37" stroke-width="1.2"/><path d="M5 8L7 10L11 6" stroke="#D4AF37" stroke-width="1.2" fill="none"/></svg>
-            </div>
-            <span>超分辨率</span>
-          </div>
-          <div class="vip-perk">
-            <div class="vip-perk-icon" style="background:rgba(212,175,55,0.1);">
-              <svg viewBox="0 0 16 16" fill="none"><path d="M3 12L8 2L13 12Z" stroke="#D4AF37" stroke-width="1.2" fill="none"/></svg>
-            </div>
-            <span>智能插帧</span>
-          </div>
-          <div class="vip-perk">
-            <div class="vip-perk-icon" style="background:rgba(212,175,55,0.1);">
-              <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#D4AF37" stroke-width="1.2"/><path d="M8 5V8L10.5 9.5" stroke="#D4AF37" stroke-width="1" fill="none"/></svg>
-            </div>
-            <span>AI 降噪</span>
-          </div>
+          <div class="vip-perk"><div class="vip-perk-icon" style="background:rgba(212,175,55,0.1)"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1L14 5L14 11L8 15L2 11L2 5Z" stroke="#D4AF37" stroke-width="1.2"/></svg></div><span>AI 抠图</span></div>
+          <div class="vip-perk"><div class="vip-perk-icon" style="background:rgba(212,175,55,0.1)"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="#D4AF37" stroke-width="1.2"/><path d="M5 8L7 10L11 6" stroke="#D4AF37" stroke-width="1.2" fill="none"/></svg></div><span>超分辨率</span></div>
+          <div class="vip-perk"><div class="vip-perk-icon" style="background:rgba(212,175,55,0.1)"><svg viewBox="0 0 16 16" fill="none"><path d="M3 12L8 2L13 12Z" stroke="#D4AF37" stroke-width="1.2" fill="none"/></svg></div><span>智能插帧</span></div>
+          <div class="vip-perk"><div class="vip-perk-icon" style="background:rgba(212,175,55,0.1)"><svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#D4AF37" stroke-width="1.2"/><path d="M8 5V8L10.5 9.5" stroke="#D4AF37" stroke-width="1" fill="none"/></svg></div><span>AI 降噪</span></div>
         </div>
       </div>
     </div>
 
-    <!-- 安全与隐私 -->
     <div class="group">
-      <div class="item">
-        <div class="item-icon">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5v4.5c0 4.2 2.7 7.9 6 8.5 3.3-.6 6-4.3 6-8.5V5L10 2z" stroke="#8E8E93" stroke-width="1.3" fill="none"/></svg>
-        </div>
+      <div class="item" onclick="openSheet('privacy')">
+        <div class="item-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5v4.5c0 4.2 2.7 7.9 6 8.5 3.3-.6 6-4.3 6-8.5V5L10 2z" stroke="#8E8E93" stroke-width="1.3" fill="none"/></svg></div>
         <span class="item-title">隐私政策</span>
         <div class="item-arrow"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4L5 11" stroke="#3A3A3C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </div>
       <div class="sep"></div>
-      <div class="item">
-        <div class="item-icon">
-          <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="10" rx="1.5" stroke="#8E8E93" stroke-width="1.3" fill="none"/><path d="M7 9h6M7 11.5h4" stroke="#8E8E93" stroke-width="1" stroke-linecap="round"/></svg>
-        </div>
+      <div class="item" onclick="openSheet('terms')">
+        <div class="item-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="10" rx="1.5" stroke="#8E8E93" stroke-width="1.3" fill="none"/><path d="M7 9h6M7 11.5h4" stroke="#8E8E93" stroke-width="1" stroke-linecap="round"/></svg></div>
         <span class="item-title">用户协议</span>
         <div class="item-arrow"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4L5 11" stroke="#3A3A3C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </div>
       <div class="sep"></div>
       <div class="toggle-item">
-        <div class="item-icon">
-          <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#8E8E93" stroke-width="1.3" fill="none"/><path d="M10 6v4.5l3 2" stroke="#8E8E93" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
-        </div>
+        <div class="item-icon"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#8E8E93" stroke-width="1.3" fill="none"/><path d="M10 6v4.5l3 2" stroke="#8E8E93" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg></div>
         <span class="item-title">使用数据统计</span>
         <div class="sw off" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="sw-dot"></div></div>
       </div>
       <div class="sep"></div>
-      <div class="item" onclick="showLicenses()">
-        <div class="item-icon">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M5 3h10l2 4-6 9-6-9 2-4z" stroke="#8E8E93" stroke-width="1.3" fill="none"/></svg>
-        </div>
+      <div class="item" onclick="openSheet('licenses')">
+        <div class="item-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M5 3h10l2 4-6 9-6-9 2-4z" stroke="#8E8E93" stroke-width="1.3" fill="none"/></svg></div>
         <span class="item-title">开源许可</span>
         <div class="item-arrow"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4L5 11" stroke="#3A3A3C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </div>
     </div>
 
-    <!-- 关于 -->
     <div class="group">
       <div class="item">
-        <div class="item-icon">
-          <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#8E8E93" stroke-width="1.3" fill="none"/><path d="M10 7v0M10 10v4" stroke="#8E8E93" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
+        <div class="item-icon"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#8E8E93" stroke-width="1.3" fill="none"/><path d="M10 7v0M10 10v4" stroke="#8E8E93" stroke-width="1.5" stroke-linecap="round"/></svg></div>
         <span class="item-title">版本号</span>
         <span class="item-value">v1.0.0</span>
         <div class="item-arrow"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4L5 11" stroke="#3A3A3C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </div>
       <div class="sep"></div>
-      <div class="item">
-        <div class="item-icon">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M10 3v3M10 14v3M3 10h3M14 10h3" stroke="#8E8E93" stroke-width="1.3" stroke-linecap="round"/><circle cx="10" cy="10" r="3" stroke="#8E8E93" stroke-width="1.3" fill="none"/></svg>
-        </div>
+      <div class="item" onclick="checkUpdate()">
+        <div class="item-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M10 3v3M10 14v3M3 10h3M14 10h3" stroke="#8E8E93" stroke-width="1.3" stroke-linecap="round"/><circle cx="10" cy="10" r="3" stroke="#8E8E93" stroke-width="1.3" fill="none"/></svg></div>
         <span class="item-title">检查更新</span>
         <div class="item-arrow"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4L5 11" stroke="#3A3A3C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </div>
     </div>
 
-    <!-- 退出登录 -->
     <div class="logout"><span>退出登录</span></div>
-
-    <!-- 底部 -->
-    <div class="bottom">
-      <div class="bottom-name">NexClip</div>
-      <div class="bottom-ver">v1.0.0</div>
-    </div>
+    <div class="bottom"><div class="bottom-name">NexClip</div><div class="bottom-ver">v1.0.0</div></div>
   </div>
 
-  <!-- 登录弹窗 -->
-  <div class="modal-overlay" id="loginModal">
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <div class="modal-title">登录 NexClip</div>
-      <div class="modal-subtitle">登录后同步你的创作数据</div>
-      <div class="modal-logins">
-        <div class="modal-login-item" onclick="doLogin('phone')">
-          <div class="modal-login-circle login-btn" id="loginPhone">
-            <svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#0A84FF" stroke-width="1.5"/><circle cx="12" cy="17" r="1" fill="#0A84FF"/></svg>
-          </div>
-          <span>手机号</span>
+  <!-- ===== 登录弹窗 ===== -->
+  <div class="sheet-overlay" id="sheet-login" onclick="closeSheet('login')">
+    <div class="sheet-wrap" id="wrap-login" onclick="event.stopPropagation()" style="max-height:70%">
+      <div class="sheet-handle-area" data-drag="login"><div class="sheet-handle-bar"></div></div>
+      <div class="sheet-scroll">
+        <div class="login-title">登录 NexClip</div>
+        <div class="login-subtitle">登录后同步你的创作数据</div>
+        <div class="login-grid">
+          <div class="login-item" onclick="doLogin('phone')"><div class="login-circle login-btn" id="loginPhone"><svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#0A84FF" stroke-width="1.5"/><circle cx="12" cy="17" r="1" fill="#0A84FF"/></svg></div><span>手机号</span></div>
+          <div class="login-item" onclick="doLogin('wechat')"><div class="login-circle login-btn" id="loginWechat"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 4C5.36 4 2 6.69 2 10c0 1.89 1.08 3.56 2.78 4.66L4 17l2.56-1.28C7.57 16.07 8.5 16.2 9.5 16.2c.27 0 .53-.01.79-.04C10.1 15.6 10 15.06 10 14.5 10 11.46 12.91 9 16.5 9c.34 0 .67.02 1 .06C16.87 6.17 13.5 4 9.5 4z" fill="#07C160"/><circle cx="7.5" cy="9.5" r="0.8" fill="white"/><circle cx="11.5" cy="9.5" r="0.8" fill="white"/><path d="M16.5 10.5c-3.04 0-5.5 2.01-5.5 4.5s2.46 4.5 5.5 4.5c.67 0 1.31-.1 1.89-.28L20.5 20.5l-.67-1.68C21.18 17.87 22 16.53 22 15c0-2.49-2.46-4.5-5.5-4.5z" fill="#07C160" opacity="0.85"/><circle cx="14.5" cy="14.5" r="0.7" fill="white"/><circle cx="18.5" cy="14.5" r="0.7" fill="white"/></svg></div><span>微信</span></div>
+          <div class="login-item" onclick="doLogin('qq')"><div class="login-circle login-btn" id="loginQQ"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 1.93.78 3.68 2.05 4.95-.45.98-1.1 1.82-1.55 2.3-.25.27-.1.7.26.73 1.12.1 2.5-.2 3.54-.65.85.3 1.76.47 2.7.47s1.85-.17 2.7-.47c1.04.45 2.42.75 3.54.65.36-.03.51-.46.26-.73-.45-.48-1.1-1.32-1.55-2.3A6.99 6.99 0 0019 9c0-3.87-3.13-7-7-7z" fill="#12B7F5"/><ellipse cx="9.5" cy="8.5" rx="1.2" ry="1.5" fill="white"/><ellipse cx="14.5" cy="8.5" rx="1.2" ry="1.5" fill="white"/></svg></div><span>QQ</span></div>
         </div>
-        <div class="modal-login-item" onclick="doLogin('wechat')">
-          <div class="modal-login-circle login-btn" id="loginWechat">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M9.5 4C5.36 4 2 6.69 2 10c0 1.89 1.08 3.56 2.78 4.66L4 17l2.56-1.28C7.57 16.07 8.5 16.2 9.5 16.2c.27 0 .53-.01.79-.04C10.1 15.6 10 15.06 10 14.5 10 11.46 12.91 9 16.5 9c.34 0 .67.02 1 .06C16.87 6.17 13.5 4 9.5 4z" fill="#07C160"/>
-              <circle cx="7.5" cy="9.5" r="0.8" fill="white"/>
-              <circle cx="11.5" cy="9.5" r="0.8" fill="white"/>
-              <path d="M16.5 10.5c-3.04 0-5.5 2.01-5.5 4.5s2.46 4.5 5.5 4.5c.67 0 1.31-.1 1.89-.28L20.5 20.5l-.67-1.68C21.18 17.87 22 16.53 22 15c0-2.49-2.46-4.5-5.5-4.5z" fill="#07C160" opacity="0.85"/>
-              <circle cx="14.5" cy="14.5" r="0.7" fill="white"/>
-              <circle cx="18.5" cy="14.5" r="0.7" fill="white"/>
-            </svg>
-          </div>
-          <span>微信</span>
+        <div class="login-cancel" onclick="closeSheet('login')">取消</div>
+        <div class="login-terms">
+          <div class="check-box" id="agreeCheck" onclick="toggleCheck()"><svg viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="#1A1008" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span>登录即表示同意 <a href="#" onclick="event.stopPropagation();openSheet('terms')">用户协议</a> 和 <a href="#" onclick="event.stopPropagation();openSheet('privacy')">隐私政策</a></span>
         </div>
-        <div class="modal-login-item" onclick="doLogin('qq')">
-          <div class="modal-login-circle login-btn" id="loginQQ">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 1.93.78 3.68 2.05 4.95-.45.98-1.1 1.82-1.55 2.3-.25.27-.1.7.26.73 1.12.1 2.5-.2 3.54-.65.85.3 1.76.47 2.7.47s1.85-.17 2.7-.47c1.04.45 2.42.75 3.54.65.36-.03.51-.46.26-.73-.45-.48-1.1-1.32-1.55-2.3A6.99 6.99 0 0019 9c0-3.87-3.13-7-7-7z" fill="#12B7F5"/>
-              <ellipse cx="9.5" cy="8.5" rx="1.2" ry="1.5" fill="white"/>
-              <ellipse cx="14.5" cy="8.5" rx="1.2" ry="1.5" fill="white"/>
-              <path d="M7.5 14c-.5 1.5-1.5 3-1 3.5s2-.5 3-1" fill="#12B7F5" opacity="0.6"/>
-              <path d="M16.5 14c.5 1.5 1.5 3 1 3.5s-2-.5-3-1" fill="#12B7F5" opacity="0.6"/>
-            </svg>
-          </div>
-          <span>QQ</span>
-        </div>
-      </div>
-      <div class="modal-cancel" onclick="hideLogin()">取消</div>
-      <div class="modal-terms">
-        <div class="modal-check" id="agreeCheck" onclick="toggleCheck()">
-          <svg viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="#1A1008" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <span>登录即表示同意 <a href="#">用户协议</a> 和 <a href="#">隐私政策</a></span>
       </div>
     </div>
   </div>
 
-  <!-- 开源许可弹窗 -->
-  <div class="lic-modal-overlay" id="licModal" onclick="hideLicenses()">
-    <div class="lic-sheet-wrap" id="licSheetWrap" onclick="event.stopPropagation()">
-      <div class="lic-handle-area" id="licHandleArea">
-        <div class="lic-handle"></div>
-      </div>
-      <div class="lic-scroll">
+  <!-- ===== 隐私政策弹窗 ===== -->
+  <div class="sheet-overlay" id="sheet-privacy" onclick="closeSheet('privacy')">
+    <div class="sheet-wrap" id="wrap-privacy" onclick="event.stopPropagation()" style="max-height:80%">
+      <div class="sheet-handle-area" data-drag="privacy"><div class="sheet-handle-bar"></div></div>
+      <div class="sheet-scroll">
+        <div class="detail-name">隐私政策</div>
+        <div class="detail-type">更新日期：2025年1月1日</div>
+        <div class="detail-text">NexClip 隐私政策
 
-      <div class="lic-section">
-        <div class="lic-section-title">AI 框架</div>
-        <div class="lic-entry" onclick="showLicDetail('onnx')">
-          <div class="lic-entry-name">ONNX Runtime</div>
-          <div class="lic-entry-desc">跨平台高性能推理引擎</div>
-          <span class="lic-badge badge-mit">MIT</span>
-        </div>
-        <div class="lic-entry" onclick="showLicDetail('tflite')">
-          <div class="lic-entry-name">TensorFlow Lite</div>
-          <div class="lic-entry-desc">移动端机器学习推理框架</div>
-          <span class="lic-badge badge-apache">Apache 2.0</span>
-        </div>
-        <div class="lic-entry" onclick="showLicDetail('pytorch')">
-          <div class="lic-entry-name">PyTorch Mobile</div>
-          <div class="lic-entry-desc">端侧深度学习推理框架</div>
-          <span class="lic-badge badge-bsd">BSD 3-Clause</span>
-        </div>
-      </div>
+一、信息收集
 
-      <div class="lic-section">
-        <div class="lic-section-title">AI 模型</div>
-        <div class="lic-entry" onclick="showLicDetail('whisper')">
-          <div class="lic-entry-name">OpenAI Whisper</div>
-          <div class="lic-entry-desc">语音识别模型</div>
-          <span class="lic-badge badge-mit">MIT</span>
-        </div>
-        <div class="lic-entry" onclick="showLicDetail('rnnoise')">
-          <div class="lic-entry-name">RNNoise</div>
-          <div class="lic-entry-desc">基于RNN的语音降噪</div>
-          <span class="lic-badge badge-bsd">BSD 3-Clause</span>
-        </div>
-        <div class="lic-entry" onclick="showLicDetail('rife')">
-          <div class="lic-entry-name">RIFE</div>
-          <div class="lic-entry-desc">实时视频插帧模型</div>
-          <span class="lic-badge badge-mit">MIT</span>
-        </div>
-      </div>
+我们收集以下类型的信息：
 
-      <div class="lic-section">
-        <div class="lic-section-title">多媒体处理</div>
-        <div class="lic-entry" onclick="showLicDetail('ffmpeg')">
-          <div class="lic-entry-name">FFmpeg</div>
-          <div class="lic-entry-desc">音视频编解码库</div>
-          <span class="lic-badge badge-lgpl">LGPL 2.1+</span>
-        </div>
-        <div class="lic-entry" onclick="showLicDetail('opencv')">
-          <div class="lic-entry-name">OpenCV</div>
-          <div class="lic-entry-desc">计算机视觉库</div>
-          <span class="lic-badge badge-apache">Apache 2.0</span>
-        </div>
-      </div>
+1. 账户信息：当您注册账户时，我们会收集您的手机号码、微信/QQ开放ID等登录信息。
 
-      <div class="lic-section">
-        <div class="lic-section-title">Android 框架</div>
-        <div class="lic-entry" onclick="showLicDetail('jetpack')">
-          <div class="lic-entry-name">Jetpack Compose</div>
-          <div class="lic-entry-desc">Android 现代 UI 工具包</div>
-          <span class="lic-badge badge-apache">Apache 2.0</span>
-        </div>
-        <div class="lic-entry" onclick="showLicDetail('kotlin')">
-          <div class="lic-entry-name">Kotlin / Kotlin Coroutines</div>
-          <div class="lic-entry-desc">编程语言与协程库</div>
-          <span class="lic-badge badge-apache">Apache 2.0</span>
-        </div>
-        <div class="lic-entry" onclick="showLicDetail('okhttp')">
-          <div class="lic-entry-name">OkHttp</div>
-          <div class="lic-entry-desc">HTTP 客户端</div>
-          <span class="lic-badge badge-apache">Apache 2.0</span>
-        </div>
-      </div>
+2. 使用数据：我们会收集您使用应用时的操作日志、功能使用频率、崩溃报告等匿名化数据，用于改善产品体验。
 
+3. 设备信息：我们会收集设备型号、操作系统版本、屏幕分辨率等信息，用于兼容性优化。
+
+4. 媒体文件：您导入的视频、音频、图片文件仅在本地处理，不会上传至服务器，除非您主动使用云同步功能。
+
+二、信息使用
+
+我们收集的信息仅用于以下目的：
+- 提供和维护应用服务
+- 改善用户体验和产品功能
+- 提供客户支持
+- 保障应用安全
+
+三、信息保护
+
+我们采用行业标准的安全措施保护您的个人信息，包括数据加密、访问控制等。
+
+四、信息共享
+
+未经您的明确同意，我们不会将您的个人信息出售或共享给第三方，以下情况除外：
+- 遵守法律法规要求
+- 保护用户及公众的安全
+
+五、您的权利
+
+您有权：
+- 访问您的个人信息
+- 更正不准确的信息
+- 删除您的账户和相关数据
+- 撤回数据收集同意
+
+六、联系我们
+
+如有任何隐私相关问题，请联系：privacy@nexclip.app</div>
       </div>
     </div>
   </div>
 
-  <!-- 许可证详情弹窗 -->
-  <div class="lic-detail-overlay" id="licDetailModal" onclick="hideLicDetail()">
-    <div class="lic-detail-wrap" id="licDetailWrap" onclick="event.stopPropagation()">
-      <div class="lic-detail-handle-area" id="licDetailHandleArea">
-        <div class="lic-detail-handle-bar"></div>
-      </div>
-      <div class="lic-detail-scroll">
-        <div class="lic-detail-name" id="licDetailName"></div>
-        <div class="lic-detail-type" id="licDetailType"></div>
-        <div class="lic-detail-text" id="licDetailText"></div>
-        <button class="lic-detail-close" onclick="hideLicDetail()">关闭</button>
+  <!-- ===== 用户协议弹窗 ===== -->
+  <div class="sheet-overlay" id="sheet-terms" onclick="closeSheet('terms')">
+    <div class="sheet-wrap" id="wrap-terms" onclick="event.stopPropagation()" style="max-height:80%">
+      <div class="sheet-handle-area" data-drag="terms"><div class="sheet-handle-bar"></div></div>
+      <div class="sheet-scroll">
+        <div class="detail-name">用户协议</div>
+        <div class="detail-type">更新日期：2025年1月1日</div>
+        <div class="detail-text">NexClip 用户服务协议
+
+一、服务条款
+
+欢迎使用 NexClip。使用本应用即表示您同意以下条款。
+
+1.1 本应用为用户提供视频编辑、AI智能处理等功能服务。
+
+1.2 我们保留随时修改、暂停或终止服务（或其任何部分）的权利。
+
+二、用户行为规范
+
+2.1 您不得利用本应用从事任何违反法律法规的活动。
+
+2.2 您不得对应用进行反编译、反汇编、修改、或创建衍生作品。
+
+2.3 您应对自己账户下的所有活动负责。
+
+三、知识产权
+
+3.1 本应用的所有内容，包括但不限于软件、文本、图片、音频、视频等，均受知识产权法保护。
+
+3.2 您使用本应用创作的作品，其知识产权归您所有。
+
+四、会员服务
+
+4.1 会员服务为付费订阅制，按月/季/年收费。
+
+4.2 会员权益包括：AI抠图、超分辨率、智能插帧、AI降噪、语音识别等高级功能。
+
+4.3 订阅自动续费，您可随时在应用内取消。
+
+五、免责声明
+
+5.1 本应用按"现状"提供，不作任何明示或暗示的保证。
+
+5.2 对于因使用本应用而导致的任何直接或间接损失，我们不承担责任。
+
+六、协议修改
+
+6.1 我们有权修改本协议，修改后的协议将在应用内公示。
+
+6.2 继续使用本应用即视为您接受修改后的协议。
+
+七、联系我们
+
+如有任何问题，请联系：support@nexclip.app</div>
       </div>
     </div>
   </div>
+
+  <!-- ===== 开源许可弹窗 ===== -->
+  <div class="sheet-overlay" id="sheet-licenses" onclick="closeSheet('licenses')">
+    <div class="sheet-wrap" id="wrap-licenses" onclick="event.stopPropagation()" style="max-height:75%">
+      <div class="sheet-handle-area" data-drag="licenses"><div class="sheet-handle-bar"></div></div>
+      <div class="sheet-scroll">
+        <div class="lic-section"><div class="lic-section-title">AI 框架</div>
+          <div class="lic-entry" onclick="openSheet('lic-onnx')"><div class="lic-entry-name">ONNX Runtime</div><div class="lic-entry-desc">跨平台高性能推理引擎</div><span class="lic-badge badge-mit">MIT</span></div>
+          <div class="lic-entry" onclick="openSheet('lic-tflite')"><div class="lic-entry-name">TensorFlow Lite</div><div class="lic-entry-desc">移动端机器学习推理框架</div><span class="lic-badge badge-apache">Apache 2.0</span></div>
+          <div class="lic-entry" onclick="openSheet('lic-pytorch')"><div class="lic-entry-name">PyTorch Mobile</div><div class="lic-entry-desc">端侧深度学习推理框架</div><span class="lic-badge badge-bsd">BSD 3-Clause</span></div>
+        </div>
+        <div class="lic-section"><div class="lic-section-title">AI 模型</div>
+          <div class="lic-entry" onclick="openSheet('lic-whisper')"><div class="lic-entry-name">OpenAI Whisper</div><div class="lic-entry-desc">语音识别模型</div><span class="lic-badge badge-mit">MIT</span></div>
+          <div class="lic-entry" onclick="openSheet('lic-rnnoise')"><div class="lic-entry-name">RNNoise</div><div class="lic-entry-desc">基于RNN的语音降噪</div><span class="lic-badge badge-bsd">BSD 3-Clause</span></div>
+          <div class="lic-entry" onclick="openSheet('lic-rife')"><div class="lic-entry-name">RIFE</div><div class="lic-entry-desc">实时视频插帧模型</div><span class="lic-badge badge-mit">MIT</span></div>
+        </div>
+        <div class="lic-section"><div class="lic-section-title">多媒体处理</div>
+          <div class="lic-entry" onclick="openSheet('lic-ffmpeg')"><div class="lic-entry-name">FFmpeg</div><div class="lic-entry-desc">音视频编解码库</div><span class="lic-badge badge-lgpl">LGPL 2.1+</span></div>
+          <div class="lic-entry" onclick="openSheet('lic-opencv')"><div class="lic-entry-name">OpenCV</div><div class="lic-entry-desc">计算机视觉库</div><span class="lic-badge badge-apache">Apache 2.0</span></div>
+        </div>
+        <div class="lic-section"><div class="lic-section-title">Android 框架</div>
+          <div class="lic-entry" onclick="openSheet('lic-jetpack')"><div class="lic-entry-name">Jetpack Compose</div><div class="lic-entry-desc">Android 现代 UI 工具包</div><span class="lic-badge badge-apache">Apache 2.0</span></div>
+          <div class="lic-entry" onclick="openSheet('lic-kotlin')"><div class="lic-entry-name">Kotlin / Kotlin Coroutines</div><div class="lic-entry-desc">编程语言与协程库</div><span class="lic-badge badge-apache">Apache 2.0</span></div>
+          <div class="lic-entry" onclick="openSheet('lic-okhttp')"><div class="lic-entry-name">OkHttp</div><div class="lic-entry-desc">HTTP 客户端</div><span class="lic-badge badge-apache">Apache 2.0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 许可证详情弹窗（共用） ===== -->
+  <div class="sheet-overlay" id="sheet-lic-detail" onclick="closeSheet('lic-detail')">
+    <div class="sheet-wrap" id="wrap-lic-detail" onclick="event.stopPropagation()" style="max-height:80%">
+      <div class="sheet-handle-area" data-drag="lic-detail"><div class="sheet-handle-bar"></div></div>
+      <div class="sheet-scroll">
+        <div class="detail-name" id="licDetailName"></div>
+        <div class="detail-type" id="licDetailType"></div>
+        <div class="detail-text" id="licDetailText"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
 </div>
 
 <script>
-function showLogin() {
-  document.getElementById('loginModal').classList.add('show');
-  updateLoginState();
+// ===== 弹窗管理 =====
+const sheetStack = [];
+
+function openSheet(name) {
+  const overlay = document.getElementById('sheet-' + name);
+  if (!overlay) return;
+  overlay.classList.add('show');
+  sheetStack.push(name);
 }
-function hideLogin() { document.getElementById('loginModal').classList.remove('show'); }
-function toggleCheck() {
-  document.getElementById('agreeCheck').classList.toggle('checked');
-  updateLoginState();
-}
-function updateLoginState() {
-  const agreed = document.getElementById('agreeCheck').classList.contains('checked');
-  document.querySelectorAll('.login-btn').forEach(btn => {
-    if (agreed) btn.classList.remove('disabled');
-    else btn.classList.add('disabled');
-  });
-}
-function doLogin(method) {
-  const agreed = document.getElementById('agreeCheck').classList.contains('checked');
-  if (!agreed) return;
-  // TODO: 实际登录逻辑
-  hideLogin();
-}
-function showLicenses() { document.getElementById('licModal').classList.add('show'); }
-function hideLicenses() {
-  const wrap = document.getElementById('licSheetWrap');
+
+function closeSheet(name) {
+  const overlay = document.getElementById('sheet-' + name);
+  const wrap = document.getElementById('wrap-' + name);
+  if (!overlay || !wrap) return;
   wrap.classList.add('closing');
   setTimeout(() => {
     wrap.classList.remove('closing');
-    document.getElementById('licModal').classList.remove('show');
-  }, 300);
-}
-function hideLicDetail() {
-  const wrap = document.getElementById('licDetailWrap');
-  wrap.classList.add('closing');
-  setTimeout(() => {
-    wrap.classList.remove('closing');
-    document.getElementById('licDetailModal').classList.remove('show');
+    wrap.style.transform = '';
+    overlay.classList.remove('show');
+    const idx = sheetStack.indexOf(name);
+    if (idx > -1) sheetStack.splice(idx, 1);
   }, 300);
 }
 
-// 下拉关闭手势 - 1:1跟手
-function setupDrag(handleId, wrapId, closeFn) {
-  const handle = document.getElementById(handleId);
-  const wrap = document.getElementById(wrapId);
+// ===== 下拉关闭 - 1:1跟手 =====
+document.querySelectorAll('.sheet-handle-area').forEach(handle => {
+  const name = handle.dataset.drag;
+  const wrap = document.getElementById('wrap-' + name);
   let startY = 0, currentY = 0, dragging = false;
 
   handle.addEventListener('mousedown', e => { startY = e.clientY; dragging = true; wrap.classList.add('dragging'); });
@@ -604,45 +445,73 @@ function setupDrag(handleId, wrapId, closeFn) {
     if (!dragging) return;
     dragging = false;
     wrap.classList.remove('dragging');
-    const dy = currentY - startY;
-    if (dy > 20) {
-      closeFn();
-    } else {
-      wrap.style.transform = '';
-    }
+    if (currentY - startY > 20) closeSheet(name);
+    else wrap.style.transform = '';
   }
   document.addEventListener('mouseup', endDrag);
   document.addEventListener('touchend', endDrag);
+});
+
+// ===== 登录 =====
+function toggleCheck() {
+  document.getElementById('agreeCheck').classList.toggle('checked');
+  updateLoginState();
+}
+function updateLoginState() {
+  const agreed = document.getElementById('agreeCheck').classList.contains('checked');
+  document.querySelectorAll('.login-btn').forEach(btn => {
+    if (agreed) btn.classList.remove('disabled');
+    else btn.classList.add('disabled');
+  });
+}
+function doLogin(method) {
+  if (!document.getElementById('agreeCheck').classList.contains('checked')) return;
+  closeSheet('login');
 }
 
-setupDrag('licHandleArea', 'licSheetWrap', hideLicenses);
-setupDrag('licDetailHandleArea', 'licDetailWrap', hideLicDetail);
+// ===== 检查更新 =====
+function checkUpdate() {
+  showToast('已是最新版本');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
 
+// ===== 许可证数据 =====
 const licenses = {
-  onnx: { name: 'ONNX Runtime', type: 'MIT License', text: 'Copyright (c) Microsoft Corporation\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.' },
-  tflite: { name: 'TensorFlow Lite', type: 'Apache License 2.0', text: 'Copyright 2017 The TensorFlow Authors\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' },
-  pytorch: { name: 'PyTorch Mobile', type: 'BSD 3-Clause License', text: 'Copyright (c) 2016, Meta Platforms, Inc. All rights reserved.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n\n2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n\n3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.' },
-  whisper: { name: 'OpenAI Whisper', type: 'MIT License', text: 'Copyright (c) 2022 OpenAI\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.' },
-  rnnoise: { name: 'RNNoise', type: 'BSD 3-Clause License', text: 'Copyright (c) 2017, Mozilla Corporation\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n\n2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n\n3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.' },
-  rife: { name: 'RIFE', type: 'MIT License', text: 'Copyright (c) 2021 Megvii Research\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.' },
-  ffmpeg: { name: 'FFmpeg', type: 'GNU Lesser General Public License v2.1+', text: 'FFmpeg is licensed under the GNU Lesser General Public License (LGPL) version 2.1 or later.\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.\n\nYou should have received a copy of the GNU Lesser General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.' },
-  opencv: { name: 'OpenCV', type: 'Apache License 2.0', text: 'Copyright (c) 2000-2023 Intel Corporation\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' },
-  jetpack: { name: 'Jetpack Compose', type: 'Apache License 2.0', text: 'Copyright 2019 The Android Open Source Project\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' },
-  kotlin: { name: 'Kotlin / Kotlin Coroutines', type: 'Apache License 2.0', text: 'Copyright 2010-2023 JetBrains s.r.o.\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' },
-  okhttp: { name: 'OkHttp', type: 'Apache License 2.0', text: 'Copyright 2014 Square, Inc.\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' }
+  'lic-onnx': { name: 'ONNX Runtime', type: 'MIT License', text: 'Copyright (c) Microsoft Corporation\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.' },
+  'lic-tflite': { name: 'TensorFlow Lite', type: 'Apache License 2.0', text: 'Copyright 2017 The TensorFlow Authors\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' },
+  'lic-pytorch': { name: 'PyTorch Mobile', type: 'BSD 3-Clause License', text: 'Copyright (c) 2016, Meta Platforms, Inc. All rights reserved.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice.\n2. Redistributions in binary form must reproduce the above copyright notice.\n3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.' },
+  'lic-whisper': { name: 'OpenAI Whisper', type: 'MIT License', text: 'Copyright (c) 2022 OpenAI\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.' },
+  'lic-rnnoise': { name: 'RNNoise', type: 'BSD 3-Clause License', text: 'Copyright (c) 2017, Mozilla Corporation\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the above copyright notice is retained.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.' },
+  'lic-rife': { name: 'RIFE', type: 'MIT License', text: 'Copyright (c) 2021 Megvii Research\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.' },
+  'lic-ffmpeg': { name: 'FFmpeg', type: 'GNU Lesser General Public License v2.1+', text: 'FFmpeg is licensed under the GNU Lesser General Public License (LGPL) version 2.1 or later.\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.' },
+  'lic-opencv': { name: 'OpenCV', type: 'Apache License 2.0', text: 'Copyright (c) 2000-2023 Intel Corporation\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.' },
+  'lic-jetpack': { name: 'Jetpack Compose', type: 'Apache License 2.0', text: 'Copyright 2019 The Android Open Source Project\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.' },
+  'lic-kotlin': { name: 'Kotlin / Kotlin Coroutines', type: 'Apache License 2.0', text: 'Copyright 2010-2023 JetBrains s.r.o.\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.' },
+  'lic-okhttp': { name: 'OkHttp', type: 'Apache License 2.0', text: 'Copyright 2014 Square, Inc.\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.' }
 };
 
-function showLicDetail(key) {
-  const lic = licenses[key];
-  if (!lic) return;
-  document.getElementById('licDetailName').textContent = lic.name;
-  document.getElementById('licDetailType').textContent = lic.type;
-  document.getElementById('licDetailText').textContent = lic.text;
-  document.getElementById('licDetailModal').classList.add('show');
-}
-function hideLicDetail() {
-  document.getElementById('licDetailModal').classList.remove('show');
-}
+// 许可证详情弹窗
+const origOpenSheet = openSheet;
+openSheet = function(name) {
+  if (name.startsWith('lic-')) {
+    const lic = licenses[name];
+    if (!lic) return;
+    document.getElementById('licDetailName').textContent = lic.name;
+    document.getElementById('licDetailType').textContent = lic.type;
+    document.getElementById('licDetailText').textContent = lic.text;
+    origOpenSheet('lic-detail');
+    return;
+  }
+  origOpenSheet(name);
+};
+
+// 初始化登录按钮状态
+updateLoginState();
 </script>
 </body>
 </html>
