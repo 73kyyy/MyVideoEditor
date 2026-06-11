@@ -25,13 +25,11 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 }
 .page::-webkit-scrollbar { display: none; }
 
-/* 导航 */
 .nav { display: flex; align-items: center; height: 44px; padding: 0 16px; }
 .nav-back { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .nav-back svg { width: 20px; height: 20px; }
 .nav-title { flex: 1; text-align: center; font-size: 16px; font-weight: 600; color: #fff; margin-right: 28px; }
 
-/* 用户信息 */
 .profile {
   display: flex; align-items: center; padding: 8px 20px 24px; cursor: pointer;
 }
@@ -45,7 +43,6 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .profile-id { font-size: 12px; color: #666; margin-top: 3px; }
 .profile-arrow { color: #3A3A3C; font-size: 20px; margin-left: 4px; }
 
-/* VIP 会员卡 */
 .vip-card {
   margin: 0 16px 20px; border-radius: 12px; padding: 0; overflow: hidden;
   background: linear-gradient(135deg, #2A1F0A 0%, #1F170A 50%, #18120A 100%);
@@ -85,19 +82,6 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .vip-perk-icon svg { width: 16px; height: 16px; }
 .vip-perk span { font-size: 10px; color: #8A7A5A; }
 
-/* 登录方式 */
-.login-section { padding: 0 16px 16px; }
-.login-label { font-size: 12px; color: #555; margin-bottom: 12px; font-weight: 500; }
-.login-grid { display: flex; gap: 24px; }
-.login-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
-.login-circle {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: #1C1C1E; display: flex; align-items: center; justify-content: center;
-}
-.login-circle svg { width: 22px; height: 22px; }
-.login-item span { font-size: 10px; color: #555; }
-
-/* 设置分组 */
 .group {
   margin: 0 16px 10px; background: #1C1C1E; border-radius: 12px; overflow: hidden;
 }
@@ -114,7 +98,6 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .item-arrow svg { width: 14px; height: 14px; }
 .sep { height: 0.33px; background: #2C2C2E; margin: 0 16px; }
 
-/* Toggle */
 .toggle-item { display: flex; align-items: center; padding: 13px 16px; }
 .toggle-item .item-icon { width: 22px; height: 22px; margin-right: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .toggle-item .item-icon svg { width: 20px; height: 20px; }
@@ -133,27 +116,81 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .sw.on .sw-dot { left: 20px; }
 .sw.off .sw-dot { left: 2px; }
 
-/* 退出登录 */
 .logout {
   margin: 20px 16px 0; background: #1C1C1E; border-radius: 12px;
   text-align: center; padding: 14px; cursor: pointer;
 }
 .logout span { font-size: 15px; color: #FF453A; font-weight: 500; }
 
-/* 底部 */
 .bottom { text-align: center; padding: 24px 0 0; }
 .bottom-name { font-size: 13px; color: #2C2C2E; font-weight: 600; letter-spacing: 2px; }
 .bottom-ver { font-size: 11px; color: #1C1C1E; margin-top: 4px; }
 
-/* 开源许可 - 隐藏式，极低调 */
-.oss-link {
-  text-align: center; padding: 16px 0 0;
+/* 登录弹窗 */
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: flex-end; justify-content: center; z-index: 100;
 }
-.oss-link span {
-  font-size: 10px; color: #1C1C1E; cursor: pointer;
-  transition: color 0.2s;
+.modal-overlay.show { display: flex; }
+.modal-sheet {
+  width: 100%; background: #1C1C1E; border-radius: 20px 20px 0 0;
+  padding: 20px 24px 40px; animation: slideUp 0.3s ease;
 }
-.oss-link span:hover { color: #2C2C2E; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 20px; }
+.modal-title { font-size: 18px; font-weight: 600; color: #fff; text-align: center; margin-bottom: 6px; }
+.modal-subtitle { font-size: 13px; color: #636366; text-align: center; margin-bottom: 28px; }
+.modal-logins { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
+.modal-login-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+.modal-login-circle {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: #2C2C2E; display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.modal-login-circle:hover { background: #3A3A3C; }
+.modal-login-circle svg { width: 26px; height: 26px; }
+.modal-login-item span { font-size: 11px; color: #8E8E93; }
+.modal-cancel {
+  width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E;
+  border: none; color: #8E8E93; font-size: 15px; font-weight: 500;
+  cursor: pointer; text-align: center;
+}
+.modal-cancel:hover { background: #3A3A3C; }
+.modal-terms { text-align: center; margin-top: 14px; }
+.modal-terms span { font-size: 10px; color: #48484A; }
+.modal-terms a { color: #636366; text-decoration: none; }
+
+/* 开源许可弹窗 */
+.lic-modal-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: flex-end; justify-content: center; z-index: 100;
+}
+.lic-modal-overlay.show { display: flex; }
+.lic-sheet {
+  width: 100%; max-height: 75%; background: #1C1C1E; border-radius: 20px 20px 0 0;
+  padding: 20px 20px 40px; animation: slideUp 0.3s ease; overflow-y: auto;
+}
+.lic-sheet::-webkit-scrollbar { display: none; }
+.lic-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 16px; }
+.lic-section { margin-bottom: 16px; }
+.lic-section-title { font-size: 11px; color: #48484A; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px; }
+.lic-entry { padding: 10px 0; border-bottom: 0.33px solid #2C2C2E; }
+.lic-entry:last-child { border-bottom: none; }
+.lic-entry-name { font-size: 13px; color: #E0E0E0; font-weight: 500; }
+.lic-entry-desc { font-size: 10px; color: #636366; margin-top: 1px; }
+.lic-badge {
+  display: inline-block; font-size: 9px; font-weight: 600; padding: 1px 5px;
+  border-radius: 3px; margin-top: 4px;
+}
+.badge-mit { background: rgba(52,199,89,0.12); color: #34C759; }
+.badge-apache { background: rgba(0,122,255,0.12); color: #0A84FF; }
+.badge-bsd { background: rgba(255,159,10,0.12); color: #FF9F0A; }
+.badge-lgpl { background: rgba(175,82,222,0.12); color: #AF52DE; }
+.lic-close {
+  width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E;
+  border: none; color: #8E8E93; font-size: 15px; font-weight: 500;
+  cursor: pointer; text-align: center; margin-top: 8px;
+}
 </style>
 </head>
 <body>
@@ -175,8 +212,8 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
       <span class="nav-title">设置</span>
     </div>
 
-    <!-- 用户信息 -->
-    <div class="profile">
+    <!-- 用户信息 - 点击弹出登录 -->
+    <div class="profile" onclick="showLogin()">
       <div class="profile-avatar">
         <svg viewBox="0 0 30 30" fill="none">
           <circle cx="15" cy="12" r="5" stroke="#555" stroke-width="1.5"/>
@@ -234,37 +271,6 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
       </div>
     </div>
 
-    <!-- 登录方式 -->
-    <div class="login-section">
-      <div class="login-label">第三方登录</div>
-      <div class="login-grid">
-        <div class="login-item">
-          <div class="login-circle">
-            <svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#0A84FF" stroke-width="1.5"/><circle cx="12" cy="17" r="1" fill="#0A84FF"/></svg>
-          </div>
-          <span>手机号</span>
-        </div>
-        <div class="login-item">
-          <div class="login-circle">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M9 5C5.7 5 3 7.2 3 10c0 1.6.8 3 2.2 4L4.5 16l2.2-1.1c.8.4 1.5.5 2.3.5.3 0 .5 0 .8-.05C9.3 14.7 9 13.9 9 13c0-3 2.7-5.5 6-5.5.3 0 .5 0 .8.05C15.3 6 12.4 5 9 5z" fill="#07C160"/><path d="M15 8.5c-2.8 0-5 2-5 4.5s2.2 4.5 5 4.5c.6 0 1.1-.1 1.6-.2L18.5 18.5l-.6-1.5C19.2 16 20 14.8 20 13c0-2.5-2.2-4.5-5-4.5z" fill="#07C160" opacity="0.7"/></svg>
-          </div>
-          <span>微信</span>
-        </div>
-        <div class="login-item">
-          <div class="login-circle">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3C8.1 3 5 6.5 5 10.8c0 1.8.5 3.4 1.3 4.7L5 18.2l2.5-.7c1.3.8 2.9 1.3 4.5 1.3s3.2-.5 4.5-1.3l2.5.7-1.3-2.7c.8-1.3 1.3-2.9 1.3-4.7C19 6.5 15.9 3 12 3z" fill="#12B7F5" opacity="0.8"/><circle cx="10" cy="10" r="1" fill="#fff"/><circle cx="14" cy="10" r="1" fill="#fff"/></svg>
-          </div>
-          <span>QQ</span>
-        </div>
-        <div class="login-item">
-          <div class="login-circle">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M17 9c-.1-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.7-2.2.9-1.3 1.2-2.5 1.2-2.6-.1 0-2.3-.9-2.3-3.5z" fill="#fff"/></svg>
-          </div>
-          <span>Apple</span>
-        </div>
-      </div>
-    </div>
-
     <!-- 安全与隐私 -->
     <div class="group">
       <div class="item">
@@ -291,19 +297,11 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
         <div class="sw off" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="sw-dot"></div></div>
       </div>
       <div class="sep"></div>
-      <div class="toggle-item">
-        <div class="item-icon">
-          <svg viewBox="0 0 20 20" fill="none"><rect x="4" y="8" width="12" height="8" rx="1.5" stroke="#8E8E93" stroke-width="1.3" fill="none"/><path d="M7 8V6a3 3 0 016 0v2" stroke="#8E8E93" stroke-width="1.3" fill="none"/></svg>
-        </div>
-        <span class="item-title">应用锁</span>
-        <div class="sw off" onclick="this.classList.toggle('on');this.classList.toggle('off')"><div class="sw-dot"></div></div>
-      </div>
-      <div class="sep"></div>
-      <div class="item" style="opacity:0.5;">
+      <div class="item" onclick="showLicenses()">
         <div class="item-icon">
           <svg viewBox="0 0 20 20" fill="none"><path d="M5 3h10l2 4-6 9-6-9 2-4z" stroke="#8E8E93" stroke-width="1.3" fill="none"/></svg>
         </div>
-        <span class="item-title" style="color:#8E8E93;">开源许可</span>
+        <span class="item-title">开源许可</span>
         <div class="item-arrow"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4L5 11" stroke="#3A3A3C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </div>
     </div>
@@ -337,7 +335,126 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
       <div class="bottom-ver">v1.0.0</div>
     </div>
   </div>
+
+  <!-- 登录弹窗 -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">登录 NexClip</div>
+      <div class="modal-subtitle">登录后同步你的创作数据</div>
+      <div class="modal-logins">
+        <div class="modal-login-item">
+          <div class="modal-login-circle">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#0A84FF" stroke-width="1.5"/><circle cx="12" cy="17" r="1" fill="#0A84FF"/></svg>
+          </div>
+          <span>手机号</span>
+        </div>
+        <div class="modal-login-item">
+          <div class="modal-login-circle">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 5C5.7 5 3 7.2 3 10c0 1.6.8 3 2.2 4L4.5 16l2.2-1.1c.8.4 1.5.5 2.3.5.3 0 .5 0 .8-.05C9.3 14.7 9 13.9 9 13c0-3 2.7-5.5 6-5.5.3 0 .5 0 .8.05C15.3 6 12.4 5 9 5z" fill="#07C160"/><path d="M15 8.5c-2.8 0-5 2-5 4.5s2.2 4.5 5 4.5c.6 0 1.1-.1 1.6-.2L18.5 18.5l-.6-1.5C19.2 16 20 14.8 20 13c0-2.5-2.2-4.5-5-4.5z" fill="#07C160" opacity="0.7"/></svg>
+          </div>
+          <span>微信</span>
+        </div>
+        <div class="modal-login-item">
+          <div class="modal-login-circle">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3C8.1 3 5 6.5 5 10.8c0 1.8.5 3.4 1.3 4.7L5 18.2l2.5-.7c1.3.8 2.9 1.3 4.5 1.3s3.2-.5 4.5-1.3l2.5.7-1.3-2.7c.8-1.3 1.3-2.9 1.3-4.7C19 6.5 15.9 3 12 3z" fill="#12B7F5" opacity="0.8"/><circle cx="10" cy="10" r="1" fill="#fff"/><circle cx="14" cy="10" r="1" fill="#fff"/></svg>
+          </div>
+          <span>QQ</span>
+        </div>
+      </div>
+      <div class="modal-cancel" onclick="hideLogin()">取消</div>
+      <div class="modal-terms">
+        <span>登录即表示同意 <a href="#">用户协议</a> 和 <a href="#">隐私政策</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 开源许可弹窗 -->
+  <div class="lic-modal-overlay" id="licModal">
+    <div class="lic-sheet">
+      <div class="lic-handle"></div>
+
+      <div class="lic-section">
+        <div class="lic-section-title">AI 框架</div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">ONNX Runtime</div>
+          <div class="lic-entry-desc">跨平台高性能推理引擎</div>
+          <span class="lic-badge badge-mit">MIT</span>
+        </div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">TensorFlow Lite</div>
+          <div class="lic-entry-desc">移动端机器学习推理框架</div>
+          <span class="lic-badge badge-apache">Apache 2.0</span>
+        </div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">PyTorch Mobile</div>
+          <div class="lic-entry-desc">端侧深度学习推理框架</div>
+          <span class="lic-badge badge-bsd">BSD 3-Clause</span>
+        </div>
+      </div>
+
+      <div class="lic-section">
+        <div class="lic-section-title">AI 模型</div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">OpenAI Whisper</div>
+          <div class="lic-entry-desc">语音识别模型</div>
+          <span class="lic-badge badge-mit">MIT</span>
+        </div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">RNNoise</div>
+          <div class="lic-entry-desc">基于RNN的语音降噪</div>
+          <span class="lic-badge badge-bsd">BSD 3-Clause</span>
+        </div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">RIFE</div>
+          <div class="lic-entry-desc">实时视频插帧模型</div>
+          <span class="lic-badge badge-mit">MIT</span>
+        </div>
+      </div>
+
+      <div class="lic-section">
+        <div class="lic-section-title">多媒体处理</div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">FFmpeg</div>
+          <div class="lic-entry-desc">音视频编解码库</div>
+          <span class="lic-badge badge-lgpl">LGPL 2.1+</span>
+        </div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">OpenCV</div>
+          <div class="lic-entry-desc">计算机视觉库</div>
+          <span class="lic-badge badge-apache">Apache 2.0</span>
+        </div>
+      </div>
+
+      <div class="lic-section">
+        <div class="lic-section-title">Android 框架</div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">Jetpack Compose</div>
+          <div class="lic-entry-desc">Android 现代 UI 工具包</div>
+          <span class="lic-badge badge-apache">Apache 2.0</span>
+        </div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">Kotlin / Kotlin Coroutines</div>
+          <div class="lic-entry-desc">编程语言与协程库</div>
+          <span class="lic-badge badge-apache">Apache 2.0</span>
+        </div>
+        <div class="lic-entry">
+          <div class="lic-entry-name">OkHttp</div>
+          <div class="lic-entry-desc">HTTP 客户端</div>
+          <span class="lic-badge badge-apache">Apache 2.0</span>
+        </div>
+      </div>
+
+      <button class="lic-close" onclick="hideLicenses()">关闭</button>
+    </div>
+  </div>
 </div>
 
+<script>
+function showLogin() { document.getElementById('loginModal').classList.add('show'); }
+function hideLogin() { document.getElementById('loginModal').classList.remove('show'); }
+function showLicenses() { document.getElementById('licModal').classList.add('show'); }
+function hideLicenses() { document.getElementById('licModal').classList.remove('show'); }
+</script>
 </body>
 </html>
