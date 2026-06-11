@@ -194,9 +194,9 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(28.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    LoginBtn("📱", "手机号")
-                    LoginBtn("💬", "微信")
-                    LoginBtn("🐧", "QQ")
+                    LoginBtn("📱", "手机号", enabled = agreedToTerms) { /* login */ }
+                    LoginBtn("💬", "微信", enabled = agreedToTerms) { /* login */ }
+                    LoginBtn("🐧", "QQ", enabled = agreedToTerms) { /* login */ }
                 }
                 Spacer(modifier = Modifier.height(20.dp))
                 Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
@@ -371,15 +371,16 @@ private fun DiamondIcon(modifier: Modifier = Modifier, size: Dp = 8.dp, tint: Co
 }
 
 @Composable
-private fun LoginBtn(icon: String, label: String) {
+private fun LoginBtn(icon: String, label: String, enabled: Boolean = true, onClick: () -> Unit = {}) {
     Column(horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { /* login */ }) {
-        Box(modifier = Modifier.size(50.dp).clip(CircleShape).background(CardHover),
+        modifier = Modifier.clickable(enabled = enabled) { onClick() }) {
+        Box(modifier = Modifier.size(50.dp).clip(CircleShape)
+            .background(if (enabled) CardHover else CardHover.copy(alpha = 0.3f)),
             contentAlignment = Alignment.Center) {
             Text(icon, fontSize = 22.sp)
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Text(label, fontSize = 11.sp, color = Icon)
+        Text(label, fontSize = 11.sp, color = if (enabled) Icon else Icon.copy(alpha = 0.3f))
     }
 }
 
