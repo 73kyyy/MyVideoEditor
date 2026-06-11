@@ -14,7 +14,6 @@ body { background: #0a0a0a; display: flex; justify-content: center; align-items:
   box-shadow: 0 0 60px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.04);
 }
 
-/* Status bar */
 .status-bar {
   height: 54px; display: flex; align-items: flex-end; justify-content: space-between;
   padding: 0 28px 8px; color: #F0ECE4; font-size: 14px; font-weight: 600;
@@ -22,14 +21,12 @@ body { background: #0a0a0a; display: flex; justify-content: center; align-items:
 .status-bar .time { font-size: 15px; font-weight: 700; }
 .status-bar .icons { display: flex; gap: 6px; align-items: center; font-size: 12px; }
 
-/* Content */
 .content {
   height: calc(100% - 54px); overflow-y: auto; padding: 0 12px 20px;
   scrollbar-width: none;
 }
 .content::-webkit-scrollbar { display: none; }
 
-/* Top bar */
 .top-bar {
   display: flex; align-items: center; height: 52px; padding: 0 0; margin-bottom: 4px;
 }
@@ -47,13 +44,87 @@ body { background: #0a0a0a; display: flex; justify-content: center; align-items:
 /* Section header */
 .section-header {
   font-size: 11px; color: #6A6660; letter-spacing: 1px; font-weight: 600;
-  padding: 16px 6px 6px 6px; text-transform: uppercase;
+  padding: 16px 6px 6px 6px;
 }
 
-/* Settings card */
+/* Card */
 .card {
   background: #161616; border-radius: 12px; padding: 2px; margin-bottom: 4px;
 }
+
+/* Member card */
+.member-card {
+  border-radius: 14px; padding: 18px 16px; position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #1a1020 0%, #201018 50%, #1a0c14 100%);
+  border: 1px solid rgba(255,77,122,0.12);
+  margin-bottom: 4px;
+}
+.member-card::before {
+  content: ''; position: absolute; top: -30px; right: -30px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,77,122,0.08) 0%, transparent 70%);
+}
+.member-top {
+  display: flex; align-items: center; gap: 12px; position: relative; z-index: 1;
+}
+.diamond-icon {
+  width: 36px; height: 36px; flex-shrink: 0;
+}
+.member-info { flex: 1; }
+.member-info .name { font-size: 15px; font-weight: 700; color: #F0ECE4; }
+.member-info .status {
+  font-size: 10px; color: #B0ACA4; margin-top: 2px;
+  display: flex; align-items: center; gap: 4px;
+}
+.member-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: linear-gradient(135deg, rgba(255,77,122,0.2), rgba(160,80,200,0.2));
+  padding: 2px 8px; border-radius: 10px; font-size: 9px; color: #FF4D7A; font-weight: 600;
+}
+.member-badge svg { width: 8px; height: 8px; }
+.member-action {
+  font-size: 11px; color: white; font-weight: 600;
+  background: linear-gradient(135deg, #FF4D7A, #D94090);
+  padding: 7px 16px; border-radius: 14px; border: none; cursor: pointer;
+  transition: opacity 0.2s; position: relative; z-index: 1;
+}
+.member-action:hover { opacity: 0.9; }
+.member-benefits {
+  display: flex; gap: 16px; margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.06); position: relative; z-index: 1;
+}
+.benefit-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.benefit-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.benefit-label { font-size: 9px; color: #6A6660; }
+
+/* Login methods */
+.login-card {
+  background: #161616; border-radius: 12px; padding: 16px; margin-bottom: 4px;
+}
+.login-title {
+  font-size: 12px; font-weight: 600; color: #F0ECE4; margin-bottom: 12px;
+}
+.login-methods { display: flex; gap: 12px; justify-content: center; }
+.login-btn {
+  width: 48px; height: 48px; border-radius: 12px; border: 1px solid #242424;
+  background: #1E1E1E; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; position: relative;
+}
+.login-btn:hover { border-color: #3a3a3a; background: #242424; }
+.login-btn.active { border-color: #4A90D9; background: rgba(74,144,217,0.08); }
+.login-btn svg { width: 24px; height: 24px; }
+.login-btn .check {
+  position: absolute; top: -4px; right: -4px; width: 14px; height: 14px;
+  background: #4A90D9; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 8px; color: white; font-weight: 700;
+}
+.login-labels { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+.login-label { width: 48px; text-align: center; font-size: 9px; color: #6A6660; }
 
 /* Setting row */
 .setting-row {
@@ -61,6 +132,10 @@ body { background: #0a0a0a; display: flex; justify-content: center; align-items:
   transition: background 0.15s; border-radius: 10px;
 }
 .setting-row:hover { background: rgba(255,255,255,0.02); }
+.setting-row .icon-wrap {
+  width: 28px; height: 28px; border-radius: 8px; margin-right: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
 .setting-row .title {
   font-size: 12px; font-weight: 500; color: #F0ECE4; flex: 1;
 }
@@ -81,6 +156,10 @@ body { background: #0a0a0a; display: flex; justify-content: center; align-items:
 .toggle-row {
   display: flex; align-items: center; padding: 12px 14px;
 }
+.toggle-row .icon-wrap {
+  width: 28px; height: 28px; border-radius: 8px; margin-right: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
 .toggle-row .title {
   font-size: 12px; font-weight: 500; color: #F0ECE4; flex: 1;
 }
@@ -97,166 +176,159 @@ body { background: #0a0a0a; display: flex; justify-content: center; align-items:
 .toggle.on .knob { left: 22px; }
 .toggle.off .knob { left: 2px; }
 
-/* Cache row with button */
-.cache-row {
-  display: flex; align-items: center; padding: 12px 14px; cursor: pointer;
-}
-.cache-row .info { flex: 1; }
-.cache-row .info .title { font-size: 12px; font-weight: 500; color: #F0ECE4; }
-.cache-row .info .subtitle { font-size: 9px; color: #6A6660; margin-top: 2px; }
-.clear-btn {
-  font-size: 10px; color: #E84848; font-weight: 500;
-  background: rgba(232,72,72,0.12); padding: 5px 10px; border-radius: 6px;
-  border: none; cursor: pointer; transition: background 0.2s;
-}
-.clear-btn:hover { background: rgba(232,72,72,0.2); }
-.manage-btn {
-  font-size: 10px; color: #4A90D9; font-weight: 500;
-  background: rgba(74,144,217,0.12); padding: 5px 10px; border-radius: 6px;
-  border: none; cursor: pointer; transition: background 0.2s;
-}
-.manage-btn:hover { background: rgba(74,144,217,0.2); }
-
-/* Quality selector */
-.quality-row {
-  display: flex; align-items: center; padding: 12px 14px;
-}
-.quality-row .title { font-size: 12px; font-weight: 500; color: #F0ECE4; flex: 1; }
-.quality-options { display: flex; gap: 4px; }
-.quality-opt {
-  font-size: 10px; padding: 4px 10px; border-radius: 6px;
-  cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
-}
-.quality-opt.sel {
-  color: #4A90D9; background: rgba(74,144,217,0.15);
-  border-color: #4A90D9; font-weight: 600;
-}
-.quality-opt:not(.sel) {
-  color: #6A6660; background: #1E1E1E;
-}
-
 /* Footer */
 .footer {
   text-align: center; font-size: 9px; color: #6A6660;
-  padding: 16px 0 8px;
+  padding: 20px 0 8px;
 }
-
-/* Confirm dialog */
-.dialog-overlay {
-  position: absolute; inset: 0; background: rgba(0,0,0,0.6);
-  display: none; align-items: center; justify-content: center; z-index: 10;
-}
-.dialog-overlay.show { display: flex; }
-.dialog {
-  background: #1E1E1E; border-radius: 16px; padding: 24px; width: 280px;
-  text-align: center;
-}
-.dialog h3 { font-size: 16px; color: #F0ECE4; font-weight: 700; margin-bottom: 8px; }
-.dialog p { font-size: 12px; color: #B0ACA4; line-height: 1.5; margin-bottom: 20px; }
-.dialog-btns { display: flex; gap: 10px; }
-.dialog-btns button {
-  flex: 1; padding: 10px; border-radius: 10px; border: none;
-  font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
-}
-.dialog-btns button:hover { opacity: 0.85; }
-.btn-cancel { background: #2C2C2C; color: #B0ACA4; }
-.btn-confirm { background: #E84848; color: white; }
 </style>
 </head>
 <body>
 
 <div class="phone">
-  <!-- Status bar -->
   <div class="status-bar">
     <span class="time">9:41</span>
     <span class="icons">
       <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="5" width="3" height="7" rx="0.5" fill="#F0ECE4"/><rect x="4.5" y="3" width="3" height="9" rx="0.5" fill="#F0ECE4"/><rect x="9" y="1" width="3" height="11" rx="0.5" fill="#F0ECE4"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" fill="#F0ECE4" opacity="0.3"/></svg>
-      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 3C5.5 3 3.3 4 1.8 5.6L0.4 4.2C2.3 2.2 5 1 8 1s5.7 1.2 7.6 3.2l-1.4 1.4C12.7 4 10.5 3 8 3z" fill="#F0ECE4" opacity="0.3"/><path d="M8 6c-1.7 0-3.2.7-4.3 1.8L2.3 6.4C3.8 4.9 5.8 4 8 4s4.2.9 5.7 2.4l-1.4 1.4C11.2 6.7 9.7 6 8 6z" fill="#F0ECE4" opacity="0.3"/><path d="M8 9c-0.8 0-1.6.3-2.1.9L4.5 8.5C5.5 7.6 6.7 7 8 7s2.5.6 3.5 1.5l-1.4 1.4C9.6 9.3 8.8 9 8 9z" fill="#F0ECE4"/><circle cx="8" cy="11" r="1.2" fill="#F0ECE4"/></svg>
       <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" stroke="#F0ECE4" stroke-width="1" fill="none"/><rect x="22" y="4" width="2" height="4" rx="0.5" fill="#F0ECE4" opacity="0.4"/><rect x="1.5" y="2.5" width="14" height="7" rx="1" fill="#6EC850"/></svg>
     </span>
   </div>
 
-  <!-- Content -->
   <div class="content">
-    <!-- Top bar -->
     <div class="top-bar">
       <button class="back-btn">‹</button>
       <h1>设置</h1>
     </div>
 
-    <!-- 通用 -->
-    <div class="section-header">通用</div>
-    <div class="card">
-      <div class="setting-row">
-        <span class="title">默认分辨率</span>
-        <span class="value">1080p</span>
-        <span class="arrow">›</span>
+    <!-- 会员卡片 -->
+    <div class="member-card">
+      <div class="member-top">
+        <svg class="diamond-icon" viewBox="0 0 36 36">
+          <defs>
+            <linearGradient id="dg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#FF4D7A"/>
+              <stop offset="100%" style="stop-color:#D94090"/>
+            </linearGradient>
+          </defs>
+          <path d="M18 3 L32 14 L18 33 L4 14 Z" fill="url(#dg)" opacity="0.9"/>
+          <path d="M18 3 L32 14 L18 33 L4 14 Z" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+          <path d="M18 3 L18 33" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+          <path d="M4 14 L32 14" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+        </svg>
+        <div class="member-info">
+          <div class="name">未登录</div>
+          <div class="status">
+            <span class="member-badge">
+              <svg viewBox="0 0 10 10"><path d="M5 0 L10 4 L5 10 L0 4 Z" fill="#FF4D7A"/></svg>
+              非会员
+            </span>
+          </div>
+        </div>
+        <button class="member-action">开通会员</button>
       </div>
-      <div class="divider"></div>
-      <div class="setting-row">
-        <span class="title">默认帧率</span>
-        <span class="value">30</span>
-        <span class="arrow">›</span>
-      </div>
-      <div class="divider"></div>
-      <div class="setting-row">
-        <span class="title">自动保存间隔</span>
-        <span class="value">30秒</span>
-        <span class="arrow">›</span>
-      </div>
-      <div class="divider"></div>
-      <div class="setting-row">
-        <span class="title">语言</span>
-        <span class="value">中文</span>
-        <span class="arrow">›</span>
+      <div class="member-benefits">
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:rgba(255,77,122,0.1);">
+            <svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1 L14 5 L14 11 L8 15 L2 11 L2 5 Z" fill="none" stroke="#FF4D7A" stroke-width="1.2"/><path d="M8 4 L11 6 L11 10 L8 12 L5 10 L5 6 Z" fill="#FF4D7A" opacity="0.3"/></svg>
+          </div>
+          <span class="benefit-label">AI 抠图</span>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:rgba(74,144,217,0.1);">
+            <svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke="#4A90D9" stroke-width="1.2"/><path d="M5 8 L7 10 L11 6" stroke="#4A90D9" stroke-width="1.2" fill="none"/></svg>
+          </div>
+          <span class="benefit-label">超分辨率</span>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:rgba(110,200,80,0.1);">
+            <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 12 L8 2 L13 12 Z" fill="none" stroke="#6EC850" stroke-width="1.2"/><circle cx="8" cy="10" r="1.5" fill="#6EC850" opacity="0.4"/></svg>
+          </div>
+          <span class="benefit-label">智能插帧</span>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon" style="background:rgba(232,168,32,0.1);">
+            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="#E8A820" stroke-width="1.2"/><path d="M8 5 L8 8 L10 10" stroke="#E8A820" stroke-width="1.2" fill="none"/></svg>
+          </div>
+          <span class="benefit-label">更多功能</span>
+        </div>
       </div>
     </div>
 
-    <!-- 存储 -->
-    <div class="section-header">存储</div>
-    <div class="card">
-      <div class="cache-row" id="cacheRow">
-        <div class="info">
-          <div class="title">缓存大小</div>
-          <div class="subtitle" id="cacheSize">128 MB</div>
+    <!-- 登录方式 -->
+    <div class="section-header">登录方式</div>
+    <div class="login-card">
+      <div class="login-methods">
+        <!-- 手机号 -->
+        <div class="login-btn active" title="手机号">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="7" y="2" width="10" height="20" rx="2" stroke="#4A90D9" stroke-width="1.5"/>
+            <line x1="10" y1="18" x2="14" y2="18" stroke="#4A90D9" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <div class="check">✓</div>
         </div>
-        <button class="clear-btn" onclick="clearCache()">清除缓存</button>
-      </div>
-      <div class="divider"></div>
-      <div class="cache-row">
-        <div class="info">
-          <div class="title">模型管理</div>
-          <div class="subtitle">AI 模型总大小: 2.4 GB</div>
+        <!-- 微信 -->
+        <div class="login-btn" title="微信">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M9 5C5.7 5 3 7.2 3 10c0 1.6.8 3 2.2 4L4.5 16l2.2-1.1C7.8 15.3 8.4 15.4 9 15.4c.3 0 .5 0 .8-.05C9.3 14.7 9 13.9 9 13c0-3 2.7-5.5 6-5.5.3 0 .5 0 .8.05C15.3 6 12.4 5 9 5z" fill="#07C160"/>
+            <path d="M15 8.5c-2.8 0-5 2-5 4.5s2.2 4.5 5 4.5c.6 0 1.1-.1 1.6-.2L18.5 18.5l-.6-1.5C19.2 16 20 14.8 20 13c0-2.5-2.2-4.5-5-4.5z" fill="#07C160" opacity="0.7"/>
+          </svg>
         </div>
-        <button class="manage-btn">管理</button>
+        <!-- QQ -->
+        <div class="login-btn" title="QQ">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3C8.1 3 5 6.5 5 10.8c0 1.8.5 3.4 1.3 4.7L5 18.2l2.5-.7c1.3.8 2.9 1.3 4.5 1.3s3.2-.5 4.5-1.3l2.5.7-1.3-2.7c.8-1.3 1.3-2.9 1.3-4.7C19 6.5 15.9 3 12 3z" fill="#12B7F5" opacity="0.8"/>
+            <circle cx="10" cy="10" r="1" fill="white"/>
+            <circle cx="14" cy="10" r="1" fill="white"/>
+          </svg>
+        </div>
+        <!-- Apple -->
+        <div class="login-btn" title="Apple">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M17 9c-.1-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.7-2.2.9-1.3 1.2-2.5 1.2-2.6-.1 0-2.3-.9-2.3-3.5z" fill="#F0ECE4"/>
+            <path d="M14.5 3c.6-.8 1.1-1.8.9-2.9-1 .1-2 .6-2.7 1.4-.6.7-1.1 1.8-1 2.8 1 .1 2.1-.5 2.8-1.3z" fill="#F0ECE4"/>
+          </svg>
+        </div>
       </div>
-      <div class="divider"></div>
-      <div class="setting-row">
-        <span class="title">导出目录</span>
-        <span class="value">/内部存储/NexClip</span>
-        <span class="arrow">›</span>
+      <div class="login-labels">
+        <span class="login-label">手机号</span>
+        <span class="login-label">微信</span>
+        <span class="login-label">QQ</span>
+        <span class="login-label">Apple</span>
       </div>
     </div>
 
-    <!-- 性能 -->
-    <div class="section-header">性能</div>
+    <!-- 安全与隐私 -->
+    <div class="section-header">安全与隐私</div>
     <div class="card">
-      <div class="toggle-row">
-        <span class="title">硬件加速</span>
-        <div class="toggle on" onclick="toggleSwitch(this)"><div class="knob"></div></div>
-      </div>
-      <div class="divider"></div>
-      <div class="quality-row">
-        <span class="title">预览质量</span>
-        <div class="quality-options">
-          <div class="quality-opt" onclick="selectQuality(this)">低</div>
-          <div class="quality-opt sel" onclick="selectQuality(this)">中</div>
-          <div class="quality-opt" onclick="selectQuality(this)">高</div>
+      <div class="setting-row">
+        <div class="icon-wrap" style="background:rgba(74,144,217,0.1);">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1L2 3.5V7c0 3.3 2.1 6.4 5 7 2.9-.6 5-3.7 5-7V3.5L7 1z" fill="none" stroke="#4A90D9" stroke-width="1.2"/></svg>
         </div>
+        <span class="title">隐私政策</span>
+        <span class="arrow">›</span>
+      </div>
+      <div class="divider"></div>
+      <div class="setting-row">
+        <div class="icon-wrap" style="background:rgba(110,200,80,0.1);">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 3h10v8H2z" fill="none" stroke="#6EC850" stroke-width="1.2" rx="1"/><path d="M5 6h4M5 8h3" stroke="#6EC850" stroke-width="1" stroke-linecap="round"/></svg>
+        </div>
+        <span class="title">用户协议</span>
+        <span class="arrow">›</span>
       </div>
       <div class="divider"></div>
       <div class="toggle-row">
-        <span class="title">后台渲染</span>
+        <div class="icon-wrap" style="background:rgba(232,168,32,0.1);">
+          <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="none" stroke="#E8A820" stroke-width="1.2"/><path d="M7 4v4l2.5 1.5" stroke="#E8A820" stroke-width="1" stroke-linecap="round" fill="none"/></svg>
+        </div>
+        <span class="title">使用数据统计</span>
+        <div class="toggle off" onclick="toggleSwitch(this)"><div class="knob"></div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="toggle-row">
+        <div class="icon-wrap" style="background:rgba(255,77,122,0.1);">
+          <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="5" width="10" height="7" rx="1.5" fill="none" stroke="#FF4D7A" stroke-width="1.2"/><path d="M4.5 5V3.5a2.5 2.5 0 015 0V5" fill="none" stroke="#FF4D7A" stroke-width="1.2"/></svg>
+        </div>
+        <span class="title">应用锁</span>
         <div class="toggle off" onclick="toggleSwitch(this)"><div class="knob"></div></div>
       </div>
     </div>
@@ -265,46 +337,32 @@ body { background: #0a0a0a; display: flex; justify-content: center; align-items:
     <div class="section-header">关于</div>
     <div class="card">
       <div class="setting-row">
+        <div class="icon-wrap" style="background:rgba(74,144,217,0.1);">
+          <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="none" stroke="#4A90D9" stroke-width="1.2"/><path d="M7 5v0M7 7v3.5" stroke="#4A90D9" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </div>
         <span class="title">版本号</span>
         <span class="value">v1.0.0</span>
         <span class="arrow">›</span>
       </div>
       <div class="divider"></div>
       <div class="setting-row">
+        <div class="icon-wrap" style="background:rgba(110,200,80,0.1);">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v3M7 10v3M1 7h3M10 7h3" stroke="#6EC850" stroke-width="1.2" stroke-linecap="round"/><circle cx="7" cy="7" r="2" fill="#6EC850" opacity="0.3" stroke="#6EC850" stroke-width="1"/></svg>
+        </div>
         <span class="title">检查更新</span>
         <span class="arrow">›</span>
       </div>
       <div class="divider"></div>
       <div class="setting-row">
+        <div class="icon-wrap" style="background:rgba(232,168,32,0.1);">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 2h8l2 3-5 7-5-7 2-3z" fill="none" stroke="#E8A820" stroke-width="1.2"/></svg>
+        </div>
         <span class="title">开源许可</span>
         <span class="arrow">›</span>
       </div>
-      <div class="divider"></div>
-      <div class="setting-row">
-        <span class="title">隐私政策</span>
-        <span class="arrow">›</span>
-      </div>
-      <div class="divider"></div>
-      <div class="setting-row">
-        <span class="title">用户协议</span>
-        <span class="arrow">›</span>
-      </div>
     </div>
 
-    <!-- Footer -->
     <div class="footer">NexClip · AI 智能视频编辑器</div>
-  </div>
-
-  <!-- Confirm dialog -->
-  <div class="dialog-overlay" id="dialogOverlay">
-    <div class="dialog">
-      <h3>清除缓存</h3>
-      <p>确定要清除所有缓存数据吗？此操作不可撤销。</p>
-      <div class="dialog-btns">
-        <button class="btn-cancel" onclick="closeDialog()">取消</button>
-        <button class="btn-confirm" onclick="confirmClear()">清除</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -312,24 +370,6 @@ body { background: #0a0a0a; display: flex; justify-content: center; align-items:
 function toggleSwitch(el) {
   el.classList.toggle('on');
   el.classList.toggle('off');
-}
-
-function selectQuality(el) {
-  document.querySelectorAll('.quality-opt').forEach(o => o.classList.remove('sel'));
-  el.classList.add('sel');
-}
-
-function clearCache() {
-  document.getElementById('dialogOverlay').classList.add('show');
-}
-
-function closeDialog() {
-  document.getElementById('dialogOverlay').classList.remove('show');
-}
-
-function confirmClear() {
-  document.getElementById('cacheSize').textContent = '0 MB';
-  closeDialog();
 }
 </script>
 </body>
