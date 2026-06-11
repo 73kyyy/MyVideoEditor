@@ -170,11 +170,10 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
   position: absolute; bottom: 0; left: 0; right: 0;
   max-height: 75%; display: flex; flex-direction: column;
   background: #1C1C1E; border-radius: 20px 20px 0 0;
-  animation: slideUp 0.3s ease;
-  transform: translateY(0); transition: transform 0.3s ease;
+  transform: translateY(0); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .lic-sheet-wrap.dragging { transition: none; }
-.lic-sheet-wrap.closing { transform: translateY(100%); }
+.lic-sheet-wrap.closing { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
 .lic-handle-area {
   padding: 12px 0 8px; cursor: grab; touch-action: none; flex-shrink: 0;
 }
@@ -215,11 +214,10 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
   position: absolute; bottom: 0; left: 0; right: 0;
   max-height: 80%; display: flex; flex-direction: column;
   background: #1C1C1E; border-radius: 20px 20px 0 0;
-  animation: slideUp 0.3s ease;
-  transform: translateY(0); transition: transform 0.3s ease;
+  transform: translateY(0); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .lic-detail-wrap.dragging { transition: none; }
-.lic-detail-wrap.closing { transform: translateY(100%); }
+.lic-detail-wrap.closing { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
 .lic-detail-handle-area {
   padding: 12px 0 8px; cursor: grab; touch-action: none; flex-shrink: 0;
 }
@@ -548,15 +546,28 @@ function setupDrag(handleId, wrapId, closeFn) {
   handle.addEventListener('mousedown', e => { startY = e.clientY; dragging = true; wrap.classList.add('dragging'); });
   handle.addEventListener('touchstart', e => { startY = e.touches[0].clientY; dragging = true; wrap.classList.add('dragging'); }, {passive: true});
 
-  document.addEventListener('mousemove', e => { if (!dragging) return; currentY = e.clientY; const dy = Math.max(0, currentY - startY); wrap.style.transform = 'translateY(' + dy + 'px)'; });
-  document.addEventListener('touchmove', e => { if (!dragging) return; currentY = e.touches[0].clientY; const dy = Math.max(0, currentY - startY); wrap.style.transform = 'translateY(' + dy + 'px)'; }, {passive: true});
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    currentY = e.clientY;
+    const raw = currentY - startY;
+    // 阻尼：下拉越多越费力
+    const dy = raw > 0 ? raw * (1 - raw / (raw + 300)) : raw;
+    wrap.style.transform = 'translateY(' + Math.max(0, dy) + 'px)';
+  });
+  document.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    currentY = e.touches[0].clientY;
+    const raw = currentY - startY;
+    const dy = raw > 0 ? raw * (1 - raw / (raw + 300)) : raw;
+    wrap.style.transform = 'translateY(' + Math.max(0, dy) + 'px)';
+  }, {passive: true});
 
   function endDrag() {
     if (!dragging) return;
     dragging = false;
     wrap.classList.remove('dragging');
     const dy = currentY - startY;
-    if (dy > 80) {
+    if (dy > 20) {
       closeFn();
     } else {
       wrap.style.transform = '';
