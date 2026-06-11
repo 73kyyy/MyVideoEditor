@@ -163,17 +163,27 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 /* 开源许可弹窗 */
 .lic-modal-overlay {
   position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-  display: none; align-items: flex-end; justify-content: center; z-index: 100;
-  touch-action: none;
+  display: none; z-index: 100;
 }
-.lic-modal-overlay.show { display: flex; }
-.lic-sheet {
-  width: 100%; max-height: 75%; background: #1C1C1E; border-radius: 20px 20px 0 0;
-  padding: 20px 20px 40px; animation: slideUp 0.3s ease;
-  overflow-y: scroll; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+.lic-modal-overlay.show { display: block; }
+.lic-sheet-wrap {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  max-height: 75%; display: flex; flex-direction: column;
+  background: #1C1C1E; border-radius: 20px 20px 0 0;
+  animation: slideUp 0.3s ease;
+  transform: translateY(0); transition: transform 0.3s ease;
 }
-.lic-sheet::-webkit-scrollbar { display: none; }
-.lic-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 16px; }
+.lic-sheet-wrap.dragging { transition: none; }
+.lic-sheet-wrap.closing { transform: translateY(100%); }
+.lic-handle-area {
+  padding: 12px 0 8px; cursor: grab; touch-action: none; flex-shrink: 0;
+}
+.lic-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto; }
+.lic-scroll {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 0 20px 20px; overscroll-behavior-y: contain;
+}
+.lic-scroll::-webkit-scrollbar { display: none; }
 .lic-section { margin-bottom: 16px; }
 .lic-section-title { font-size: 11px; color: #48484A; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px; }
 .lic-entry { padding: 10px 0; border-bottom: 0.33px solid #2C2C2E; cursor: pointer; transition: background 0.12s; }
@@ -198,17 +208,27 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 /* 许可证详情弹窗 */
 .lic-detail-overlay {
   position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-  display: none; align-items: flex-end; justify-content: center; z-index: 200;
-  touch-action: none;
+  display: none; z-index: 200;
 }
-.lic-detail-overlay.show { display: flex; }
-.lic-detail-sheet {
-  width: 100%; max-height: 80%; background: #1C1C1E; border-radius: 20px 20px 0 0;
-  padding: 20px 20px 40px; animation: slideUp 0.3s ease;
-  overflow-y: scroll; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+.lic-detail-overlay.show { display: block; }
+.lic-detail-wrap {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  max-height: 80%; display: flex; flex-direction: column;
+  background: #1C1C1E; border-radius: 20px 20px 0 0;
+  animation: slideUp 0.3s ease;
+  transform: translateY(0); transition: transform 0.3s ease;
 }
-.lic-detail-sheet::-webkit-scrollbar { display: none; }
-.lic-detail-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 16px; }
+.lic-detail-wrap.dragging { transition: none; }
+.lic-detail-wrap.closing { transform: translateY(100%); }
+.lic-detail-handle-area {
+  padding: 12px 0 8px; cursor: grab; touch-action: none; flex-shrink: 0;
+}
+.lic-detail-handle-bar { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto; }
+.lic-detail-scroll {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 0 20px 20px; overscroll-behavior-y: contain;
+}
+.lic-detail-scroll::-webkit-scrollbar { display: none; }
 .lic-detail-name { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 4px; }
 .lic-detail-type { font-size: 12px; color: #636366; margin-bottom: 16px; }
 .lic-detail-text {
@@ -400,9 +420,12 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
   </div>
 
   <!-- 开源许可弹窗 -->
-  <div class="lic-modal-overlay" id="licModal">
-    <div class="lic-sheet">
-      <div class="lic-handle"></div>
+  <div class="lic-modal-overlay" id="licModal" onclick="hideLicenses()">
+    <div class="lic-sheet-wrap" id="licSheetWrap" onclick="event.stopPropagation()">
+      <div class="lic-handle-area" id="licHandleArea">
+        <div class="lic-handle"></div>
+      </div>
+      <div class="lic-scroll">
 
       <div class="lic-section">
         <div class="lic-section-title">AI 框架</div>
@@ -475,18 +498,22 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
         </div>
       </div>
 
-      <button class="lic-close" onclick="hideLicenses()">关闭</button>
+      </div>
     </div>
   </div>
 
   <!-- 许可证详情弹窗 -->
-  <div class="lic-detail-overlay" id="licDetailModal">
-    <div class="lic-detail-sheet">
-      <div class="lic-detail-handle"></div>
-      <div class="lic-detail-name" id="licDetailName"></div>
-      <div class="lic-detail-type" id="licDetailType"></div>
-      <div class="lic-detail-text" id="licDetailText"></div>
-      <button class="lic-detail-close" onclick="hideLicDetail()">关闭</button>
+  <div class="lic-detail-overlay" id="licDetailModal" onclick="hideLicDetail()">
+    <div class="lic-detail-wrap" id="licDetailWrap" onclick="event.stopPropagation()">
+      <div class="lic-detail-handle-area" id="licDetailHandleArea">
+        <div class="lic-detail-handle-bar"></div>
+      </div>
+      <div class="lic-detail-scroll">
+        <div class="lic-detail-name" id="licDetailName"></div>
+        <div class="lic-detail-type" id="licDetailType"></div>
+        <div class="lic-detail-text" id="licDetailText"></div>
+        <button class="lic-detail-close" onclick="hideLicDetail()">关闭</button>
+      </div>
     </div>
   </div>
 </div>
@@ -495,7 +522,52 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 function showLogin() { document.getElementById('loginModal').classList.add('show'); }
 function hideLogin() { document.getElementById('loginModal').classList.remove('show'); }
 function showLicenses() { document.getElementById('licModal').classList.add('show'); }
-function hideLicenses() { document.getElementById('licModal').classList.remove('show'); }
+function hideLicenses() {
+  const wrap = document.getElementById('licSheetWrap');
+  wrap.classList.add('closing');
+  setTimeout(() => {
+    wrap.classList.remove('closing');
+    document.getElementById('licModal').classList.remove('show');
+  }, 300);
+}
+function hideLicDetail() {
+  const wrap = document.getElementById('licDetailWrap');
+  wrap.classList.add('closing');
+  setTimeout(() => {
+    wrap.classList.remove('closing');
+    document.getElementById('licDetailModal').classList.remove('show');
+  }, 300);
+}
+
+// 下拉关闭手势
+function setupDrag(handleId, wrapId, closeFn) {
+  const handle = document.getElementById(handleId);
+  const wrap = document.getElementById(wrapId);
+  let startY = 0, currentY = 0, dragging = false;
+
+  handle.addEventListener('mousedown', e => { startY = e.clientY; dragging = true; wrap.classList.add('dragging'); });
+  handle.addEventListener('touchstart', e => { startY = e.touches[0].clientY; dragging = true; wrap.classList.add('dragging'); }, {passive: true});
+
+  document.addEventListener('mousemove', e => { if (!dragging) return; currentY = e.clientY; const dy = Math.max(0, currentY - startY); wrap.style.transform = 'translateY(' + dy + 'px)'; });
+  document.addEventListener('touchmove', e => { if (!dragging) return; currentY = e.touches[0].clientY; const dy = Math.max(0, currentY - startY); wrap.style.transform = 'translateY(' + dy + 'px)'; }, {passive: true});
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    wrap.classList.remove('dragging');
+    const dy = currentY - startY;
+    if (dy > 80) {
+      closeFn();
+    } else {
+      wrap.style.transform = '';
+    }
+  }
+  document.addEventListener('mouseup', endDrag);
+  document.addEventListener('touchend', endDrag);
+}
+
+setupDrag('licHandleArea', 'licSheetWrap', hideLicenses);
+setupDrag('licDetailHandleArea', 'licDetailWrap', hideLicDetail);
 
 const licenses = {
   onnx: { name: 'ONNX Runtime', type: 'MIT License', text: 'Copyright (c) Microsoft Corporation\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.' },
