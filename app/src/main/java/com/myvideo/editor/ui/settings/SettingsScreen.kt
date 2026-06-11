@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -87,6 +88,8 @@ fun SettingsScreen(
     var showLicensesSheet by remember { mutableStateOf(false) }
     var selectedLic by remember { mutableStateOf<LicenseEntry?>(null) }
     var agreedToTerms by remember { mutableStateOf(false) }
+    var showPricingPage by remember { mutableStateOf(false) }
+    var selectedPlan by remember { mutableStateOf("year") }
 
     Box(modifier = Modifier.fillMaxSize().background(Black)) {
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 40.dp)) {
@@ -125,7 +128,7 @@ fun SettingsScreen(
             }
 
             // VIP 会员卡
-            item { VipCard(isMember = isMember, onOpenMember = onOpenMemberCenter) }
+            item { VipCard(isMember = isMember, onOpenMember = { showPricingPage = true }) }
 
             // 安全与隐私
             item {
@@ -303,6 +306,16 @@ fun SettingsScreen(
                     if (showLicensesSheet) showLicensesSheet = false
                 })
         }
+
+        // 定价页面
+        if (showPricingPage) {
+            PricingPage(
+                selectedPlan = selectedPlan,
+                onSelectPlan = { selectedPlan = it },
+                onSubscribe = { /* handle subscribe */ showPricingPage = false },
+                onBack = { showPricingPage = false }
+            )
+        }
     }
 }
 
@@ -423,4 +436,151 @@ private fun ToggleRow(icon: String, title: String, checked: Boolean, onCheckedCh
 @Composable
 private fun GroupSep() {
     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(0.33.dp).background(Sep))
+}
+
+// ===== 定价页面 =====
+private data class PlanOption(
+    val id: String, val name: String, val price: String, val unit: String,
+    val save: String = "", val recommended: Boolean = false, val daily: String
+)
+
+private val plans = listOf(
+    PlanOption("month", "月付", "¥29", "/月", daily = "¥0.97"),
+    PlanOption("quarter", "季付", "¥76", "/季", "省 13%", daily = "¥0.84"),
+    PlanOption("year", "年付", "¥228", "/年", "省 35%", recommended = true, daily = "¥0.63")
+)
+
+@Composable
+private fun PricingPage(
+    selectedPlan: String,
+    onSelectPlan: (String) -> Unit,
+    onSubscribe: () -> Unit,
+    onBack: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize().background(Black)) {
+        // 导航栏
+        Row(modifier = Modifier.fillMaxWidth().height(54.dp).padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(28.dp).clickable { onBack() },
+                contentAlignment = Alignment.Center) {
+                Text("‹", fontSize = 22.sp, color = T1)
+            }
+            Text("NexClip 会员", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = T1,
+                modifier = Modifier.weight(1f).padding(end = 28.dp), textAlign = TextAlign.Center)
+        }
+
+        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)) {
+            // 顶部皇冠+标题
+            item {
+                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp)) {
+                    Box(modifier = Modifier.size(56.dp).clip(CircleShape)
+                        .background(Brush.linearGradient(listOf(Gold, Color(0xFFB8962E)))),
+                        contentAlignment = Alignment.Center) {
+                        Text("★", fontSize = 26.sp, color = Color(0xFF1A1008))
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text("NexClip 会员", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = GoldT)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("解锁全部 AI 智能功能，释放创作无限可能", fontSize = 13.sp, color = GoldD)
+                }
+            }
+
+            // 功能标签
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    val features = listOf("AI 抠图", "超分辨率", "智能插帧", "AI 降噪", "语音识别", "无水印导出")
+                    features.chunked(3).forEach { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            row.forEach { feat ->
+                                Box(modifier = Modifier.clip(RoundedCornerShape(16.dp))
+                                    .background(Gold.copy(alpha = 0.08f))
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)) {
+                                    Text(feat, fontSize = 12.sp, color = GoldT)
+                                }
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(28.dp))
+            }
+
+            // 套餐选择
+            items(plans) { plan ->
+                val isSelected = selectedPlan == plan.id
+                Box(modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (isSelected) Gold.copy(alpha = 0.06f) else Card)
+                    .border(1.5.dp, if (isSelected) Gold else Color(0xFF2C2C2E), RoundedCornerShape(14.dp))
+                    .clickable { onSelectPlan(plan.id) }
+                    .padding(horizontal = 18.dp, vertical = 16.dp)
+                ) {
+                    Row(modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text(plan.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = T1)
+                            if (plan.save.isNotEmpty()) {
+                                Box(modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(4.dp))
+                                    .background(Gold.copy(alpha = 0.12f))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)) {
+                                    Text(plan.save, fontSize = 10.sp, color = Gold, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(plan.price, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = GoldT)
+                            Text(plan.unit, fontSize = 12.sp, color = GoldD)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Box(modifier = Modifier.size(20.dp).clip(CircleShape)
+                                .background(if (isSelected) Gold else Color.Transparent)
+                                .border(1.5.dp, if (isSelected) Gold else Arrow, CircleShape),
+                                contentAlignment = Alignment.Center) {
+                                if (isSelected) {
+                                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF1A1008)))
+                                }
+                            }
+                        }
+                    }
+                    if (plan.recommended) {
+                        Box(modifier = Modifier.align(Alignment.TopEnd)
+                            .offset(y = (-16).dp).offset(x = (-18).dp)
+                            .clip(RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp))
+                            .background(Brush.linearGradient(listOf(Gold, GoldL)))
+                            .padding(horizontal = 10.dp, vertical = 3.dp)) {
+                            Text("推荐", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1008))
+                        }
+                    }
+                }
+            }
+
+            // 每天价格
+            item {
+                val daily = plans.find { it.id == selectedPlan }?.daily ?: "¥0.63"
+                Text("折合每天仅 $daily", fontSize = 12.sp, color = GoldD,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp), textAlign = TextAlign.Center)
+            }
+
+            // 订阅按钮
+            item {
+                Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                    .background(Brush.linearGradient(listOf(Gold, GoldL)))
+                    .clickable { onSubscribe() }
+                    .padding(vertical = 15.dp),
+                    contentAlignment = Alignment.Center) {
+                    Text("立即订阅", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1008))
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            // 底部说明
+            item {
+                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()) {
+                    Text("会员可随时取消自动续费 · 虚拟商品不支持无理由退款",
+                        fontSize = 10.sp, color = Color(0xFF48484A), textAlign = TextAlign.Center)
+                }
+            }
+        }
+    }
 }
