@@ -230,8 +230,8 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
         <div class="login-subtitle">登录后同步你的创作数据</div>
         <div class="login-grid">
           <div class="login-item" onclick="doLogin('phone')"><div class="login-circle login-btn" id="loginPhone"><svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#0A84FF" stroke-width="1.5"/><circle cx="12" cy="17" r="1" fill="#0A84FF"/></svg></div><span>手机号</span></div>
-          <div class="login-item" onclick="doLogin('wechat')"><div class="login-circle login-btn" id="loginWechat"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 4C5.36 4 2 6.69 2 10c0 1.89 1.08 3.56 2.78 4.66L4 17l2.56-1.28C7.57 16.07 8.5 16.2 9.5 16.2c.27 0 .53-.01.79-.04C10.1 15.6 10 15.06 10 14.5 10 11.46 12.91 9 16.5 9c.34 0 .67.02 1 .06C16.87 6.17 13.5 4 9.5 4z" fill="#07C160"/><circle cx="7.5" cy="9.5" r="0.8" fill="white"/><circle cx="11.5" cy="9.5" r="0.8" fill="white"/><path d="M16.5 10.5c-3.04 0-5.5 2.01-5.5 4.5s2.46 4.5 5.5 4.5c.67 0 1.31-.1 1.89-.28L20.5 20.5l-.67-1.68C21.18 17.87 22 16.53 22 15c0-2.49-2.46-4.5-5.5-4.5z" fill="#07C160" opacity="0.85"/><circle cx="14.5" cy="14.5" r="0.7" fill="white"/><circle cx="18.5" cy="14.5" r="0.7" fill="white"/></svg></div><span>微信</span></div>
-          <div class="login-item" onclick="doLogin('qq')"><div class="login-circle login-btn" id="loginQQ"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 1.93.78 3.68 2.05 4.95-.45.98-1.1 1.82-1.55 2.3-.25.27-.1.7.26.73 1.12.1 2.5-.2 3.54-.65.85.3 1.76.47 2.7.47s1.85-.17 2.7-.47c1.04.45 2.42.75 3.54.65.36-.03.51-.46.26-.73-.45-.48-1.1-1.32-1.55-2.3A6.99 6.99 0 0019 9c0-3.87-3.13-7-7-7z" fill="#12B7F5"/><ellipse cx="9.5" cy="8.5" rx="1.2" ry="1.5" fill="white"/><ellipse cx="14.5" cy="8.5" rx="1.2" ry="1.5" fill="white"/></svg></div><span>QQ</span></div>
+          <div class="login-item" onclick="doLogin('wechat')"><div class="login-circle login-btn" id="loginWechat"><svg viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#07C160"/><path d="M16.5 10.5c-.17-2.8-2.6-5-5.6-5C7.7 5.5 5 7.9 5 10.9c0 1.6.7 3 1.9 4l-.5 1.8 2-.9c.7.2 1.4.4 2.1.4.2 0 .4 0 .6-.05C11 15.6 11 14.8 11 14c0-2.5 2.5-4.5 5.5-4.5z" fill="white"/><circle cx="8.5" cy="9.5" r="0.7" fill="#07C160"/><circle cx="12.5" cy="9.5" r="0.7" fill="#07C160"/><path d="M19 14.5c0-2-2-3.5-4.5-3.5S10 12.5 10 14.5s2 3.5 4.5 3.5c.6 0 1.1-.1 1.6-.3l1.6.7-.4-1.4c1-.8 1.7-1.9 1.7-3.2z" fill="white"/><circle cx="13" cy="14" r="0.5" fill="#07C160"/><circle cx="16" cy="14" r="0.5" fill="#07C160"/></svg></div><span>微信</span></div>
+          <div class="login-item" onclick="doLogin('qq')"><div class="login-circle login-btn" id="loginQQ"><svg viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#12B7F5"/><path d="M12 4.5c-3.3 0-6 2.5-6 5.6 0 1.7.6 3.2 1.7 4.3-.2.7-.6 1.5-1.2 2.1 0 0 1.6-.2 2.8-.9.8.3 1.7.5 2.7.5s1.9-.2 2.7-.5c1.2.7 2.8.9 2.8.9-.6-.6-1-1.4-1.2-2.1 1.1-1.1 1.7-2.6 1.7-4.3 0-3.1-2.7-5.6-6-5.6z" fill="white"/><ellipse cx="9.8" cy="9.8" rx="1" ry="1.2" fill="#12B7F5"/><ellipse cx="14.2" cy="9.8" rx="1" ry="1.2" fill="#12B7F5"/><path d="M8 15c-.3.8-.8 1.5-.5 1.8.3.2 1-.2 1.5-.6" fill="white" opacity="0.8"/><path d="M16 15c.3.8.8 1.5.5 1.8-.3.2-1-.2-1.5-.6" fill="white" opacity="0.8"/></svg></div><span>QQ</span></div>
         </div>
         <div class="login-cancel" onclick="closeSheet('login')">取消</div>
         <div class="login-terms">
@@ -445,7 +445,7 @@ document.querySelectorAll('.sheet-handle-area').forEach(handle => {
     if (!dragging) return;
     dragging = false;
     wrap.classList.remove('dragging');
-    if (currentY - startY > 20) closeSheet(name);
+    if (currentY > startY) closeSheet(name);
     else wrap.style.transform = '';
   }
   document.addEventListener('mouseup', endDrag);
