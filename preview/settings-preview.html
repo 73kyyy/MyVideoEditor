@@ -164,11 +164,13 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .lic-modal-overlay {
   position: absolute; inset: 0; background: rgba(0,0,0,0.7);
   display: none; align-items: flex-end; justify-content: center; z-index: 100;
+  touch-action: none;
 }
 .lic-modal-overlay.show { display: flex; }
 .lic-sheet {
   width: 100%; max-height: 75%; background: #1C1C1E; border-radius: 20px 20px 0 0;
-  padding: 20px 20px 40px; animation: slideUp 0.3s ease; overflow-y: auto;
+  padding: 20px 20px 40px; animation: slideUp 0.3s ease;
+  overflow-y: scroll; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
 }
 .lic-sheet::-webkit-scrollbar { display: none; }
 .lic-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 16px; }
@@ -197,11 +199,13 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .lic-detail-overlay {
   position: absolute; inset: 0; background: rgba(0,0,0,0.7);
   display: none; align-items: flex-end; justify-content: center; z-index: 200;
+  touch-action: none;
 }
 .lic-detail-overlay.show { display: flex; }
 .lic-detail-sheet {
   width: 100%; max-height: 80%; background: #1C1C1E; border-radius: 20px 20px 0 0;
-  padding: 20px 20px 40px; animation: slideUp 0.3s ease; overflow-y: auto;
+  padding: 20px 20px 40px; animation: slideUp 0.3s ease;
+  overflow-y: scroll; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
 }
 .lic-detail-sheet::-webkit-scrollbar { display: none; }
 .lic-detail-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 16px; }
