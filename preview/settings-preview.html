@@ -45,6 +45,58 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .profile-id { font-size: 12px; color: #666; margin-top: 3px; }
 .profile-arrow { color: #3A3A3C; font-size: 20px; margin-left: 4px; }
 
+/* VIP 会员卡 */
+.vip-card {
+  margin: 0 16px 20px; border-radius: 12px; padding: 0; overflow: hidden;
+  background: linear-gradient(135deg, #2A1F0A 0%, #1F170A 50%, #18120A 100%);
+  cursor: pointer;
+}
+.vip-inner { padding: 16px 18px; position: relative; }
+.vip-inner::after {
+  content: ''; position: absolute; top: -20px; right: -10px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.vip-row1 { display: flex; align-items: center; position: relative; z-index: 1; }
+.vip-crown {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #D4AF37, #B8962E);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.vip-crown svg { width: 18px; height: 18px; }
+.vip-label { margin-left: 10px; flex: 1; }
+.vip-label-title { font-size: 15px; font-weight: 600; color: #E8D5A0; }
+.vip-label-sub { font-size: 11px; color: #8A7A5A; margin-top: 2px; }
+.vip-btn {
+  font-size: 13px; font-weight: 600; color: #1A1008;
+  background: linear-gradient(135deg, #D4AF37, #E8C84A);
+  padding: 7px 20px; border-radius: 18px; border: none; cursor: pointer;
+}
+.vip-perks {
+  display: flex; gap: 0; margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid rgba(212,175,55,0.1); position: relative; z-index: 1;
+}
+.vip-perk { flex: 1; text-align: center; }
+.vip-perk-icon {
+  width: 32px; height: 32px; border-radius: 8px; margin: 0 auto 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+.vip-perk-icon svg { width: 16px; height: 16px; }
+.vip-perk span { font-size: 10px; color: #8A7A5A; }
+
+/* 登录方式 */
+.login-section { padding: 0 16px 16px; }
+.login-label { font-size: 12px; color: #555; margin-bottom: 12px; font-weight: 500; }
+.login-grid { display: flex; gap: 24px; }
+.login-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+.login-circle {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #1C1C1E; display: flex; align-items: center; justify-content: center;
+}
+.login-circle svg { width: 22px; height: 22px; }
+.login-item span { font-size: 10px; color: #555; }
+
 /* 设置分组 */
 .group {
   margin: 0 16px 10px; background: #1C1C1E; border-radius: 12px; overflow: hidden;
@@ -61,16 +113,6 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .item-arrow { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
 .item-arrow svg { width: 14px; height: 14px; }
 .sep { height: 0.33px; background: #2C2C2E; margin: 0 16px; }
-
-/* 会员行 - 隐藏式，低调但存在 */
-.member-row .item-title { color: #8A8A8E; font-size: 14px; }
-.member-tag {
-  display: inline-flex; align-items: center; gap: 3px;
-  background: rgba(212,175,55,0.08); padding: 2px 8px; border-radius: 8px;
-  margin-right: 6px;
-}
-.member-tag svg { width: 8px; height: 8px; }
-.member-tag span { font-size: 9px; color: #D4AF37; font-weight: 600; }
 
 /* Toggle */
 .toggle-item { display: flex; align-items: center; padding: 13px 16px; }
@@ -103,44 +145,15 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .bottom-name { font-size: 13px; color: #2C2C2E; font-weight: 600; letter-spacing: 2px; }
 .bottom-ver { font-size: 11px; color: #1C1C1E; margin-top: 4px; }
 
-/* ===== 登录弹窗 ===== */
-.modal-overlay {
-  position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-  display: none; align-items: flex-end; justify-content: center; z-index: 100;
+/* 开源许可 - 隐藏式，极低调 */
+.oss-link {
+  text-align: center; padding: 16px 0 0;
 }
-.modal-overlay.show { display: flex; }
-.modal-sheet {
-  width: 100%; background: #1C1C1E; border-radius: 20px 20px 0 0;
-  padding: 20px 24px 40px; animation: slideUp 0.3s ease;
+.oss-link span {
+  font-size: 10px; color: #1C1C1E; cursor: pointer;
+  transition: color 0.2s;
 }
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.modal-handle {
-  width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C;
-  margin: 0 auto 20px;
-}
-.modal-title { font-size: 18px; font-weight: 600; color: #fff; text-align: center; margin-bottom: 6px; }
-.modal-subtitle { font-size: 13px; color: #636366; text-align: center; margin-bottom: 28px; }
-.modal-logins { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
-.modal-login-item {
-  display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;
-}
-.modal-login-circle {
-  width: 50px; height: 50px; border-radius: 50%;
-  background: #2C2C2E; display: flex; align-items: center; justify-content: center;
-  transition: background 0.2s;
-}
-.modal-login-circle:hover { background: #3A3A3C; }
-.modal-login-circle svg { width: 26px; height: 26px; }
-.modal-login-item span { font-size: 11px; color: #8E8E93; }
-.modal-cancel {
-  width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E;
-  border: none; color: #8E8E93; font-size: 15px; font-weight: 500;
-  cursor: pointer; text-align: center;
-}
-.modal-cancel:hover { background: #3A3A3C; }
-.modal-terms { text-align: center; margin-top: 14px; }
-.modal-terms span { font-size: 10px; color: #48484A; }
-.modal-terms a { color: #636366; text-decoration: none; }
+.oss-link span:hover { color: #2C2C2E; }
 </style>
 </head>
 <body>
@@ -162,8 +175,8 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
       <span class="nav-title">设置</span>
     </div>
 
-    <!-- 用户信息 - 点击弹出登录 -->
-    <div class="profile" onclick="showLogin()">
+    <!-- 用户信息 -->
+    <div class="profile">
       <div class="profile-avatar">
         <svg viewBox="0 0 30 30" fill="none">
           <circle cx="15" cy="12" r="5" stroke="#555" stroke-width="1.5"/>
@@ -175,6 +188,81 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
         <div class="profile-id">点击登录账号</div>
       </div>
       <span class="profile-arrow">›</span>
+    </div>
+
+    <!-- VIP 会员卡 -->
+    <div class="vip-card">
+      <div class="vip-inner">
+        <div class="vip-row1">
+          <div class="vip-crown">
+            <svg viewBox="0 0 18 18" fill="none">
+              <path d="M9 2L11.5 7L17 7.5L13 11.5L14 17L9 14.5L4 17L5 11.5L1 7.5L6.5 7L9 2Z" fill="#1A1008"/>
+            </svg>
+          </div>
+          <div class="vip-label">
+            <div class="vip-label-title">NexClip 会员</div>
+            <div class="vip-label-sub">解锁全部 AI 智能功能</div>
+          </div>
+          <button class="vip-btn">开通</button>
+        </div>
+        <div class="vip-perks">
+          <div class="vip-perk">
+            <div class="vip-perk-icon" style="background:rgba(212,175,55,0.1);">
+              <svg viewBox="0 0 16 16" fill="none"><path d="M8 1L14 5L14 11L8 15L2 11L2 5Z" stroke="#D4AF37" stroke-width="1.2"/><path d="M8 4L11 6V10L8 12L5 10V6Z" fill="#D4AF37" opacity="0.3"/></svg>
+            </div>
+            <span>AI 抠图</span>
+          </div>
+          <div class="vip-perk">
+            <div class="vip-perk-icon" style="background:rgba(212,175,55,0.1);">
+              <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="#D4AF37" stroke-width="1.2"/><path d="M5 8L7 10L11 6" stroke="#D4AF37" stroke-width="1.2" fill="none"/></svg>
+            </div>
+            <span>超分辨率</span>
+          </div>
+          <div class="vip-perk">
+            <div class="vip-perk-icon" style="background:rgba(212,175,55,0.1);">
+              <svg viewBox="0 0 16 16" fill="none"><path d="M3 12L8 2L13 12Z" stroke="#D4AF37" stroke-width="1.2" fill="none"/></svg>
+            </div>
+            <span>智能插帧</span>
+          </div>
+          <div class="vip-perk">
+            <div class="vip-perk-icon" style="background:rgba(212,175,55,0.1);">
+              <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#D4AF37" stroke-width="1.2"/><path d="M8 5V8L10.5 9.5" stroke="#D4AF37" stroke-width="1" fill="none"/></svg>
+            </div>
+            <span>AI 降噪</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 登录方式 -->
+    <div class="login-section">
+      <div class="login-label">第三方登录</div>
+      <div class="login-grid">
+        <div class="login-item">
+          <div class="login-circle">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#0A84FF" stroke-width="1.5"/><circle cx="12" cy="17" r="1" fill="#0A84FF"/></svg>
+          </div>
+          <span>手机号</span>
+        </div>
+        <div class="login-item">
+          <div class="login-circle">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 5C5.7 5 3 7.2 3 10c0 1.6.8 3 2.2 4L4.5 16l2.2-1.1c.8.4 1.5.5 2.3.5.3 0 .5 0 .8-.05C9.3 14.7 9 13.9 9 13c0-3 2.7-5.5 6-5.5.3 0 .5 0 .8.05C15.3 6 12.4 5 9 5z" fill="#07C160"/><path d="M15 8.5c-2.8 0-5 2-5 4.5s2.2 4.5 5 4.5c.6 0 1.1-.1 1.6-.2L18.5 18.5l-.6-1.5C19.2 16 20 14.8 20 13c0-2.5-2.2-4.5-5-4.5z" fill="#07C160" opacity="0.7"/></svg>
+          </div>
+          <span>微信</span>
+        </div>
+        <div class="login-item">
+          <div class="login-circle">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3C8.1 3 5 6.5 5 10.8c0 1.8.5 3.4 1.3 4.7L5 18.2l2.5-.7c1.3.8 2.9 1.3 4.5 1.3s3.2-.5 4.5-1.3l2.5.7-1.3-2.7c.8-1.3 1.3-2.9 1.3-4.7C19 6.5 15.9 3 12 3z" fill="#12B7F5" opacity="0.8"/><circle cx="10" cy="10" r="1" fill="#fff"/><circle cx="14" cy="10" r="1" fill="#fff"/></svg>
+          </div>
+          <span>QQ</span>
+        </div>
+        <div class="login-item">
+          <div class="login-circle">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M17 9c-.1-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.7-2.2.9-1.3 1.2-2.5 1.2-2.6-.1 0-2.3-.9-2.3-3.5z" fill="#fff"/></svg>
+          </div>
+          <span>Apple</span>
+        </div>
+      </div>
     </div>
 
     <!-- 安全与隐私 -->
@@ -212,20 +300,8 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
       </div>
     </div>
 
-    <!-- 关于 - 会员隐藏在这里 -->
+    <!-- 关于 -->
     <div class="group">
-      <div class="item member-row" onclick="showMemberInfo()">
-        <div class="item-icon">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M10 2L11.5 7L17 7.5L13 11.5L14 17L10 14.5L6 17L7 11.5L3 7.5L8.5 7L10 2Z" stroke="#636366" stroke-width="1.2" fill="none"/></svg>
-        </div>
-        <span class="item-title">NexClip 会员</span>
-        <div class="member-tag">
-          <svg viewBox="0 0 10 10"><path d="M5 0 L10 4 L5 10 L0 4 Z" fill="#D4AF37"/></svg>
-          <span>VIP</span>
-        </div>
-        <div class="item-arrow"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4L5 11" stroke="#3A3A3C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </div>
-      <div class="sep"></div>
       <div class="item">
         <div class="item-icon">
           <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#8E8E93" stroke-width="1.3" fill="none"/><path d="M10 7v0M10 10v4" stroke="#8E8E93" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -242,14 +318,6 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
         <span class="item-title">检查更新</span>
         <div class="item-arrow"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4L5 11" stroke="#3A3A3C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </div>
-      <div class="sep"></div>
-      <div class="item">
-        <div class="item-icon">
-          <svg viewBox="0 0 20 20" fill="none"><path d="M5 3h10l2 4-6 9-6-9 2-4z" stroke="#8E8E93" stroke-width="1.3" fill="none"/></svg>
-        </div>
-        <span class="item-title">开源许可</span>
-        <div class="item-arrow"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3l4.5 4L5 11" stroke="#3A3A3C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </div>
     </div>
 
     <!-- 退出登录 -->
@@ -259,59 +327,11 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
     <div class="bottom">
       <div class="bottom-name">NexClip</div>
       <div class="bottom-ver">v1.0.0</div>
-    </div>
-  </div>
-
-  <!-- 登录弹窗 -->
-  <div class="modal-overlay" id="loginModal">
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <div class="modal-title">登录 NexClip</div>
-      <div class="modal-subtitle">登录后同步你的创作数据</div>
-      <div class="modal-logins">
-        <div class="modal-login-item">
-          <div class="modal-login-circle">
-            <svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#0A84FF" stroke-width="1.5"/><circle cx="12" cy="17" r="1" fill="#0A84FF"/></svg>
-          </div>
-          <span>手机号</span>
-        </div>
-        <div class="modal-login-item">
-          <div class="modal-login-circle">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M9 5C5.7 5 3 7.2 3 10c0 1.6.8 3 2.2 4L4.5 16l2.2-1.1c.8.4 1.5.5 2.3.5.3 0 .5 0 .8-.05C9.3 14.7 9 13.9 9 13c0-3 2.7-5.5 6-5.5.3 0 .5 0 .8.05C15.3 6 12.4 5 9 5z" fill="#07C160"/><path d="M15 8.5c-2.8 0-5 2-5 4.5s2.2 4.5 5 4.5c.6 0 1.1-.1 1.6-.2L18.5 18.5l-.6-1.5C19.2 16 20 14.8 20 13c0-2.5-2.2-4.5-5-4.5z" fill="#07C160" opacity="0.7"/></svg>
-          </div>
-          <span>微信</span>
-        </div>
-        <div class="modal-login-item">
-          <div class="modal-login-circle">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3C8.1 3 5 6.5 5 10.8c0 1.8.5 3.4 1.3 4.7L5 18.2l2.5-.7c1.3.8 2.9 1.3 4.5 1.3s3.2-.5 4.5-1.3l2.5.7-1.3-2.7c.8-1.3 1.3-2.9 1.3-4.7C19 6.5 15.9 3 12 3z" fill="#12B7F5" opacity="0.8"/><circle cx="10" cy="10" r="1" fill="#fff"/><circle cx="14" cy="10" r="1" fill="#fff"/></svg>
-          </div>
-          <span>QQ</span>
-        </div>
-        <div class="modal-login-item">
-          <div class="modal-login-circle">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M17 9c-.1-2.3 1.9-3.4 2-3.5-1.1-1.6-2.7-1.8-3.3-1.8-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.7-2.2.9-1.3 1.2-2.5 1.2-2.6-.1 0-2.3-.9-2.3-3.5z" fill="#fff"/></svg>
-          </div>
-          <span>Apple</span>
-        </div>
-      </div>
-      <div class="modal-cancel" onclick="hideLogin()">取消</div>
-      <div class="modal-terms">
-        <span>登录即表示同意 <a href="#">用户协议</a> 和 <a href="#">隐私政策</a></span>
-      </div>
+      <!-- 开源许可 - 隐藏式，颜色极淡几乎看不见 -->
+      <div class="oss-link"><span>开源许可</span></div>
     </div>
   </div>
 </div>
 
-<script>
-function showLogin() {
-  document.getElementById('loginModal').classList.add('show');
-}
-function hideLogin() {
-  document.getElementById('loginModal').classList.remove('show');
-}
-function showMemberInfo() {
-  // 点击会员行跳转到会员中心
-}
-</script>
 </body>
 </html>

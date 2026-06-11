@@ -1,8 +1,5 @@
 package com.myvideo.editor.ui.settings
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,8 +29,10 @@ private val Arrow = Color(0xFF3A3A3C)
 private val T1 = Color(0xFFFFFFFF)
 private val T2 = Color(0xFF636366)
 private val T3 = Color(0xFF555555)
-private val T4 = Color(0xFF8A8A8E)
 private val Gold = Color(0xFFD4AF37)
+private val GoldL = Color(0xFFE8C84A)
+private val GoldT = Color(0xFFE8D5A0)
+private val GoldD = Color(0xFF8A7A5A)
 private val Red = Color(0xFFFF453A)
 private val SwOff = Color(0xFF39393D)
 
@@ -51,9 +50,8 @@ fun SettingsScreen(
     var userName by remember { mutableStateOf("未登录") }
     var analyticsEnabled by remember { mutableStateOf(false) }
     var appLockEnabled by remember { mutableStateOf(false) }
-    var showLoginSheet by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().background(Black)) {
+    Column(modifier = Modifier.fillMaxSize().background(Black)) {
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 40.dp)) {
 
             // ===== 导航栏 =====
@@ -69,9 +67,9 @@ fun SettingsScreen(
                 }
             }
 
-            // ===== 用户信息 - 点击弹出登录 =====
+            // ===== 用户信息 =====
             item {
-                Row(modifier = Modifier.fillMaxWidth().clickable { showLoginSheet = true }
+                Row(modifier = Modifier.fillMaxWidth().clickable { /* profile */ }
                     .padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 16.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(60.dp).clip(CircleShape).background(Card),
@@ -89,6 +87,25 @@ fun SettingsScreen(
                 }
             }
 
+            // ===== VIP 会员卡 =====
+            item { VipCard(isMember = isMember, onOpenMember = onOpenMemberCenter) }
+
+            // ===== 第三方登录 =====
+            item {
+                Text("第三方登录", fontSize = 12.sp, color = T3, fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 12.dp))
+            }
+            item {
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    LoginBtn("📱", "手机号")
+                    LoginBtn("💬", "微信")
+                    LoginBtn("🐧", "QQ")
+                    LoginBtn("🍎", "Apple")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             // ===== 安全与隐私 =====
             item {
                 SettingsGroup {
@@ -102,36 +119,12 @@ fun SettingsScreen(
                 }
             }
 
-            // ===== 关于（会员隐藏在这里） =====
+            // ===== 关于 =====
             item {
                 SettingsGroup {
-                    // 会员行 - 低调隐藏式
-                    Row(modifier = Modifier.fillMaxWidth().clickable { onOpenMemberCenter() }
-                        .padding(horizontal = 16.dp, vertical = 13.dp),
-                        verticalAlignment = Alignment.CenterVertically) {
-                        Text("★", fontSize = 16.sp, color = T2, modifier = Modifier.width(22.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("NexClip 会员", fontSize = 14.sp, color = T4, modifier = Modifier.weight(1f))
-                        // 小VIP标签
-                        Box(modifier = Modifier.clip(RoundedCornerShape(8.dp))
-                            .background(Gold.copy(0.08f))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                DiamondIcon(size = 7.dp, tint = Gold)
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text("VIP", fontSize = 9.sp, color = Gold, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("›", fontSize = 16.sp, color = Arrow)
-                    }
-                    GroupSep()
                     SettingRow("ℹ️", "版本号", value = "v1.0.0", onClick = onOpenAbout)
                     GroupSep()
                     SettingRow("🔄", "检查更新", onClick = { /* check */ })
-                    GroupSep()
-                    SettingRow("💎", "开源许可", onClick = onOpenLicenses)
                 }
             }
 
@@ -154,62 +147,70 @@ fun SettingsScreen(
                         fontWeight = FontWeight.SemiBold, letterSpacing = 2.sp)
                     Text("v1.0.0", fontSize = 11.sp, color = Color(0xFF1C1C1E),
                         modifier = Modifier.padding(top = 4.dp))
+                    // 开源许可 - 隐藏式，颜色极淡
+                    Text("开源许可", fontSize = 10.sp, color = Color(0xFF1C1C1E),
+                        modifier = Modifier.padding(top = 16.dp).clickable { onOpenLicenses() })
                 }
             }
-        }
-
-        // ===== 登录弹窗（底部滑出） =====
-        AnimatedVisibility(
-            visible = showLoginSheet,
-            enter = slideInVertically { it },
-            exit = slideOutVertically { it },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                .background(Card)
-                .padding(horizontal = 24.dp, vertical = 20.dp)
-                .padding(bottom = 40.dp)
-            ) {
-                // 拖拽条
-                Box(modifier = Modifier.width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp))
-                    .background(Arrow).align(Alignment.CenterHorizontally))
-                Spacer(modifier = Modifier.height(20.dp))
-                Text("登录 NexClip", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
-                    color = T1, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.height(6.dp))
-                Text("登录后同步你的创作数据", fontSize = 13.sp, color = T2,
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.height(28.dp))
-                // 登录方式
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    LoginBtn("📱", "手机号")
-                    LoginBtn("💬", "微信")
-                    LoginBtn("🐧", "QQ")
-                    LoginBtn("🍎", "Apple")
-                }
-                Spacer(modifier = Modifier.height(20.dp))
-                // 取消
-                Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                    .background(CardHover).clickable { showLoginSheet = false }
-                    .padding(vertical = 14.dp), contentAlignment = Alignment.Center) {
-                    Text("取消", fontSize = 15.sp, color = T2, fontWeight = FontWeight.Medium)
-                }
-                Spacer(modifier = Modifier.height(14.dp))
-                Text("登录即表示同意 用户协议 和 隐私政策", fontSize = 10.sp, color = Color(0xFF48484A),
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-            }
-        }
-
-        // 遮罩层
-        if (showLoginSheet) {
-            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f))
-                .clickable { showLoginSheet = false })
         }
     }
 }
 
-// ===== 钻石图标 =====
+// ===== VIP 会员卡 =====
+@Composable
+private fun VipCard(isMember: Boolean, onOpenMember: () -> Unit) {
+    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        .clip(RoundedCornerShape(12.dp))
+        .background(Brush.linearGradient(listOf(Color(0xFF2A1F0A), Color(0xFF1F170A), Color(0xFF18120A))))
+        .clickable { onOpenMember() }
+        .padding(18.dp)
+    ) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(32.dp).clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(Gold, Color(0xFFB8962E)))),
+                    contentAlignment = Alignment.Center) {
+                    Text("★", fontSize = 16.sp, color = Color(0xFF1A1008))
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("NexClip 会员", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = GoldT)
+                    Text("解锁全部 AI 智能功能", fontSize = 11.sp, color = GoldD, modifier = Modifier.padding(top = 2.dp))
+                }
+                Box(modifier = Modifier.clip(RoundedCornerShape(18.dp))
+                    .background(Brush.linearGradient(listOf(Gold, GoldL)))
+                    .clickable { onOpenMember() }
+                    .padding(horizontal = 20.dp, vertical = 7.dp)
+                ) {
+                    Text(if (isMember) "续费" else "开通", fontSize = 13.sp,
+                        color = Color(0xFF1A1008), fontWeight = FontWeight.SemiBold)
+                }
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(0.5.dp).background(Gold.copy(0.1f)))
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                VipPerk("AI 抠图")
+                VipPerk("超分辨率")
+                VipPerk("智能插帧")
+                VipPerk("AI 降噪")
+            }
+        }
+    }
+}
+
+@Composable
+private fun VipPerk(label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(modifier = Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))
+            .background(Gold.copy(0.1f)), contentAlignment = Alignment.Center) {
+            DiamondIcon(size = 14.dp, tint = Gold)
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(label, fontSize = 10.sp, color = GoldD)
+    }
+}
+
 @Composable
 private fun DiamondIcon(modifier: Modifier = Modifier, size: Dp = 8.dp, tint: Color = Gold) {
     androidx.compose.foundation.Canvas(modifier = modifier.size(size)) {
@@ -227,12 +228,12 @@ private fun DiamondIcon(modifier: Modifier = Modifier, size: Dp = 8.dp, tint: Co
 private fun LoginBtn(icon: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { /* login */ }) {
-        Box(modifier = Modifier.size(50.dp).clip(CircleShape).background(CardHover),
+        Box(modifier = Modifier.size(44.dp).clip(CircleShape).background(Card),
             contentAlignment = Alignment.Center) {
-            Text(icon, fontSize = 22.sp)
+            Text(icon, fontSize = 18.sp)
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(label, fontSize = 11.sp, color = Icon)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(label, fontSize = 10.sp, color = T3)
     }
 }
 
