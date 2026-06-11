@@ -45,28 +45,29 @@ private val BsdColor = Color(0xFFFF9F0A)
 private val LgplColor = Color(0xFFAF52DE)
 
 private data class LicenseEntry(
-    val name: String, val desc: String, val licenseType: String, val licenseColor: Color
+    val name: String, val desc: String, val licenseType: String, val licenseColor: Color,
+    val licenseText: String
 )
 
 private val licenseSections = mapOf(
     "AI 框架" to listOf(
-        LicenseEntry("ONNX Runtime", "跨平台高性能推理引擎", "MIT", MitColor),
-        LicenseEntry("TensorFlow Lite", "移动端机器学习推理框架", "Apache 2.0", ApacheColor),
-        LicenseEntry("PyTorch Mobile", "端侧深度学习推理框架", "BSD 3-Clause", BsdColor)
+        LicenseEntry("ONNX Runtime", "跨平台高性能推理引擎", "MIT", MitColor, "Copyright (c) Microsoft Corporation\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT."),
+        LicenseEntry("TensorFlow Lite", "移动端机器学习推理框架", "Apache 2.0", ApacheColor, "Copyright 2017 The TensorFlow Authors\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."),
+        LicenseEntry("PyTorch Mobile", "端侧深度学习推理框架", "BSD 3-Clause", BsdColor, "Copyright (c) 2016, Meta Platforms, Inc. All rights reserved.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice.\n2. Redistributions in binary form must reproduce the above copyright notice.\n3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.")
     ),
     "AI 模型" to listOf(
-        LicenseEntry("OpenAI Whisper", "语音识别模型", "MIT", MitColor),
-        LicenseEntry("RNNoise", "基于RNN的语音降噪", "BSD 3-Clause", BsdColor),
-        LicenseEntry("RIFE", "实时视频插帧模型", "MIT", MitColor)
+        LicenseEntry("OpenAI Whisper", "语音识别模型", "MIT", MitColor, "Copyright (c) 2022 OpenAI\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED."),
+        LicenseEntry("RNNoise", "基于RNN的语音降噪", "BSD 3-Clause", BsdColor, "Copyright (c) 2017, Mozilla Corporation\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the above copyright notice is retained.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED."),
+        LicenseEntry("RIFE", "实时视频插帧模型", "MIT", MitColor, "Copyright (c) 2021 Megvii Research\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.")
     ),
     "多媒体处理" to listOf(
-        LicenseEntry("FFmpeg", "音视频编解码库", "LGPL 2.1+", LgplColor),
-        LicenseEntry("OpenCV", "计算机视觉库", "Apache 2.0", ApacheColor)
+        LicenseEntry("FFmpeg", "音视频编解码库", "LGPL 2.1+", LgplColor, "FFmpeg is licensed under the GNU Lesser General Public License (LGPL) version 2.1 or later.\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."),
+        LicenseEntry("OpenCV", "计算机视觉库", "Apache 2.0", ApacheColor, "Copyright (c) 2000-2023 Intel Corporation\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License.\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.")
     ),
     "Android 框架" to listOf(
-        LicenseEntry("Jetpack Compose", "Android 现代 UI 工具包", "Apache 2.0", ApacheColor),
-        LicenseEntry("Kotlin / Kotlin Coroutines", "编程语言与协程库", "Apache 2.0", ApacheColor),
-        LicenseEntry("OkHttp", "HTTP 客户端", "Apache 2.0", ApacheColor)
+        LicenseEntry("Jetpack Compose", "Android 现代 UI 工具包", "Apache 2.0", ApacheColor, "Copyright 2019 The Android Open Source Project\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License."),
+        LicenseEntry("Kotlin / Kotlin Coroutines", "编程语言与协程库", "Apache 2.0", ApacheColor, "Copyright 2010-2023 JetBrains s.r.o.\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License."),
+        LicenseEntry("OkHttp", "HTTP 客户端", "Apache 2.0", ApacheColor, "Copyright 2014 Square, Inc.\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License.")
     )
 )
 
@@ -84,6 +85,7 @@ fun SettingsScreen(
     var analyticsEnabled by remember { mutableStateOf(false) }
     var showLoginSheet by remember { mutableStateOf(false) }
     var showLicensesSheet by remember { mutableStateOf(false) }
+    var selectedLic by remember { mutableStateOf<LicenseEntry?>(null) }
 
     Box(modifier = Modifier.fillMaxSize().background(Black)) {
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 40.dp)) {
@@ -231,7 +233,7 @@ fun SettingsScreen(
                                 modifier = Modifier.padding(bottom = 8.dp))
                         }
                         items(entries) { entry ->
-                            Column(modifier = Modifier.padding(vertical = 6.dp)) {
+                            Column(modifier = Modifier.padding(vertical = 6.dp).clickable { selectedLic = entry }) {
                                 Text(entry.name, fontSize = 13.sp, color = Color(0xFFE0E0E0), fontWeight = FontWeight.Medium)
                                 Text(entry.desc, fontSize = 10.sp, color = T2, modifier = Modifier.padding(top = 1.dp))
                                 Box(modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(3.dp))
@@ -248,6 +250,31 @@ fun SettingsScreen(
 
                 Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                     .background(CardHover).clickable { showLicensesSheet = false }
+                    .padding(vertical = 14.dp), contentAlignment = Alignment.Center) {
+                    Text("关闭", fontSize = 15.sp, color = T2, fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+
+        // 许可证详情弹窗
+        if (selectedLic != null) {
+            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f))
+                .clickable { selectedLic = null })
+            Column(modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .background(Card)
+                .padding(horizontal = 20.dp, vertical = 20.dp).padding(bottom = 40.dp)
+            ) {
+                Box(modifier = Modifier.width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp))
+                    .background(Arrow).align(Alignment.CenterHorizontally))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(selectedLic!!.name, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                Text(selectedLic!!.licenseType, fontSize = 12.sp, color = T2, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
+                Text(selectedLic!!.licenseText, fontSize = 11.sp, color = Icon, lineHeight = 18.sp,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                Spacer(modifier = Modifier.height(16.dp))
+                Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                    .background(CardHover).clickable { selectedLic = null }
                     .padding(vertical = 14.dp), contentAlignment = Alignment.Center) {
                     Text("关闭", fontSize = 15.sp, color = T2, fontWeight = FontWeight.Medium)
                 }

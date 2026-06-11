@@ -174,7 +174,8 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 .lic-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 16px; }
 .lic-section { margin-bottom: 16px; }
 .lic-section-title { font-size: 11px; color: #48484A; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px; }
-.lic-entry { padding: 10px 0; border-bottom: 0.33px solid #2C2C2E; }
+.lic-entry { padding: 10px 0; border-bottom: 0.33px solid #2C2C2E; cursor: pointer; transition: background 0.12s; }
+.lic-entry:active { background: rgba(255,255,255,0.04); border-radius: 6px; }
 .lic-entry:last-child { border-bottom: none; }
 .lic-entry-name { font-size: 13px; color: #E0E0E0; font-weight: 500; }
 .lic-entry-desc { font-size: 10px; color: #636366; margin-top: 1px; }
@@ -190,6 +191,31 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
   width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E;
   border: none; color: #8E8E93; font-size: 15px; font-weight: 500;
   cursor: pointer; text-align: center; margin-top: 8px;
+}
+
+/* 许可证详情弹窗 */
+.lic-detail-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: flex-end; justify-content: center; z-index: 200;
+}
+.lic-detail-overlay.show { display: flex; }
+.lic-detail-sheet {
+  width: 100%; max-height: 80%; background: #1C1C1E; border-radius: 20px 20px 0 0;
+  padding: 20px 20px 40px; animation: slideUp 0.3s ease; overflow-y: auto;
+}
+.lic-detail-sheet::-webkit-scrollbar { display: none; }
+.lic-detail-handle { width: 36px; height: 4px; border-radius: 2px; background: #3A3A3C; margin: 0 auto 16px; }
+.lic-detail-name { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.lic-detail-type { font-size: 12px; color: #636366; margin-bottom: 16px; }
+.lic-detail-text {
+  font-size: 11px; color: #8E8E93; line-height: 1.7;
+  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  white-space: pre-wrap; word-break: break-word;
+}
+.lic-detail-close {
+  width: 100%; padding: 14px; border-radius: 12px; background: #2C2C2E;
+  border: none; color: #8E8E93; font-size: 15px; font-weight: 500;
+  cursor: pointer; text-align: center; margin-top: 16px;
 }
 </style>
 </head>
@@ -376,17 +402,17 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 
       <div class="lic-section">
         <div class="lic-section-title">AI 框架</div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('onnx')">
           <div class="lic-entry-name">ONNX Runtime</div>
           <div class="lic-entry-desc">跨平台高性能推理引擎</div>
           <span class="lic-badge badge-mit">MIT</span>
         </div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('tflite')">
           <div class="lic-entry-name">TensorFlow Lite</div>
           <div class="lic-entry-desc">移动端机器学习推理框架</div>
           <span class="lic-badge badge-apache">Apache 2.0</span>
         </div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('pytorch')">
           <div class="lic-entry-name">PyTorch Mobile</div>
           <div class="lic-entry-desc">端侧深度学习推理框架</div>
           <span class="lic-badge badge-bsd">BSD 3-Clause</span>
@@ -395,17 +421,17 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 
       <div class="lic-section">
         <div class="lic-section-title">AI 模型</div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('whisper')">
           <div class="lic-entry-name">OpenAI Whisper</div>
           <div class="lic-entry-desc">语音识别模型</div>
           <span class="lic-badge badge-mit">MIT</span>
         </div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('rnnoise')">
           <div class="lic-entry-name">RNNoise</div>
           <div class="lic-entry-desc">基于RNN的语音降噪</div>
           <span class="lic-badge badge-bsd">BSD 3-Clause</span>
         </div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('rife')">
           <div class="lic-entry-name">RIFE</div>
           <div class="lic-entry-desc">实时视频插帧模型</div>
           <span class="lic-badge badge-mit">MIT</span>
@@ -414,12 +440,12 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 
       <div class="lic-section">
         <div class="lic-section-title">多媒体处理</div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('ffmpeg')">
           <div class="lic-entry-name">FFmpeg</div>
           <div class="lic-entry-desc">音视频编解码库</div>
           <span class="lic-badge badge-lgpl">LGPL 2.1+</span>
         </div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('opencv')">
           <div class="lic-entry-name">OpenCV</div>
           <div class="lic-entry-desc">计算机视觉库</div>
           <span class="lic-badge badge-apache">Apache 2.0</span>
@@ -428,17 +454,17 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
 
       <div class="lic-section">
         <div class="lic-section-title">Android 框架</div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('jetpack')">
           <div class="lic-entry-name">Jetpack Compose</div>
           <div class="lic-entry-desc">Android 现代 UI 工具包</div>
           <span class="lic-badge badge-apache">Apache 2.0</span>
         </div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('kotlin')">
           <div class="lic-entry-name">Kotlin / Kotlin Coroutines</div>
           <div class="lic-entry-desc">编程语言与协程库</div>
           <span class="lic-badge badge-apache">Apache 2.0</span>
         </div>
-        <div class="lic-entry">
+        <div class="lic-entry" onclick="showLicDetail('okhttp')">
           <div class="lic-entry-name">OkHttp</div>
           <div class="lic-entry-desc">HTTP 客户端</div>
           <span class="lic-badge badge-apache">Apache 2.0</span>
@@ -448,6 +474,17 @@ body { background: #000; display: flex; justify-content: center; align-items: ce
       <button class="lic-close" onclick="hideLicenses()">关闭</button>
     </div>
   </div>
+
+  <!-- 许可证详情弹窗 -->
+  <div class="lic-detail-overlay" id="licDetailModal">
+    <div class="lic-detail-sheet">
+      <div class="lic-detail-handle"></div>
+      <div class="lic-detail-name" id="licDetailName"></div>
+      <div class="lic-detail-type" id="licDetailType"></div>
+      <div class="lic-detail-text" id="licDetailText"></div>
+      <button class="lic-detail-close" onclick="hideLicDetail()">关闭</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -455,6 +492,32 @@ function showLogin() { document.getElementById('loginModal').classList.add('show
 function hideLogin() { document.getElementById('loginModal').classList.remove('show'); }
 function showLicenses() { document.getElementById('licModal').classList.add('show'); }
 function hideLicenses() { document.getElementById('licModal').classList.remove('show'); }
+
+const licenses = {
+  onnx: { name: 'ONNX Runtime', type: 'MIT License', text: 'Copyright (c) Microsoft Corporation\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.' },
+  tflite: { name: 'TensorFlow Lite', type: 'Apache License 2.0', text: 'Copyright 2017 The TensorFlow Authors\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' },
+  pytorch: { name: 'PyTorch Mobile', type: 'BSD 3-Clause License', text: 'Copyright (c) 2016, Meta Platforms, Inc. All rights reserved.\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n\n2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n\n3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.' },
+  whisper: { name: 'OpenAI Whisper', type: 'MIT License', text: 'Copyright (c) 2022 OpenAI\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.' },
+  rnnoise: { name: 'RNNoise', type: 'BSD 3-Clause License', text: 'Copyright (c) 2017, Mozilla Corporation\n\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\n1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n\n2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n\n3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.' },
+  rife: { name: 'RIFE', type: 'MIT License', text: 'Copyright (c) 2021 Megvii Research\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.' },
+  ffmpeg: { name: 'FFmpeg', type: 'GNU Lesser General Public License v2.1+', text: 'FFmpeg is licensed under the GNU Lesser General Public License (LGPL) version 2.1 or later.\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.\n\nYou should have received a copy of the GNU Lesser General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.' },
+  opencv: { name: 'OpenCV', type: 'Apache License 2.0', text: 'Copyright (c) 2000-2023 Intel Corporation\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' },
+  jetpack: { name: 'Jetpack Compose', type: 'Apache License 2.0', text: 'Copyright 2019 The Android Open Source Project\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' },
+  kotlin: { name: 'Kotlin / Kotlin Coroutines', type: 'Apache License 2.0', text: 'Copyright 2010-2023 JetBrains s.r.o.\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' },
+  okhttp: { name: 'OkHttp', type: 'Apache License 2.0', text: 'Copyright 2014 Square, Inc.\n\nLicensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.' }
+};
+
+function showLicDetail(key) {
+  const lic = licenses[key];
+  if (!lic) return;
+  document.getElementById('licDetailName').textContent = lic.name;
+  document.getElementById('licDetailType').textContent = lic.type;
+  document.getElementById('licDetailText').textContent = lic.text;
+  document.getElementById('licDetailModal').classList.add('show');
+}
+function hideLicDetail() {
+  document.getElementById('licDetailModal').classList.remove('show');
+}
 </script>
 </body>
 </html>
