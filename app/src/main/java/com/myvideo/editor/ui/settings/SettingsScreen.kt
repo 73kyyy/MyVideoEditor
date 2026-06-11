@@ -86,6 +86,7 @@ fun SettingsScreen(
     var showLoginSheet by remember { mutableStateOf(false) }
     var showLicensesSheet by remember { mutableStateOf(false) }
     var selectedLic by remember { mutableStateOf<LicenseEntry?>(null) }
+    var agreedToTerms by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().background(Black)) {
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 40.dp)) {
@@ -204,8 +205,21 @@ fun SettingsScreen(
                     Text("取消", fontSize = 15.sp, color = T2, fontWeight = FontWeight.Medium)
                 }
                 Spacer(modifier = Modifier.height(14.dp))
-                Text("登录即表示同意 用户协议 和 隐私政策", fontSize = 10.sp, color = Color(0xFF48484A),
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Row(modifier = Modifier.fillMaxWidth().clickable { agreedToTerms = !agreedToTerms },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center) {
+                    // 勾选框
+                    Box(modifier = Modifier.size(16.dp).clip(RoundedCornerShape(4.dp))
+                        .background(if (agreedToTerms) Gold else Color.Transparent)
+                        .border(1.5.dp, if (agreedToTerms) Gold else Color(0xFF48484A), RoundedCornerShape(4.dp)),
+                        contentAlignment = Alignment.Center) {
+                        if (agreedToTerms) {
+                            Text("✓", fontSize = 10.sp, color = Color(0xFF1A1008), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("登录即表示同意 用户协议 和 隐私政策", fontSize = 10.sp, color = Color(0xFF48484A))
+                }
             }
         }
 
