@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexClip 会员弹窗 V2</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(ellipse at top, #1a1a2e 0%, #0a0a14 60%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 背景装饰光斑 */
+  .bg-blob-purple {
+    position: fixed;
+    top: 15%;
+    left: 8%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(40px);
+    pointer-events: none;
+  }
+
+  .bg-blob-pink {
+    position: fixed;
+    bottom: 8%;
+    right: 8%;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(50px);
+    pointer-events: none;
+  }
+
+  /* ===== 遮罩层 ===== */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  .overlay.closing {
+    opacity: 0;
+  }
+
+  /* ===== 弹窗主体 ===== */
+  .popup {
+    position: relative;
+    width: min(90vw, 400px);
+    background: linear-gradient(180deg, #1e1e30 0%, #15151f 100%);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(139, 92, 246, 0.1);
+    z-index: 110;
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform;
+    touch-action: none;
+  }
+
+  .popup.dragging {
+    animation: none;
+    transition: none;
+  }
+
+  .popup.closing {
+    animation: popOut 0.25s ease forwards;
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes popOut {
+    0% { transform: scale(1) translateY(0); opacity: 1; }
+    100% { transform: scale(0.9) translateY(60px); opacity: 0; }
+  }
+
+  /* ===== 顶部高光横幅 ===== */
+  .popup-banner {
+    padding: 28px 24px 24px;
+    background:
+      radial-gradient(ellipse at top, rgba(255, 215, 0, 0.12) 0%, transparent 60%),
+      linear-gradient(180deg, #2a1f3d 0%, transparent 100%);
+    position: relative;
+    text-align: center;
+  }
+
+  /* 顶部金色标签 */
+  .tag-limited {
+    display: inline-block;
+    padding: 5px 16px;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 16px rgba(255, 140, 0, 0.3);
+  }
+
+  .popup-title {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .popup-title .gold-text {
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .popup-subtitle {
+    font-size: 13px;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  /* ===== 权益列表 ===== */
+  .benefits {
+    padding: 20px 20px 16px;
+  }
+
+  .benefits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    transition: background 0.2s;
+  }
+
+  .benefit-item:active {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .benefit-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.12) 0%, rgba(255, 140, 0, 0.12) 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .benefit-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .benefit-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .benefit-text .title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 2px;
+  }
+
+  .benefit-text .desc {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+  }
+
+  /* ===== 价格区 ===== */
+  .price-section {
+    padding: 4px 20px 20px;
+    text-align: center;
+  }
+
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .currency {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+
+  .price-value {
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .price-unit {
+    font-size: 14px;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-bottom: 8px;
+    margin-left: 2px;
+  }
+
+  .price-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .old-price {
+    text-decoration: line-through;
+    color: #64748b;
+  }
+
+  .discount-badge {
+    display: inline-block;
+    background: rgba(236, 72, 153, 0.15);
+    color: #ec4899;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  /* ===== CTA 按钮 ===== */
+  .cta-section {
+    padding: 0 20px 16px;
+  }
+
+  .cta-btn {
+    width: 100%;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    border: none;
+    border-radius: 16px;
+    color: #1a1a2e;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    box-shadow:
+      0 8px 24px rgba(255, 140, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shine 2.5s infinite;
+  }
+
+  @keyframes shine {
+    0% { left: -100%; }
+    50%, 100% { left: 100%; }
+  }
+
+  .cta-btn:active {
+    transform: scale(0.98);
+    box-shadow:
+      0 4px 16px rgba(255, 140, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  /* ===== 底部说明 ===== */
+  .footer-note {
+    padding: 0 20px 24px;
+    text-align: center;
+  }
+
+  .footer-note .auto-renew {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.5;
+  }
+
+  .footer-note .cancel-anytime {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 2px;
+  }
+
+  /* ===== 关闭按钮 ===== */
+  .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 120;
+  }
+
+  .close-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .close-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.9);
+  }
+
+  .close-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ===== 重新打开按钮（关闭弹窗后显示） ===== */
+  .reopen-btn {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    border: none;
+    border-radius: 24px;
+    color: #1a1a2e;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(255, 140, 0, 0.3);
+    display: none;
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .reopen-btn:active {
+    transform: translateX(-50%) scale(0.95);
+  }
+</style>
+</head>
+<body>
+
+  <!-- 背景光斑 -->
+  <div class="bg-blob-purple"></div>
+  <div class="bg-blob-pink"></div>
+
+  <!-- 遮罩层 -->
+  <div class="overlay" id="overlay">
+
+    <!-- 弹窗 -->
+    <div class="popup" id="popup">
+
+      <!-- 关闭按钮 -->
+      <div class="close-btn" id="closeBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </div>
+
+      <!-- 顶部横幅 -->
+      <div class="popup-banner">
+        <div class="tag-limited">限时特惠</div>
+        <div class="popup-title">解锁 <span class="gold-text">NexClip</span> 会员</div>
+        <div class="popup-subtitle">专业创作体验，一次解锁全部权益</div>
+      </div>
+
+      <!-- 权益列表 -->
+      <div class="benefits">
+        <div class="benefits-list">
+          <div class="benefit-item">
+            <div class="benefit-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <polyline points="10 9 13 12 10 15"></polyline>
+                <line x1="17" y1="10" x2="17" y2="14"></line>
+              </svg>
+            </div>
+            <div class="benefit-text">
+              <div class="title">4K超清导出</div>
+              <div class="desc">无损画质，专业级输出</div>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                <line x1="9" y1="7" x2="16" y2="7"></line>
+                <line x1="9" y1="11" x2="14" y2="11"></line>
+              </svg>
+            </div>
+            <div class="benefit-text">
+              <div class="title">全网素材库</div>
+              <div class="desc">海量模板/音乐/特效免费使用</div>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93"></path>
+                <path d="M8.25 9.93A4 4 0 0 1 12 2"></path>
+                <path d="M12 18v-4"></path>
+                <path d="M8 22h8"></path>
+                <path d="M7 14l5 4 5-4"></path>
+                <circle cx="12" cy="6" r="2"></circle>
+              </svg>
+            </div>
+            <div class="benefit-text">
+              <div class="title">AI智能剪辑</div>
+              <div class="desc">抠图/超分/插帧/降噪/语音识别</div>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                <polyline points="13 14 16 14"></polyline>
+                <polyline points="16 14 16 11"></polyline>
+              </svg>
+            </div>
+            <div class="benefit-text">
+              <div class="title">云端项目同步</div>
+              <div class="desc">多设备无缝衔接</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 价格区 -->
+      <div class="price-section">
+        <div class="price-row">
+          <span class="currency">¥</span>
+          <span class="price-value">9</span>
+          <span class="price-unit">/月</span>
+        </div>
+        <div class="price-meta">
+          <span class="old-price">原价¥29/月</span>
+          <span class="discount-badge">省69%</span>
+        </div>
+      </div>
+
+      <!-- CTA 按钮 -->
+      <div class="cta-section">
+        <button class="cta-btn" id="ctaBtn">立即开通</button>
+      </div>
+
+      <!-- 底部说明 -->
+      <div class="footer-note">
+        <div class="auto-renew">订阅按月自动续费，新用户特惠价¥9/月</div>
+        <div class="cancel-anytime">可随时取消，取消后月底失效</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 重新打开按钮 -->
+  <button class="reopen-btn" id="reopenBtn">重新打开弹窗</button>
+
+<script>
+(function() {
+  const overlay = document.getElementById('overlay');
+  const popup = document.getElementById('popup');
+  const closeBtn = document.getElementById('closeBtn');
+  const reopenBtn = document.getElementById('reopenBtn');
+
+  let isClosing = false;
+
+  function closePopup() {
+    if (isClosing) return;
+    isClosing = true;
+    popup.classList.add('closing');
+    overlay.classList.add('closing');
+    setTimeout(function() {
+      overlay.style.display = 'none';
+      reopenBtn.style.display = 'block';
+      isClosing = false;
+    }, 260);
+  }
+
+  function openPopup() {
+    overlay.style.display = 'flex';
+    overlay.classList.remove('closing');
+    popup.classList.remove('closing');
+    popup.style.transform = '';
+    popup.style.opacity = '';
+    reopenBtn.style.display = 'none';
+    // Re-trigger animation
+    popup.style.animation = 'none';
+    popup.offsetHeight; // force reflow
+    popup.style.animation = '';
+  }
+
+  // 关闭按钮
+  closeBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    closePopup();
+  });
+
+  // 点击遮罩关闭
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) {
+      closePopup();
+    }
+  });
+
+  // 重新打开
+  reopenBtn.addEventListener('click', openPopup);
+
+  // ===== 下拉关闭（1:1跟手） =====
+  let startY = 0;
+  let currentY = 0;
+  let isDragging = false;
+
+  function getClientY(e) {
+    return e.touches ? e.touches[0].clientY : e.clientY;
+  }
+
+  function onDragStart(e) {
+    // 只在弹窗内触发
+    if (!popup.contains(e.target) && e.target !== popup) return;
+    startY = getClientY(e);
+    currentY = startY;
+    isDragging = true;
+    popup.classList.add('dragging');
+  }
+
+  function onDragMove(e) {
+    if (!isDragging) return;
+    currentY = getClientY(e);
+    let deltaY = currentY - startY;
+    // 只允许下拉，上推回弹
+    if (deltaY < 0) deltaY = 0;
+    let progress = deltaY / window.innerHeight;
+    let opacity = 1 - progress * 1.5;
+    if (opacity < 0) opacity = 0;
+    popup.style.transform = 'translateY(' + deltaY + 'px) scale(' + (1 - progress * 0.1) + ')';
+    popup.style.opacity = opacity;
+    if (e.cancelable) e.preventDefault();
+  }
+
+  function onDragEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    popup.classList.remove('dragging');
+    let deltaY = currentY - startY;
+    // 下拉超过屏幕 25% 则关闭
+    if (deltaY > window.innerHeight * 0.25) {
+      closePopup();
+    } else {
+      // 回弹
+      popup.style.transition = 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease';
+      popup.style.transform = 'translateY(0) scale(1)';
+      popup.style.opacity = '1';
+      setTimeout(function() {
+        popup.style.transition = '';
+      }, 360);
+    }
+  }
+
+  // Touch events
+  popup.addEventListener('touchstart', onDragStart, { passive: true });
+  document.addEventListener('touchmove', onDragMove, { passive: false });
+  document.addEventListener('touchend', onDragEnd);
+
+  // Mouse events (桌面端模拟)
+  popup.addEventListener('mousedown', onDragStart);
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('mouseup', onDragEnd);
+
+  // CTA 点击反馈
+  document.getElementById('ctaBtn').addEventListener('click', function() {
+    this.textContent = '✓ 即将跳转…';
+    this.style.pointerEvents = 'none';
+    var btn = this;
+    setTimeout(function() {
+      btn.textContent = '立即开通';
+      btn.style.pointerEvents = '';
+    }, 1500);
+  });
+})();
+</script>
+</body>
+</html>

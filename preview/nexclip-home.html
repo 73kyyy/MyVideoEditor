@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>NexClip - 视频编辑</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  background: #000;
+  color: #E0E0E0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: clamp(13px, 1.2vw, 16px);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* ===== App Shell ===== */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ===== Bottom Nav ===== */
+.bottom-nav {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: clamp(52px, 8vw, 68px);
+  background: rgba(28,28,30,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  z-index: 100;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 4px 12px;
+  border: none;
+  background: none;
+  color: #8E8E93;
+  font-size: clamp(10px, 1vw, 12px);
+  transition: color 0.2s;
+}
+.nav-item.active { color: #E8C84A; }
+.nav-item svg { width: clamp(20px, 2.5vw, 26px); height: clamp(20px, 2.5vw, 26px); }
+
+/* ===== Tab Content ===== */
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tab-content::-webkit-scrollbar { display: none; }
+.tab-panel { display: none; height: 100%; }
+.tab-panel.active { display: block; }
+
+/* ===== Top Bar ===== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(10px, 2vw, 18px) clamp(14px, 3vw, 24px);
+  position: sticky;
+  top: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 50;
+}
+.brand {
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 700;
+  background: linear-gradient(135deg, #E8C84A, #D4AF37);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+.top-actions { display: flex; gap: clamp(8px, 1.5vw, 16px); }
+.icon-btn {
+  width: clamp(34px, 4vw, 42px);
+  height: clamp(34px, 4vw, 42px);
+  border-radius: 50%;
+  border: none;
+  background: #1C1C1E;
+  color: #E0E0E0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.icon-btn:hover { background: #2C2C2E; }
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* ===== Search Bar ===== */
+.search-bar {
+  margin: 0 clamp(14px, 3vw, 24px) clamp(12px, 2vw, 18px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1C1C1E;
+  border-radius: 14px;
+  padding: clamp(8px, 1vw, 12px) clamp(12px, 2vw, 16px);
+}
+.search-bar svg { width: 18px; height: 18px; color: #8E8E93; flex-shrink: 0; }
+.search-bar input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #E0E0E0;
+  font-size: clamp(13px, 1.2vw, 15px);
+}
+.search-bar input::placeholder { color: #8E8E93; }
+
+/* ===== Create Project Card ===== */
+.create-card {
+  margin: 0 clamp(14px, 3vw, 24px) clamp(16px, 2.5vw, 24px);
+  background: linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #E8D5A0 100%);
+  border-radius: 20px;
+  padding: clamp(24px, 4vw, 40px) clamp(20px, 3vw, 32px);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 20px);
+}
+.create-card:active { transform: scale(0.98); }
+.create-card-icon {
+  width: clamp(44px, 5vw, 56px);
+  height: clamp(44px, 5vw, 56px);
+  background: rgba(0,0,0,0.2);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.create-card-icon svg { width: clamp(22px, 2.5vw, 28px); height: clamp(22px, 2.5vw, 28px); color: #000; }
+.create-card-text h3 {
+  color: #000;
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.create-card-text p {
+  color: rgba(0,0,0,0.6);
+  font-size: clamp(12px, 1.1vw, 14px);
+}
+
+/* ===== Section Header ===== */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(12px, 2vw, 18px) clamp(14px, 3vw, 24px) clamp(8px, 1.2vw, 12px);
+}
+.section-header h2 {
+  font-size: clamp(16px, 1.8vw, 20px);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.count-badge {
+  background: rgba(232,200,74,0.15);
+  color: #E8C84A;
+  font-size: clamp(11px, 1vw, 13px);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+.section-header .see-all {
+  color: #8E8E93;
+  font-size: clamp(12px, 1.1vw, 14px);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 4px 8px;
+}
+.section-header .see-all:hover { color: #E0E0E0; }
+
+/* ===== Empty State ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(24px, 4vw, 48px) clamp(14px, 3vw, 24px);
+  text-align: center;
+}
+.empty-state svg {
+  width: clamp(80px, 10vw, 120px);
+  height: clamp(80px, 10vw, 120px);
+  margin-bottom: clamp(12px, 2vw, 20px);
+  opacity: 0.4;
+}
+.empty-state .empty-title {
+  font-size: clamp(14px, 1.4vw, 17px);
+  color: #E0E0E0;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.empty-state .empty-desc {
+  font-size: clamp(12px, 1.1vw, 14px);
+  color: #8E8E93;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* ===== Home Layout ===== */
+.home-layout {
+  padding-bottom: 20px;
+}
+.home-landscape {
+  display: none;
+}
+
+/* ===== Category Tags ===== */
+.category-tags {
+  display: flex;
+  gap: 8px;
+  padding: 0 clamp(14px, 3vw, 24px) clamp(12px, 2vw, 18px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.category-tags::-webkit-scrollbar { display: none; }
+.cat-tag {
+  flex-shrink: 0;
+  padding: clamp(6px, 0.8vw, 10px) clamp(14px, 1.8vw, 20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: #8E8E93;
+  font-size: clamp(12px, 1.1vw, 14px);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.cat-tag.active {
+  background: rgba(232,200,74,0.15);
+  color: #E8C84A;
+  border-color: rgba(232,200,74,0.3);
+}
+.cat-tag:hover { border-color: rgba(255,255,255,0.2); }
+
+/* ===== Tutorial Cards ===== */
+.tutorial-list {
+  padding: 0 clamp(14px, 3vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.5vw, 14px);
+  padding-bottom: 20px;
+}
+.tutorial-card {
+  display: flex;
+  gap: clamp(12px, 1.5vw, 16px);
+  background: #1C1C1E;
+  border-radius: 16px;
+  padding: clamp(12px, 1.5vw, 16px);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.tutorial-card:hover { background: #2C2C2E; }
+.tutorial-card:active { background: #252528; }
+.tutorial-thumb {
+  width: clamp(100px, 14vw, 160px);
+  height: clamp(68px, 9vw, 100px);
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.tutorial-thumb .play-icon {
+  width: 32px; height: 32px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+.tutorial-thumb .play-icon svg { width: 14px; height: 14px; color: #fff; margin-left: 2px; }
+.tutorial-info { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.tutorial-info h4 {
+  font-size: clamp(13px, 1.3vw, 16px);
+  font-weight: 500;
+  line-height: 1.4;
+  color: #E0E0E0;
+}
+.tutorial-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tutorial-duration {
+  font-size: clamp(11px, 1vw, 13px);
+  color: #8E8E93;
+}
+.tutorial-difficulty {
+  font-size: clamp(10px, 0.9vw, 12px);
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+.tutorial-difficulty.beginner {
+  background: rgba(76,175,80,0.15);
+  color: #66BB6A;
+}
+.tutorial-difficulty.advanced {
+  background: rgba(255,152,0,0.15);
+  color: #FFA726;
+}
+.tutorial-category-tag {
+  font-size: clamp(10px, 0.9vw, 12px);
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(232,200,74,0.1);
+  color: #E8C84A;
+}
+
+/* ===== Template Grid ===== */
+.template-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 clamp(14px, 3vw, 24px) clamp(12px, 2vw, 18px);
+}
+.upload-btn {
+  flex-shrink: 0;
+  padding: clamp(6px, 0.8vw, 10px) clamp(12px, 1.5vw, 18px);
+  border-radius: 20px;
+  border: 1px solid rgba(232,200,74,0.3);
+  background: rgba(232,200,74,0.1);
+  color: #E8C84A;
+  font-size: clamp(12px, 1.1vw, 14px);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.upload-btn:hover { background: rgba(232,200,74,0.2); }
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(10px, 1.5vw, 14px);
+  padding: 0 clamp(14px, 3vw, 24px) 20px;
+}
+.template-card {
+  background: #1C1C1E;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+}
+.template-card:active { transform: scale(0.97); }
+.template-card:hover { background: #2C2C2E; }
+.template-thumb {
+  width: 100%;
+  aspect-ratio: 16/10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.template-thumb .ratio-label {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.template-card-info {
+  padding: clamp(8px, 1vw, 12px);
+}
+.template-card-info h4 {
+  font-size: clamp(12px, 1.2vw, 15px);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.template-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.template-card-meta .tpl-cat {
+  font-size: clamp(10px, 0.9vw, 12px);
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(232,200,74,0.1);
+  color: #E8C84A;
+}
+.template-card-meta .tpl-users {
+  font-size: clamp(10px, 0.9vw, 12px);
+  color: #8E8E93;
+}
+
+/* ===== Profile Tab ===== */
+.profile-section {
+  padding: clamp(20px, 3vw, 32px) clamp(14px, 3vw, 24px);
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 20px);
+  margin-bottom: clamp(20px, 3vw, 28px);
+}
+.avatar {
+  width: clamp(56px, 7vw, 72px);
+  height: clamp(56px, 7vw, 72px);
+  border-radius: 50%;
+  background: #2C2C2E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 2px solid rgba(232,200,74,0.3);
+}
+.avatar svg { width: 28px; height: 28px; color: #8E8E93; }
+.profile-name {
+  font-size: clamp(18px, 2.2vw, 24px);
+  font-weight: 600;
+  color: #E0E0E0;
+  cursor: pointer;
+}
+.profile-name.not-logged { color: #8E8E93; }
+
+.vip-card {
+  background: linear-gradient(135deg, #D4AF37, #E8C84A, #E8D5A0);
+  border-radius: 18px;
+  padding: clamp(18px, 2.5vw, 28px) clamp(16px, 2vw, 24px);
+  margin-bottom: clamp(20px, 3vw, 28px);
+  cursor: pointer;
+  transition: transform 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.vip-card:active { transform: scale(0.98); }
+.vip-card-text h3 {
+  color: #000;
+  font-size: clamp(16px, 1.8vw, 20px);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.vip-card-text p {
+  color: rgba(0,0,0,0.6);
+  font-size: clamp(12px, 1.1vw, 14px);
+}
+.vip-card-btn {
+  padding: clamp(8px, 1vw, 12px) clamp(16px, 2vw, 24px);
+  background: #000;
+  color: #E8C84A;
+  border-radius: 20px;
+  font-size: clamp(12px, 1.1vw, 14px);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+}
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(14px, 2vw, 18px) 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.settings-item:hover { opacity: 0.8; }
+.settings-item:last-child { border-bottom: none; }
+.settings-item span {
+  font-size: clamp(14px, 1.4vw, 17px);
+  color: #E0E0E0;
+}
+.settings-item svg { width: 18px; height: 18px; color: #8E8E93; }
+
+.logout-btn {
+  margin-top: clamp(24px, 3vw, 36px);
+  width: 100%;
+  padding: clamp(12px, 1.5vw, 16px);
+  border-radius: 14px;
+  border: 1px solid rgba(255,80,80,0.3);
+  background: rgba(255,80,80,0.08);
+  color: #FF5050;
+  font-size: clamp(14px, 1.4vw, 16px);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.logout-btn:hover { background: rgba(255,80,80,0.15); }
+
+/* ===== Modal / Bottom Sheet ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  background: #1C1C1E;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.modal-overlay.show .modal-sheet { transform: translateY(0); }
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+  cursor: grab;
+}
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: clamp(16px, 2.5vw, 24px);
+  scrollbar-width: none;
+}
+.modal-body::-webkit-scrollbar { display: none; }
+.modal-title {
+  font-size: clamp(18px, 2vw, 22px);
+  font-weight: 600;
+  margin-bottom: clamp(12px, 2vw, 18px);
+  text-align: center;
+}
+.modal-close-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px 0;
+}
+.modal-close-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #8E8E93;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Tutorial Detail Modal */
+.video-placeholder {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #2C2C2E;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: clamp(14px, 2vw, 20px);
+}
+.video-placeholder svg { width: 48px; height: 48px; color: #8E8E93; }
+.step-list {
+  list-style: none;
+  margin-bottom: clamp(16px, 2.5vw, 24px);
+}
+.step-list li {
+  padding: clamp(8px, 1vw, 12px) 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: clamp(13px, 1.2vw, 15px);
+  color: #E0E0E0;
+  display: flex;
+  gap: 10px;
+  line-height: 1.5;
+}
+.step-list li:last-child { border-bottom: none; }
+.step-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(232,200,74,0.15);
+  color: #E8C84A;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+.learn-btn {
+  width: 100%;
+  padding: clamp(12px, 1.5vw, 16px);
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #D4AF37, #E8C84A);
+  color: #000;
+  font-size: clamp(14px, 1.4vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.learn-btn:hover { opacity: 0.9; }
+
+/* Template Preview Modal */
+.tpl-preview-area {
+  width: 100%;
+  aspect-ratio: 16/10;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: clamp(14px, 2vw, 20px);
+}
+.tpl-preview-info {
+  margin-bottom: clamp(16px, 2.5vw, 24px);
+}
+.tpl-preview-info h3 {
+  font-size: clamp(16px, 1.8vw, 20px);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.tpl-preview-info p {
+  font-size: clamp(12px, 1.1vw, 14px);
+  color: #8E8E93;
+  line-height: 1.5;
+}
+.use-tpl-btn {
+  width: 100%;
+  padding: clamp(12px, 1.5vw, 16px);
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #D4AF37, #E8C84A);
+  color: #000;
+  font-size: clamp(14px, 1.4vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Login Modal */
+.login-methods {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.5vw, 14px);
+  margin-bottom: clamp(16px, 2.5vw, 24px);
+}
+.login-method {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: clamp(12px, 1.5vw, 16px);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: #E0E0E0;
+  font-size: clamp(14px, 1.4vw, 16px);
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+}
+.login-method:hover { background: rgba(255,255,255,0.05); }
+.login-method .method-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.login-method .method-icon svg { width: 20px; height: 20px; }
+.method-phone .method-icon { background: rgba(76,175,80,0.15); color: #66BB6A; }
+.method-wechat .method-icon { background: rgba(7,193,96,0.15); color: #07C160; }
+.method-qq .method-icon { background: rgba(18,183,245,0.15); color: #12B7F5; }
+
+.login-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: clamp(11px, 1vw, 13px);
+  color: #8E8E93;
+  line-height: 1.5;
+}
+.login-agreement input[type="checkbox"] {
+  margin-top: 2px;
+  accent-color: #E8C84A;
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+}
+.login-agreement a { color: #E8C84A; text-decoration: none; }
+
+/* Upload Info Modal */
+.upload-steps {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.5vw, 14px);
+  margin-bottom: clamp(16px, 2.5vw, 24px);
+}
+.upload-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.upload-step-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: rgba(232,200,74,0.15);
+  color: #E8C84A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.upload-step-text {
+  font-size: clamp(13px, 1.2vw, 15px);
+  color: #E0E0E0;
+  line-height: 1.5;
+  padding-top: 4px;
+}
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(50,50,52,0.95);
+  backdrop-filter: blur(10px);
+  color: #E0E0E0;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: clamp(13px, 1.2vw, 15px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  text-align: center;
+  max-width: 80vw;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ===== Responsive: Landscape ===== */
+@media (orientation: landscape) and (min-width: 640px) {
+  .home-layout { display: none; }
+  .home-landscape {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(12px, 2vw, 20px);
+    padding: clamp(12px, 2vw, 20px) clamp(14px, 3vw, 24px);
+    align-items: start;
+  }
+  .home-landscape .land-col {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 2vw, 20px);
+  }
+  .template-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .tutorial-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(10px, 1.5vw, 14px);
+  }
+}
+
+/* ===== Responsive: Tablet ===== */
+@media (min-width: 768px) {
+  .template-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .template-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .tutorial-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(10px, 1.5vw, 14px);
+  }
+}
+
+/* ===== Landscape Home Specific ===== */
+.land-create-card {
+  background: linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #E8D5A0 100%);
+  border-radius: 20px;
+  padding: clamp(20px, 3vw, 32px) clamp(16px, 2.5vw, 24px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 20px);
+  transition: transform 0.15s;
+}
+.land-create-card:active { transform: scale(0.98); }
+.land-create-card .create-card-icon {
+  width: clamp(40px, 4.5vw, 52px);
+  height: clamp(40px, 4.5vw, 52px);
+  background: rgba(0,0,0,0.2);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.land-create-card .create-card-icon svg { width: clamp(20px, 2.2vw, 26px); height: clamp(20px, 2.2vw, 26px); color: #000; }
+.land-create-card h3 { color: #000; font-size: clamp(15px, 1.8vw, 20px); font-weight: 700; margin-bottom: 2px; }
+.land-create-card p { color: rgba(0,0,0,0.6); font-size: clamp(11px, 1vw, 14px); }
+
+.land-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(8px, 1.2vw, 14px) 0 clamp(4px, 0.6vw, 8px);
+}
+.land-section-header h2 {
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.land-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(16px, 3vw, 32px);
+  text-align: center;
+}
+.land-empty svg { width: clamp(60px, 7vw, 90px); height: clamp(60px, 7vw, 90px); opacity: 0.35; margin-bottom: 10px; }
+.land-empty .empty-title { font-size: clamp(12px, 1.2vw, 15px); color: #E0E0E0; margin-bottom: 4px; }
+.land-empty .empty-desc { font-size: clamp(11px, 1vw, 13px); color: #8E8E93; }
+
+.land-tutorial-recommend {
+  background: #1C1C1E;
+  border-radius: 16px;
+  padding: clamp(12px, 1.5vw, 18px);
+}
+.land-tut-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: clamp(8px, 1vw, 12px) 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+}
+.land-tut-item:last-child { border-bottom: none; }
+.land-tut-item .tut-num {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(232,200,74,0.15);
+  color: #E8C84A;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.land-tut-item .tut-name { font-size: clamp(12px, 1.1vw, 14px); color: #E0E0E0; flex: 1; }
+.land-tut-item .tut-dur { font-size: clamp(10px, 0.9vw, 12px); color: #8E8E93; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ===== Tab Content Area ===== -->
+  <div class="tab-content" id="tabContent">
+
+    <!-- ===== HOME TAB ===== -->
+    <div class="tab-panel active" id="panelHome">
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="brand">NexClip</div>
+        <div class="top-actions">
+          <button class="icon-btn" onclick="showToast('搜索功能开发中')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </button>
+          <button class="icon-btn" onclick="showToast('暂无新通知')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Portrait Layout -->
+      <div class="home-layout">
+        <!-- Create Card -->
+        <div class="create-card" onclick="showToast('选择素材')">
+          <div class="create-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <div class="create-card-text">
+            <h3>创建新项目</h3>
+            <p>选择素材，开始创作</p>
+          </div>
+        </div>
+
+        <!-- Drafts Section -->
+        <div class="section-header">
+          <h2>草稿箱 <span class="count-badge">0</span></h2>
+          <button class="see-all">全部</button>
+        </div>
+        <div class="empty-state">
+          <svg viewBox="0 0 120 120" fill="none">
+            <rect x="20" y="30" width="80" height="60" rx="8" stroke="#8E8E93" stroke-width="2" fill="none"/>
+            <path d="M45 55 L58 65 L75 50" stroke="#8E8E93" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="60" cy="60" r="24" stroke="#8E8E93" stroke-width="1.5" fill="none" opacity="0.3"/>
+          </svg>
+          <div class="empty-title">暂无草稿，开始你的第一个创作吧</div>
+          <div class="empty-desc">创建项目后，未完成的作品会保存在这里</div>
+        </div>
+
+        <!-- Recent Projects Section -->
+        <div class="section-header">
+          <h2>近期项目 <span class="count-badge">0</span></h2>
+          <button class="see-all">全部</button>
+        </div>
+        <div class="empty-state">
+          <svg viewBox="0 0 120 120" fill="none">
+            <rect x="25" y="20" width="70" height="50" rx="6" stroke="#8E8E93" stroke-width="2" fill="none"/>
+            <path d="M40 85 L55 70 L65 80 L80 65" stroke="#8E8E93" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="45" cy="40" r="6" stroke="#8E8E93" stroke-width="1.5" fill="none" opacity="0.5"/>
+          </svg>
+          <div class="empty-title">暂无已完成的项目</div>
+          <div class="empty-desc">完成导出的项目会显示在这里</div>
+        </div>
+      </div>
+
+      <!-- Landscape Layout -->
+      <div class="home-landscape">
+        <div class="land-col">
+          <div class="land-create-card" onclick="showToast('选择素材')">
+            <div class="create-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+            <div>
+              <h3>创建新项目</h3>
+              <p>选择素材，开始创作</p>
+            </div>
+          </div>
+          <div>
+            <div class="land-section-header">
+              <h2>草稿箱 <span class="count-badge">0</span></h2>
+            </div>
+            <div class="land-empty">
+              <svg viewBox="0 0 120 120" fill="none">
+                <rect x="20" y="30" width="80" height="60" rx="8" stroke="#8E8E93" stroke-width="2" fill="none"/>
+                <path d="M45 55 L58 65 L75 50" stroke="#8E8E93" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div class="empty-title">暂无草稿</div>
+              <div class="empty-desc">创建项目后，未完成的作品会保存在这里</div>
+            </div>
+          </div>
+        </div>
+        <div class="land-col">
+          <div>
+            <div class="land-section-header">
+              <h2>近期项目 <span class="count-badge">0</span></h2>
+            </div>
+            <div class="land-empty">
+              <svg viewBox="0 0 120 120" fill="none">
+                <rect x="25" y="20" width="70" height="50" rx="6" stroke="#8E8E93" stroke-width="2" fill="none"/>
+                <path d="M40 85 L55 70 L65 80 L80 65" stroke="#8E8E93" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div class="empty-title">暂无已完成的项目</div>
+              <div class="empty-desc">完成导出的项目会显示在这里</div>
+            </div>
+          </div>
+          <div class="land-tutorial-recommend">
+            <div class="land-section-header" style="padding-top:0">
+              <h2>教程推荐</h2>
+            </div>
+            <div class="land-tut-item" onclick="openTutorialDetail(0)">
+              <span class="tut-num">1</span>
+              <span class="tut-name">3分钟上手NexClip</span>
+              <span class="tut-dur">3:12</span>
+            </div>
+            <div class="land-tut-item" onclick="openTutorialDetail(1)">
+              <span class="tut-num">2</span>
+              <span class="tut-name">AI抠图：一键分离主体与背景</span>
+              <span class="tut-dur">2:45</span>
+            </div>
+            <div class="land-tut-item" onclick="openTutorialDetail(5)">
+              <span class="tut-num">3</span>
+              <span class="tut-name">语音识别：自动生成字幕</span>
+              <span class="tut-dur">3:20</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TUTORIAL TAB ===== -->
+    <div class="tab-panel" id="panelTutorial">
+      <div class="top-bar">
+        <div class="brand">教程</div>
+      </div>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="搜索教程..." id="tutorialSearch" oninput="filterTutorials()">
+      </div>
+      <div class="category-tags" id="tutorialTags">
+        <button class="cat-tag active" data-cat="全部" onclick="filterTutCategory(this)">全部</button>
+        <button class="cat-tag" data-cat="快速入门" onclick="filterTutCategory(this)">快速入门</button>
+        <button class="cat-tag" data-cat="AI功能" onclick="filterTutCategory(this)">AI功能</button>
+        <button class="cat-tag" data-cat="编辑技巧" onclick="filterTutCategory(this)">编辑技巧</button>
+        <button class="cat-tag" data-cat="导出设置" onclick="filterTutCategory(this)">导出设置</button>
+      </div>
+      <div class="tutorial-list" id="tutorialList"></div>
+    </div>
+
+    <!-- ===== TEMPLATE TAB ===== -->
+    <div class="tab-panel" id="panelTemplate">
+      <div class="top-bar">
+        <div class="brand">模板</div>
+      </div>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="搜索模板..." id="templateSearch" oninput="filterTemplates()">
+      </div>
+      <div class="template-header-row">
+        <div class="category-tags" id="templateTags" style="padding:0; flex:1;">
+          <button class="cat-tag active" data-cat="全部" onclick="filterTplCategory(this)">全部</button>
+          <button class="cat-tag" data-cat="旅行" onclick="filterTplCategory(this)">旅行</button>
+          <button class="cat-tag" data-cat="Vlog" onclick="filterTplCategory(this)">Vlog</button>
+          <button class="cat-tag" data-cat="美食" onclick="filterTplCategory(this)">美食</button>
+          <button class="cat-tag" data-cat="节日" onclick="filterTplCategory(this)">节日</button>
+          <button class="cat-tag" data-cat="商务" onclick="filterTplCategory(this)">商务</button>
+          <button class="cat-tag" data-cat="社交" onclick="filterTplCategory(this)">社交</button>
+        </div>
+        <button class="upload-btn" onclick="openUploadModal()">上传我的模板</button>
+      </div>
+      <div class="template-grid" id="templateGrid"></div>
+    </div>
+
+    <!-- ===== PROFILE TAB ===== -->
+    <div class="tab-panel" id="panelProfile">
+      <div class="top-bar">
+        <div class="brand">我的</div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-header">
+          <div class="avatar" onclick="openLoginModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="profile-name not-logged" onclick="openLoginModal()">点击登录</div>
+        </div>
+
+        <div class="vip-card" onclick="showToast('正在跳转定价页...')">
+          <div class="vip-card-text">
+            <h3>NexClip VIP</h3>
+            <p>解锁全部AI功能与高级模板</p>
+          </div>
+          <button class="vip-card-btn">开通</button>
+        </div>
+
+        <div class="settings-list">
+          <div class="settings-item" onclick="showToast('隐私政策')">
+            <span>隐私政策</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="settings-item" onclick="showToast('用户协议')">
+            <span>用户协议</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="settings-item" onclick="showToast('开源许可')">
+            <span>开源许可</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="settings-item" onclick="showToast('当前已是最新版本')">
+            <span>检查更新</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="settings-item" onclick="showToast('NexClip v1.0.0')">
+            <span>关于</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+
+        <button class="logout-btn" onclick="showToast('已退出登录')">退出登录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Bottom Navigation ===== -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="panelHome" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>首页</span>
+    </button>
+    <button class="nav-item" data-tab="panelTutorial" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span>教程</span>
+    </button>
+    <button class="nav-item" data-tab="panelTemplate" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>模板</span>
+    </button>
+    <button class="nav-item" data-tab="panelProfile" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>我的</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ===== Tutorial Detail Modal ===== -->
+<div class="modal-overlay" id="tutorialDetailModal">
+  <div class="modal-sheet">
+    <div class="modal-handle" data-close="tutorialDetailModal"></div>
+    <div class="modal-body">
+      <div class="modal-title" id="tutDetailTitle"></div>
+      <div class="video-placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
+      <ul class="step-list" id="tutDetailSteps"></ul>
+      <button class="learn-btn" onclick="showToast('即将开始学习'); closeModal('tutorialDetailModal')">开始学习</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Template Preview Modal ===== -->
+<div class="modal-overlay" id="templatePreviewModal">
+  <div class="modal-sheet">
+    <div class="modal-handle" data-close="templatePreviewModal"></div>
+    <div class="modal-body">
+      <div class="modal-title" id="tplPreviewTitle"></div>
+      <div class="tpl-preview-area" id="tplPreviewArea"></div>
+      <div class="tpl-preview-info" id="tplPreviewInfo"></div>
+      <button class="use-tpl-btn" onclick="showToast('正在应用模板...'); closeModal('templatePreviewModal')">使用此模板</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Login Modal ===== -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-sheet">
+    <div class="modal-handle" data-close="loginModal"></div>
+    <div class="modal-body">
+      <div class="modal-title">登录 NexClip</div>
+      <div class="login-methods">
+        <button class="login-method method-phone" onclick="showToast('手机号登录开发中')">
+          <span class="method-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
+          手机号登录
+        </button>
+        <button class="login-method method-wechat" onclick="showToast('微信登录开发中')">
+          <span class="method-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05a6.127 6.127 0 0 1-.253-1.728c0-3.572 3.193-6.468 7.13-6.468.234 0 .463.014.69.032C16.418 4.695 12.891 2.188 8.691 2.188zm-2.6 4.17a1.03 1.03 0 1 1 0 2.06 1.03 1.03 0 0 1 0-2.06zm5.2 0a1.03 1.03 0 1 1 0 2.06 1.03 1.03 0 0 1 0-2.06zM15.88 9.09c-3.405 0-6.166 2.427-6.166 5.42 0 2.992 2.76 5.42 6.166 5.42.67 0 1.312-.1 1.914-.271a.722.722 0 0 1 .596.081l1.453.852a.272.272 0 0 0 .14.046.244.244 0 0 0 .241-.245c0-.06-.024-.118-.04-.176l-.298-1.13a.49.49 0 0 1 .177-.554C21.066 17.503 22 15.937 22 14.51c0-2.993-2.76-5.42-6.12-5.42zm-2.143 3.277a.86.86 0 1 1 0 1.72.86.86 0 0 1 0-1.72zm4.286 0a.86.86 0 1 1 0 1.72.86.86 0 0 1 0-1.72z"/></svg></span>
+          微信登录
+        </button>
+        <button class="login-method method-qq" onclick="showToast('QQ登录开发中')">
+          <span class="method-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 13.24c-.18.53-.5.96-.92 1.3.22.24.42.52.58.82.28.52.1.82-.24.92-.34.1-.7-.06-.96-.4-.14-.18-.26-.38-.36-.58-.36.1-.74.16-1.14.18.06.18.1.38.12.58.06.5-.18.74-.5.78-.32.04-.6-.18-.68-.6-.04-.2-.06-.42-.06-.64h-.96c0 .22-.02.44-.06.64-.08.42-.36.64-.68.6-.32-.04-.56-.28-.5-.78.02-.2.06-.4.12-.58-.4-.02-.78-.08-1.14-.18-.1.2-.22.4-.36.58-.26.34-.62.5-.96.4-.34-.1-.52-.4-.24-.92.16-.3.36-.58.58-.82-.42-.34-.74-.77-.92-1.3-.24-.7.1-1.1.52-1.02.22.04.42.18.56.4.12.18.2.4.26.64.36-.16.76-.28 1.18-.34-.1-.28-.16-.6-.16-.94 0-1.38.82-2.5 1.84-2.5s1.84 1.12 1.84 2.5c0 .34-.06.66-.16.94.42.06.82.18 1.18.34.06-.24.14-.46.26-.64.14-.22.34-.36.56-.4.42-.08.76.32.52 1.02z"/></svg></span>
+          QQ登录
+        </button>
+      </div>
+      <div class="login-agreement">
+        <input type="checkbox" id="agreeCheck">
+        <label for="agreeCheck">我已阅读并同意 <a href="javascript:void(0)" onclick="showToast('用户协议')">用户协议</a> 和 <a href="javascript:void(0)" onclick="showToast('隐私政策')">隐私政策</a></label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Upload Template Modal ===== -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal-sheet">
+    <div class="modal-handle" data-close="uploadModal"></div>
+    <div class="modal-body">
+      <div class="modal-title">上传我的模板</div>
+      <div class="upload-steps">
+        <div class="upload-step">
+          <span class="upload-step-num">1</span>
+          <span class="upload-step-text">在NexClip中完成你的视频项目编辑</span>
+        </div>
+        <div class="upload-step">
+          <span class="upload-step-num">2</span>
+          <span class="upload-step-text">在项目菜单中选择"保存为模板"</span>
+        </div>
+        <div class="upload-step">
+          <span class="upload-step-num">3</span>
+          <span class="upload-step-text">填写模板名称、分类和描述信息</span>
+        </div>
+        <div class="upload-step">
+          <span class="upload-step-num">4</span>
+          <span class="upload-step-text">提交审核，通过后即可在模板中心展示</span>
+        </div>
+      </div>
+      <button class="learn-btn" onclick="showToast('请在App中操作'); closeModal('uploadModal')">我知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== Data =====
+const tutorials = [
+  { id:0, title:"3分钟上手NexClip", category:"快速入门", duration:"3:12", difficulty:"入门", gradient:"linear-gradient(135deg,#667eea,#764ba2)", steps:["打开NexClip，点击创建新项目","选择视频素材或拍摄新内容","使用底部工具栏进行基础剪辑","添加文字、音乐和滤镜","预览并导出你的作品"] },
+  { id:1, title:"AI抠图：一键分离主体与背景", category:"AI功能", duration:"2:45", difficulty:"入门", gradient:"linear-gradient(135deg,#f093fb,#f5576c)", steps:["在编辑界面选择AI抠图工具","点击视频中的主体区域","AI自动识别并分离前景","调整边缘精度和羽化参数","替换背景或导出透明通道"] },
+  { id:2, title:"超分辨率：让模糊视频变清晰", category:"AI功能", duration:"3:08", difficulty:"进阶", gradient:"linear-gradient(135deg,#4facfe,#00f2fe)", steps:["选择需要增强的视频片段","点击AI工具中的超分辨率","选择目标分辨率（2x/4x）","预览增强效果对比","应用并等待处理完成"] },
+  { id:3, title:"智能插帧：视频丝滑流畅", category:"AI功能", duration:"2:56", difficulty:"进阶", gradient:"linear-gradient(135deg,#43e97b,#38f9d7)", steps:["选中需要插帧的视频片段","打开AI工具中的智能插帧","选择目标帧率（30/60/120fps）","预览插帧效果","应用插帧并导出"] },
+  { id:4, title:"AI降噪：告别画面噪点", category:"AI功能", duration:"2:30", difficulty:"进阶", gradient:"linear-gradient(135deg,#fa709a,#fee140)", steps:["选中暗光拍摄的视频片段","点击AI工具中的AI降噪","调整降噪强度滑块","实时预览降噪效果","应用降噪处理"] },
+  { id:5, title:"语音识别：自动生成字幕", category:"AI功能", duration:"3:20", difficulty:"入门", gradient:"linear-gradient(135deg,#a18cd1,#fbc2eb)", steps:["在编辑界面选择字幕工具","点击"语音识别生成字幕"","选择视频中的音频轨道","AI自动识别语音并生成字幕","编辑校对字幕内容和时间轴"] },
+  { id:6, title:"多轨道编辑：专业剪辑流程", category:"编辑技巧", duration:"5:15", difficulty:"进阶", gradient:"linear-gradient(135deg,#ffecd2,#fcb69f)", steps:["了解多轨道时间轴界面","添加视频轨道和音频轨道","使用轨道锁定和静音功能","调整轨道混合模式和透明度","完成多轨道合成编辑"] },
+  { id:7, title:"文字与贴纸：让视频更生动", category:"编辑技巧", duration:"3:40", difficulty:"入门", gradient:"linear-gradient(135deg,#a1c4fd,#c2e9fb)", steps:["选择文字工具添加标题","选择字体、颜色和动画效果","浏览贴纸库选择合适贴纸","调整贴纸位置、大小和时间","预览文字和贴纸效果"] },
+  { id:8, title:"滤镜与调色：打造电影质感", category:"编辑技巧", duration:"4:10", difficulty:"进阶", gradient:"linear-gradient(135deg,#d4fc79,#96e6a1)", steps:["浏览滤镜库选择预设风格","调整滤镜强度","进入手动调色面板","调整亮度、对比度、饱和度","使用曲线进行精细调色"] },
+  { id:9, title:"导出设置：最佳画质与体积平衡", category:"导出设置", duration:"2:55", difficulty:"入门", gradient:"linear-gradient(135deg,#fddb92,#d1fdff)", steps:["点击导出按钮进入设置","选择分辨率和帧率","选择编码器（H.264/H.265）","调整码率控制模式","预估文件大小并导出"] }
+];
+
+const templates = [
+  { id:0, name:"旅行日记", category:"旅行", ratio:"16:9", users:"2.3万", gradient:"linear-gradient(135deg,#667eea,#764ba2)" },
+  { id:1, name:"城市漫步", category:"旅行", ratio:"9:16", users:"1.8万", gradient:"linear-gradient(135deg,#f093fb,#f5576c)" },
+  { id:2, name:"日常Vlog", category:"Vlog", ratio:"9:16", users:"5.1万", gradient:"linear-gradient(135deg,#4facfe,#00f2fe)" },
+  { id:3, name:"美食探店", category:"美食", ratio:"1:1", users:"3.2万", gradient:"linear-gradient(135deg,#43e97b,#38f9d7)" },
+  { id:4, name:"新年祝福", category:"节日", ratio:"16:9", users:"4.5万", gradient:"linear-gradient(135deg,#fa709a,#fee140)" },
+  { id:5, name:"产品展示", category:"商务", ratio:"16:9", users:"1.6万", gradient:"linear-gradient(135deg,#a18cd1,#fbc2eb)" },
+  { id:6, name:"朋友圈", category:"社交", ratio:"1:1", users:"6.8万", gradient:"linear-gradient(135deg,#ffecd2,#fcb69f)" },
+  { id:7, name:"生日快乐", category:"节日", ratio:"9:16", users:"3.9万", gradient:"linear-gradient(135deg,#fddb92,#d1fdff)" }
+];
+
+// ===== State =====
+let currentTutCat = "全部";
+let currentTplCat = "全部";
+
+// ===== Tab Switching =====
+function switchTab(btn) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  btn.classList.add('active');
+  const tabId = btn.dataset.tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  // Scroll to top
+  document.getElementById('tabContent').scrollTop = 0;
+}
+
+// ===== Toast =====
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ===== Modal =====
+function openModal(id) {
+  const m = document.getElementById(id);
+  m.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  const m = document.getElementById(id);
+  m.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// ===== Swipe-to-close for modals =====
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  let startY = 0, currentY = 0, sheet = null, dragging = false;
+
+  overlay.addEventListener('touchstart', e => {
+    sheet = overlay.querySelector('.modal-sheet');
+    const handle = overlay.querySelector('.modal-handle');
+    // Only start drag from handle or top area of sheet
+    if (e.target === handle || e.target.closest('.modal-handle') || e.target === sheet) {
+      dragging = true;
+      startY = e.touches[0].clientY;
+      sheet.style.transition = 'none';
+    }
+  }, { passive: true });
+
+  overlay.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    currentY = e.touches[0].clientY;
+    const diff = currentY - startY;
+    if (diff > 0) {
+      sheet.style.transform = `translateY(${diff}px)`;
+    }
+  }, { passive: true });
+
+  overlay.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    const diff = currentY - startY;
+    sheet.style.transition = '';
+    sheet.style.transform = '';
+    // Any downward swipe closes the modal
+    if (diff > 0) {
+      const modalId = overlay.id;
+      closeModal(modalId);
+    }
+    startY = 0;
+    currentY = 0;
+  });
+
+  // Mouse support for desktop
+  overlay.addEventListener('mousedown', e => {
+    sheet = overlay.querySelector('.modal-sheet');
+    const handle = overlay.querySelector('.modal-handle');
+    if (e.target === handle || e.target.closest('.modal-handle') || e.target === sheet) {
+      dragging = true;
+      startY = e.clientY;
+      sheet.style.transition = 'none';
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    currentY = e.clientY;
+    const diff = currentY - startY;
+    if (diff > 0) {
+      sheet.style.transform = `translateY(${diff}px)`;
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    const diff = currentY - startY;
+    sheet.style.transition = '';
+    sheet.style.transform = '';
+    if (diff > 0) {
+      closeModal(overlay.id);
+    }
+    startY = 0;
+    currentY = 0;
+  });
+
+  // Click overlay to close
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) {
+      closeModal(overlay.id);
+    }
+  });
+});
+
+// ===== Render Tutorials =====
+function renderTutorials(data) {
+  const list = document.getElementById('tutorialList');
+  list.innerHTML = data.map(t => `
+    <div class="tutorial-card" onclick="openTutorialDetail(${t.id})">
+      <div class="tutorial-thumb" style="background:${t.gradient}">
+        <div class="play-icon"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+      </div>
+      <div class="tutorial-info">
+        <h4>${t.title}</h4>
+        <div class="tutorial-meta">
+          <span class="tutorial-duration">${t.duration}</span>
+          <span class="tutorial-difficulty ${t.difficulty === '入门' ? 'beginner' : 'advanced'}">${t.difficulty}</span>
+          <span class="tutorial-category-tag">${t.category}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterTutCategory(btn) {
+  document.querySelectorAll('#tutorialTags .cat-tag').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTutCat = btn.dataset.cat;
+  filterTutorials();
+}
+
+function filterTutorials() {
+  const query = document.getElementById('tutorialSearch').value.toLowerCase();
+  let filtered = tutorials;
+  if (currentTutCat !== '全部') {
+    filtered = filtered.filter(t => t.category === currentTutCat);
+  }
+  if (query) {
+    filtered = filtered.filter(t => t.title.toLowerCase().includes(query) || t.category.toLowerCase().includes(query));
+  }
+  renderTutorials(filtered);
+}
+
+// ===== Tutorial Detail =====
+function openTutorialDetail(id) {
+  const t = tutorials.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('tutDetailTitle').textContent = t.title;
+  document.getElementById('tutDetailSteps').innerHTML = t.steps.map((s, i) =>
+    `<li><span class="step-num">${i + 1}</span><span>${s}</span></li>`
+  ).join('');
+  openModal('tutorialDetailModal');
+}
+
+// ===== Render Templates =====
+function renderTemplates(data) {
+  const grid = document.getElementById('templateGrid');
+  grid.innerHTML = data.map(t => `
+    <div class="template-card" onclick="openTemplatePreview(${t.id})">
+      <div class="template-thumb" style="background:${t.gradient}">
+        <span class="ratio-label">${t.ratio}</span>
+      </div>
+      <div class="template-card-info">
+        <h4>${t.name}</h4>
+        <div class="template-card-meta">
+          <span class="tpl-cat">${t.category}</span>
+          <span class="tpl-users">${t.users}人使用</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterTplCategory(btn) {
+  document.querySelectorAll('#templateTags .cat-tag').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTplCat = btn.dataset.cat;
+  filterTemplates();
+}
+
+function filterTemplates() {
+  const query = document.getElementById('templateSearch').value.toLowerCase();
+  let filtered = templates;
+  if (currentTplCat !== '全部') {
+    filtered = filtered.filter(t => t.category === currentTplCat);
+  }
+  if (query) {
+    filtered = filtered.filter(t => t.name.toLowerCase().includes(query) || t.category.toLowerCase().includes(query));
+  }
+  renderTemplates(filtered);
+}
+
+// ===== Template Preview =====
+function openTemplatePreview(id) {
+  const t = templates.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('tplPreviewTitle').textContent = t.name;
+  document.getElementById('tplPreviewArea').style.background = t.gradient;
+  document.getElementById('tplPreviewInfo').innerHTML = `
+    <h3>${t.name}</h3>
+    <p>分类：${t.category} | 比例：${t.ratio} | ${t.users}人使用</p>
+    <p style="margin-top:8px">使用此模板快速开始创作，替换素材即可生成同款风格视频。</p>
+  `;
+  openModal('templatePreviewModal');
+}
+
+// ===== Login Modal =====
+function openLoginModal() {
+  openModal('loginModal');
+}
+
+// ===== Upload Modal =====
+function openUploadModal() {
+  openModal('uploadModal');
+}
+
+// ===== Init =====
+renderTutorials(tutorials);
+renderTemplates(templates);
+</script>
+</body>
+</html>
