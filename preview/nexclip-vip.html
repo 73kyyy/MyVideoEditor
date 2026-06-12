@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexClip 会员弹窗</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(ellipse at top, #1a1a2e 0%, #0a0a14 60%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 背景装饰光斑 */
+  body::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(40px);
+  }
+
+  body::after {
+    content: '';
+    position: absolute;
+    bottom: 10%;
+    right: 10%;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(50px);
+  }
+
+  /* ===== 弹窗主体 ===== */
+  .popup {
+    position: relative;
+    width: 360px;
+    background: linear-gradient(180deg, #1e1e30 0%, #15151f 100%);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(139, 92, 246, 0.1);
+    z-index: 10;
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ===== 顶部高光横幅 ===== */
+  .popup-banner {
+    padding: 28px 24px 24px;
+    background:
+      radial-gradient(ellipse at top, rgba(255, 215, 0, 0.15) 0%, transparent 60%),
+      linear-gradient(180deg, #2a1f3d 0%, transparent 100%);
+    position: relative;
+    text-align: center;
+  }
+
+  /* 顶部金色标签 */
+  .tag-limited {
+    display: inline-block;
+    padding: 5px 14px;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 16px rgba(255, 140, 0, 0.3);
+  }
+
+  .popup-title {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .popup-title .gold-text {
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .popup-subtitle {
+    font-size: 13px;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  /* ===== 价格展示区 ===== */
+  .price-section {
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  /* 装饰分隔线 */
+  .price-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+  }
+
+  .price-card {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.08) 100%);
+    border: 1.5px solid rgba(139, 92, 246, 0.35);
+    border-radius: 18px;
+    padding: 22px 20px;
+    position: relative;
+  }
+
+  .price-card::before {
+    content: '🔥 限时特惠';
+    position: absolute;
+    top: -10px;
+    right: 16px;
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .price-main {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .currency {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+
+  .price-value {
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 60px rgba(255, 140, 0, 0.3);
+  }
+
+  .price-unit {
+    font-size: 14px;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-bottom: 10px;
+    margin-left: 4px;
+  }
+
+  /* 原价划线 */
+  .price-original {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  .price-original .old-price {
+    text-decoration: line-through;
+    color: #64748b;
+  }
+
+  .discount-badge {
+    display: inline-block;
+    background: rgba(236, 72, 153, 0.15);
+    color: #ec4899;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .price-hint {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 6px;
+  }
+
+  /* ===== 会员权益 ===== */
+  .benefits {
+    padding: 0 24px 20px;
+  }
+
+  .benefits-title {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .benefits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+  }
+
+  .benefit-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 140, 0, 0.15) 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .benefit-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .benefit-text {
+    flex: 1;
+  }
+
+  .benefit-text .title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 2px;
+  }
+
+  .benefit-text .desc {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .check-mark {
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* ===== CTA 按钮 ===== */
+  .cta-section {
+    padding: 0 24px 20px;
+  }
+
+  .cta-btn {
+    width: 100%;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #ec4899 100%);
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    box-shadow:
+      0 8px 24px rgba(139, 92, 246, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shine 2s infinite;
+  }
+
+  @keyframes shine {
+    0% { left: -100%; }
+    50%, 100% { left: 100%; }
+  }
+
+  .cta-btn:active {
+    transform: scale(0.98);
+  }
+
+  .cta-sub {
+    text-align: center;
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 10px;
+  }
+
+  /* ===== 关闭按钮 ===== */
+  .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 20;
+  }
+
+  .close-btn:active {
+    background: rgba(255, 255, 255, 0.12);
+    transform: scale(0.95);
+  }
+
+  .close-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ===== 底部倒计时 ===== */
+  .countdown {
+    padding: 12px 24px 24px;
+    text-align: center;
+  }
+
+  .countdown-text {
+    font-size: 11px;
+    color: #64748b;
+    margin-bottom: 8px;
+  }
+
+  .countdown-numbers {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .time-block {
+    min-width: 48px;
+    padding: 8px 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+  }
+
+  .time-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffd700;
+    line-height: 1;
+    font-family: "SF Mono", monospace;
+  }
+
+  .time-label {
+    font-size: 9px;
+    color: #64748b;
+    margin-top: 4px;
+    display: block;
+  }
+
+  .time-sep {
+    display: flex;
+    align-items: center;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 14px;
+    padding-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="popup">
+
+    <!-- 关闭按钮 -->
+    <div class="close-btn" onclick="document.querySelector('.popup').style.display='none'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+
+    <!-- 顶部横幅 -->
+    <div class="popup-banner">
+      <div class="tag-limited">✨ NEW USER 专属</div>
+      <div class="popup-title">解锁 <span class="gold-text">NexClip</span></div>
+      <div class="popup-title">Pro 会员特权</div>
+      <div class="popup-subtitle">专业视频剪辑 · 从此无拘无束</div>
+    </div>
+
+    <!-- 价格区 -->
+    <div class="price-section">
+      <div class="price-card">
+        <div class="price-main">
+          <span class="currency">¥</span>
+          <span class="price-value">9</span>
+          <span class="price-unit">/月</span>
+        </div>
+        <div class="price-original">
+          <span class="old-price">原价 ¥39/月</span>
+          <span class="discount-badge">省 77%</span>
+        </div>
+        <div class="price-hint">新用户首月专享 · 次月起 ¥19/月</div>
+      </div>
+    </div>
+
+    <!-- 会员权益 -->
+    <div class="benefits">
+      <div class="benefits-title">会 员 专 享</div>
+      <div class="benefits-list">
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7"></polygon>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              <line x1="10" y1="8" x2="10" y2="16"></line>
+              <line x1="6" y1="12" x2="14" y2="12"></line>
+            </svg>
+          </div>
+          <div class="benefit-text">
+            <div class="title">4K 超清导出</div>
+            <div class="desc">无水印 · 原画质输出</div>
+          </div>
+          <div class="check-mark">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+            </svg>
+          </div>
+          <div class="benefit-text">
+            <div class="title">全网素材库</div>
+            <div class="desc">10万+ 滤镜 · 转场 · 特效</div>
+          </div>
+          <div class="check-mark">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l2 7h7l-5.5 4 2 7-5.5-4-5.5 4 2-7L2 9h7z"></path>
+            </svg>
+          </div>
+          <div class="benefit-text">
+            <div class="title">AI 智能剪辑</div>
+            <div class="desc">一键成片 · 智能配文</div>
+          </div>
+          <div class="check-mark">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 12l2 2 4-4"></path>
+              <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.5 0 4.77 1.02 6.36 2.64"></path>
+            </svg>
+          </div>
+          <div class="benefit-text">
+            <div class="title">云端项目同步</div>
+            <div class="desc">多端无缝 · 100GB 云空间</div>
+          </div>
+          <div class="check-mark">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA 按钮 -->
+    <div class="cta-section">
+      <button class="cta-btn">立即开通 · 仅 ¥9</button>
+      <div class="cta-sub">🔒 随时可取消 · 安全支付</div>
+    </div>
+
+    <!-- 倒计时 -->
+    <div class="countdown">
+      <div class="countdown-text">距活动结束还剩</div>
+      <div class="countdown-numbers">
+        <div class="time-block">
+          <span class="time-num">02</span>
+          <span class="time-label">天</span>
+        </div>
+        <span class="time-sep">:</span>
+        <div class="time-block">
+          <span class="time-num">14</span>
+          <span class="time-label">时</span>
+        </div>
+        <span class="time-sep">:</span>
+        <div class="time-block">
+          <span class="time-num">36</span>
+          <span class="time-label">分</span>
+        </div>
+        <span class="time-sep">:</span>
+        <div class="time-block">
+          <span class="time-num">48</span>
+          <span class="time-label">秒</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
