@@ -279,6 +279,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .modal-x{width:28px;height:28px;background:rgba(255,255,255,.06);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .modal-body{padding:clamp(12px,2vh,20px) clamp(16px,3vw,24px)}
 
+/* 项目设置 */
+.proj-group{margin-bottom:clamp(14px,2vh,20px)}
+.proj-label{font-size:var(--f-sm);color:var(--t4);font-weight:600;margin-bottom:clamp(6px,1vh,10px);letter-spacing:.5px}
+.proj-input{width:100%;padding:clamp(8px,1.2vh,12px) clamp(10px,1.5vw,14px);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--t1);font-size:var(--f-md);outline:none;transition:border-color .2s}
+.proj-input:focus{border-color:var(--acc)}
+.proj-input::placeholder{color:var(--t5)}
+.proj-opts{display:flex;gap:clamp(6px,1vw,10px);flex-wrap:wrap}
+.proj-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:clamp(8px,1vh,12px) clamp(10px,1.5vw,14px);background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:12px;cursor:pointer;transition:all .2s;min-width:clamp(52px,8vw,64px)}
+.proj-opt:hover{background:rgba(255,255,255,.08)}
+.proj-opt.selected{border-color:var(--acc);background:rgba(139,92,246,.1)}
+.ratio-box{width:clamp(28px,4vw,40px);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:3px}
+.proj-opt span{font-size:var(--f-xs);color:var(--t4);font-weight:500}
+.proj-opt.selected span{color:var(--acc2)}
+.proj-chips{display:flex;gap:clamp(6px,1vw,8px);flex-wrap:wrap}
+.proj-chip{display:flex;align-items:center;gap:6px;padding:clamp(7px,1vh,10px) clamp(10px,1.5vw,14px);background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:10px;cursor:pointer;transition:all .2s;font-size:var(--f-sm);color:var(--t2);font-weight:600}
+.proj-chip:hover{background:rgba(255,255,255,.08)}
+.proj-chip.selected{border-color:var(--acc);background:rgba(139,92,246,.1);color:var(--acc2)}
+.chip-sub{font-size:var(--f-xs);color:var(--t5);font-weight:400;margin-left:2px}
+.proj-chip.selected .chip-sub{color:rgba(165,180,252,.6)}
+.bg-dot{width:16px;height:16px;border-radius:4px;flex-shrink:0}
+.proj-create-btn{width:100%;padding:clamp(12px,1.8vh,16px);background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:14px;color:white;font-size:var(--f-lg);font-weight:700;cursor:pointer;margin-top:clamp(8px,1vh,16px);transition:transform .15s}
+.proj-create-btn:active{transform:scale(.97)}
+
 /* AI面板 */
 .ai-ov{position:fixed;inset:0;background:rgba(10,10,20,.5);backdrop-filter:blur(8px);display:none;justify-content:flex-end;flex-direction:column;z-index:170}
 .ai-ov.show{display:flex}
@@ -457,6 +480,73 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 </div>
 </div>
 
+<!-- 项目设置弹窗 -->
+<div class="modal-ov" id="projModal">
+<div class="modal-sheet" id="projSheet" style="max-height:90vh">
+<div class="modal-handle"></div>
+<div class="modal-hdr"><div class="modal-title">新建项目</div><div class="modal-x" onclick="closeModal('projModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
+<div class="modal-body">
+  <!-- 项目名称 -->
+  <div class="proj-group">
+    <div class="proj-label">项目名称</div>
+    <input class="proj-input" id="projName" type="text" placeholder="未命名项目" maxlength="30">
+  </div>
+  <!-- 画面比例 -->
+  <div class="proj-group">
+    <div class="proj-label">画面比例</div>
+    <div class="proj-opts" id="projRatio">
+      <div class="proj-opt selected" data-val="16:9" onclick="pickOpt('projRatio',this)">
+        <div class="ratio-box" style="aspect-ratio:16/9"></div><span>16:9</span>
+      </div>
+      <div class="proj-opt" data-val="9:16" onclick="pickOpt('projRatio',this)">
+        <div class="ratio-box" style="aspect-ratio:9/16"></div><span>9:16</span>
+      </div>
+      <div class="proj-opt" data-val="1:1" onclick="pickOpt('projRatio',this)">
+        <div class="ratio-box" style="aspect-ratio:1/1"></div><span>1:1</span>
+      </div>
+      <div class="proj-opt" data-val="4:3" onclick="pickOpt('projRatio',this)">
+        <div class="ratio-box" style="aspect-ratio:4/3"></div><span>4:3</span>
+      </div>
+      <div class="proj-opt" data-val="21:9" onclick="pickOpt('projRatio',this)">
+        <div class="ratio-box" style="aspect-ratio:21/9"></div><span>21:9</span>
+      </div>
+    </div>
+  </div>
+  <!-- 画质 -->
+  <div class="proj-group">
+    <div class="proj-label">画质</div>
+    <div class="proj-chips" id="projQuality">
+      <div class="proj-chip" data-val="4k" onclick="pickChip('projQuality',this)">4K<span class="chip-sub">3840×2160</span></div>
+      <div class="proj-chip selected" data-val="1080p" onclick="pickChip('projQuality',this)">1080P<span class="chip-sub">1920×1080</span></div>
+      <div class="proj-chip" data-val="720p" onclick="pickChip('projQuality',this)">720P<span class="chip-sub">1280×720</span></div>
+      <div class="proj-chip" data-val="480p" onclick="pickChip('projQuality',this)">480P<span class="chip-sub">854×480</span></div>
+    </div>
+  </div>
+  <!-- 帧率 -->
+  <div class="proj-group">
+    <div class="proj-label">帧率</div>
+    <div class="proj-chips" id="projFps">
+      <div class="proj-chip" data-val="24" onclick="pickChip('projFps',this)">24fps<span class="chip-sub">电影</span></div>
+      <div class="proj-chip selected" data-val="30" onclick="pickChip('projFps',this)">30fps<span class="chip-sub">标准</span></div>
+      <div class="proj-chip" data-val="60" onclick="pickChip('projFps',this)">60fps<span class="chip-sub">流畅</span></div>
+    </div>
+  </div>
+  <!-- 背景颜色 -->
+  <div class="proj-group">
+    <div class="proj-label">背景颜色</div>
+    <div class="proj-chips" id="projBg">
+      <div class="proj-chip selected" data-val="#000000" onclick="pickChip('projBg',this)"><span class="bg-dot" style="background:#000;border:1px solid rgba(255,255,255,.2)"></span>黑色</div>
+      <div class="proj-chip" data-val="#ffffff" onclick="pickChip('projBg',this)"><span class="bg-dot" style="background:#fff"></span>白色</div>
+      <div class="proj-chip" data-val="transparent" onclick="pickChip('projBg',this)"><span class="bg-dot" style="background:repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50%/8px 8px"></span>透明</div>
+      <div class="proj-chip" data-val="custom" onclick="pickChip('projBg',this);document.getElementById('projBgPicker').click()"><span class="bg-dot" style="background:conic-gradient(red,yellow,lime,aqua,blue,magenta,red)"></span>自定义</div>
+      <input type="color" id="projBgPicker" value="#1a1a2e" style="display:none" onchange="document.querySelector('#projBg .proj-chip[data-val=custom] .bg-dot').style.background=this.value">
+    </div>
+  </div>
+  <button class="proj-create-btn" onclick="createProject()">创建项目</button>
+</div>
+</div>
+</div>
+
 <!-- 教程详情弹窗 -->
 <div class="modal-ov" id="tutModal">
 <div class="modal-sheet" id="tutSheet">
@@ -557,9 +647,14 @@ function switchTab(id) {
 
 // ===== 编辑器 =====
 function openEditor() {
+  openModal('projModal');
+}
+function createProject() {
+  closeModal('projModal');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('pg-editor').classList.add('active');
   checkLandscape();
+  toast('项目已创建');
 }
 function closeEditor() {
   document.getElementById('pg-editor').classList.remove('active');
@@ -736,6 +831,16 @@ function openModal(id) {
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('show');
+}
+
+// 项目设置选择
+function pickOpt(groupId, el) {
+  document.querySelectorAll('#'+groupId+' .proj-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function pickChip(groupId, el) {
+  document.querySelectorAll('#'+groupId+' .proj-chip').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
 }
 
 // 弹窗下拉关闭
