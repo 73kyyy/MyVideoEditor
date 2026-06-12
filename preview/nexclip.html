@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexClip · 视频编辑器</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: #1f1f24;
+    color: #d9d9d9;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ============ 顶部状态栏 ============ */
+  .status-bar {
+    height: 34px;
+    background: #15151a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    font-size: 13px;
+    color: #e8e8e8;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .status-right { display: flex; align-items: center; gap: 10px; font-size: 11px; color: #a0a0a8; }
+  .battery {
+    width: 22px; height: 11px; border: 1px solid #a0a0a8; border-radius: 2px;
+    position: relative; display: inline-block;
+  }
+  .battery::after {
+    content: ''; position: absolute; right: -3px; top: 3px; width: 2px; height: 5px;
+    background: #a0a0a8; border-radius: 0 1px 1px 0;
+  }
+  .battery-fill { width: 75%; height: 100%; background: #4ade80; border-radius: 1px; }
+
+  /* ============ 应用标题栏 ============ */
+  .app-header {
+    height: 52px;
+    background: #181820;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    flex-shrink: 0;
+  }
+  .app-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; color: #e8e8e8;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: white; font-weight: 700;
+  }
+  .header-actions { display: flex; align-items: center; gap: 12px; }
+  .icon-btn {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #b8b8c0;
+    transition: background 0.15s;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .export-pill {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white; padding: 7px 14px; border-radius: 18px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+  }
+
+  /* ============ 编辑器主体 ============ */
+  .editor-main {
+    display: flex; flex-direction: column;
+    height: calc(100vh - 34px - 52px);
+    background: #1f1f24;
+  }
+
+  /* ============ 预览区 ============ */
+  .preview-section {
+    padding: 10px 14px 8px;
+    background: #181820;
+    display: flex; justify-content: center;
+    flex-shrink: 0;
+  }
+  .preview-box {
+    width: 100%; max-width: 640px;
+    aspect-ratio: 16 / 8;
+    background: #0c0c12;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .preview-box::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 40%, rgba(99,102,241,0.18), transparent 55%),
+      radial-gradient(ellipse at 75% 65%, rgba(236,72,153,0.15), transparent 55%),
+      linear-gradient(135deg, #181828, #252535);
+  }
+  .preview-meta-top {
+    position: absolute; top: 8px; left: 10px;
+    font-size: 10px; color: #9a9aa5; font-family: monospace;
+    background: rgba(0,0,0,0.45); padding: 3px 7px; border-radius: 4px;
+  }
+  .preview-meta-bottom {
+    position: absolute; bottom: 8px; right: 10px;
+    font-size: 10px; color: #9a9aa5; font-family: monospace;
+    background: rgba(0,0,0,0.45); padding: 3px 7px; border-radius: 4px;
+  }
+  .preview-center-mark {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 200px; height: 56px; border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.35); font-size: 12px;
+  }
+  .preview-play-overlay {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 48px; height: 48px;
+    background: rgba(0,0,0,0.55); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    cursor: pointer;
+  }
+
+  /* ============ 时间轴区域（现在是主体） ============ */
+  .timeline-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #1f1f24;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .timeline-header {
+    padding: 5px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; color: #8a8a94;
+    background: #181820;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    flex-shrink: 0;
+  }
+  .timeline-area-label {
+    color: #c8c8d0; font-weight: 500; font-size: 12px;
+  }
+  .timeline-area-actions { display: flex; align-items: center; gap: 6px; }
+
+  /* 时间轴主体 */
+  .timeline-body {
+    flex: 1; display: flex; overflow: auto; min-height: 0;
+  }
+  .timeline-body::-webkit-scrollbar { height: 8px; width: 8px; }
+  .timeline-body::-webkit-scrollbar-track { background: #181820; }
+  .timeline-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+  /* 左侧轨道标签列 —— 与右侧严格视觉分离 */
+  .tracks-col {
+    min-width: 128px; width: 128px;
+    background: #181820;
+    flex-shrink: 0;
+    position: sticky; left: 0; z-index: 5;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    /* 用内部 box-shadow 强化右侧分界线 */
+    box-shadow: 2px 0 0 0 rgba(0,0,0,0.25);
+  }
+  .track-header {
+    height: 28px; padding: 0 8px;
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 2px;
+    font-size: 9px; color: #6a6a74;
+    background: #181820;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-right: 1px solid rgba(255,255,255,0.15);
+  }
+  .track-header-label {
+    margin-right: auto;
+    font-size: 10px;
+    color: #8a8a94;
+    font-weight: 500;
+  }
+  .track-label-row {
+    height: 48px; padding: 0 8px 0 8px;
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 2px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    color: #b8b8c0;
+    cursor: pointer;
+    background: #181820;
+    border-right: 1px solid rgba(255,255,255,0.15);
+  }
+  .track-label-row.active { background: rgba(99,102,241,0.1); }
+  .track-label-row:hover { background: rgba(255,255,255,0.04); }
+  .track-label-row.locked { opacity: 0.6; }
+  .track-name-wrap {
+    display: flex; align-items: center; gap: 5px;
+    min-width: 0; overflow: hidden;
+    margin-right: auto;
+  }
+  .track-color-tag {
+    width: 3px; height: 12px; border-radius: 2px; flex-shrink: 0;
+  }
+  .t-color-1 { background: #60a5fa; }
+  .t-color-2 { background: #8b5cf6; }
+  .t-color-3 { background: #f59e0b; }
+  .t-color-4 { background: #ec4899; }
+  .t-color-5 { background: #10b981; }
+  .t-color-6 { background: #34d399; }
+  .track-label-name {
+    font-size: 9.5px; white-space: nowrap;
+    color: #a8a8b0;
+    font-weight: 500;
+  }
+  .track-label-row.active .track-label-name { color: #e0e0e8; }
+  .track-icon-btn {
+    width: 16px; height: 16px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    color: #6a6a74; cursor: pointer; flex-shrink: 0;
+  }
+  .track-icon-btn:hover { color: #e8e8e8; background: rgba(255,255,255,0.08); }
+  .track-icon-btn.on { color: #10b981; }
+  .track-icon-btn.solo-on { color: #f59e0b; }
+  .track-icon-btn.locked-on { color: #ef4444; }
+  .track-icon-btn.hidden { visibility: hidden; }
+
+  /* 占位隐形图标（保持非音频层对齐） */
+  .track-icon-btn.audio-placeholder { visibility: hidden; }
+
+  .add-track-row {
+    height: 34px; padding: 0 8px;
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10px; color: #8a8a94;
+    cursor: pointer;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .add-track-row:hover { color: #c8c8d0; background: rgba(255,255,255,0.04); }
+
+  /* 右侧时间轴网格（含刻度栏 + 剪辑区） */
+  .timeline-ruler-col { flex: 1; min-width: 1000px; position: relative; background: #1b1b22; }
+
+  .time-ruler {
+    height: 28px;
+    background: #23232e;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  /* 时间刻度短竖线（仅在刻度栏内，不会延伸到左侧轨道标签区） */
+  .ruler-tick {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 8px;
+    background: rgba(255,255,255,0.2);
+  }
+  .ruler-tick.major {
+    height: 14px;
+    background: rgba(255,255,255,0.4);
+  }
+  .ruler-label {
+    position: absolute;
+    bottom: 2px;
+    font-size: 8px;
+    color: #7a7a85;
+    font-family: monospace;
+    padding-left: 2px;
+    white-space: nowrap;
+  }
+  .ruler-minor {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 5px;
+    background: rgba(255,255,255,0.12);
+  }
+
+  /* 播放指针 T 形 - 仅在右侧剪辑轨道区 */
+  .playhead {
+    position: absolute; top: 0; bottom: 0;
+    width: 2px; background: #ffffff; z-index: 15; pointer-events: none;
+  }
+  .playhead::before {
+    content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    width: 14px; height: 8px; background: #ffffff;
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+  }
+
+  .timeline-tracks { position: relative; }
+  .track-row {
+    height: 48px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+    background: #1b1b22;
+  }
+
+  /* 剪辑块 */
+  .clip-block {
+    position: absolute; top: 6px; height: 36px;
+    background: #2d2d3a;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    display: flex; align-items: center;
+    padding: 0 8px 0 0; gap: 8px;
+    font-size: 11px; color: #d0d0d8;
+    overflow: hidden; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .clip-block:hover { border-color: rgba(255,255,255,0.25); }
+  .clip-block.selected {
+    border: 1.5px solid #a5b4fc;
+    box-shadow: 0 0 0 1px rgba(99,102,241,0.3);
+    background: #34344a;
+  }
+  .clip-left-mark {
+    width: 3px; height: 100%; position: absolute; left: 0; top: 0;
+    border-radius: 3px 0 0 3px;
+  }
+  .c-mark-1 { background: #60a5fa; }
+  .c-mark-2 { background: #8b5cf6; }
+  .c-mark-3 { background: #f59e0b; }
+  .c-mark-4 { background: #ec4899; }
+
+  .clip-thumb-strip {
+    display: flex; gap: 1px; width: 60px; height: 28px; margin-left: 6px;
+    flex-shrink: 0;
+  }
+  .thumb-cell { flex: 1; border-radius: 2px; }
+  .thumb-set-1 .thumb-cell:nth-child(1) { background: linear-gradient(135deg, #4c1d95, #6366f1); }
+  .thumb-set-1 .thumb-cell:nth-child(2) { background: linear-gradient(135deg, #1e3a8a, #3b82f6); }
+  .thumb-set-1 .thumb-cell:nth-child(3) { background: linear-gradient(135deg, #0f766e, #14b8a6); }
+  .thumb-set-2 .thumb-cell:nth-child(1) { background: linear-gradient(135deg, #831843, #ec4899); }
+  .thumb-set-2 .thumb-cell:nth-child(2) { background: linear-gradient(135deg, #7c2d12, #ea580c); }
+  .thumb-set-2 .thumb-cell:nth-child(3) { background: linear-gradient(135deg, #78350f, #f59e0b); }
+  .thumb-set-3 .thumb-cell:nth-child(1) { background: linear-gradient(135deg, #14532d, #22c55e); }
+  .thumb-set-3 .thumb-cell:nth-child(2) { background: linear-gradient(135deg, #1e3a8a, #6366f1); }
+  .thumb-set-3 .thumb-cell:nth-child(3) { background: linear-gradient(135deg, #831843, #8b5cf6); }
+
+  .clip-title {
+    flex: 1; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .clip-time {
+    font-size: 10px; color: #7a7a85; font-family: monospace;
+    flex-shrink: 0; padding: 0 4px;
+    border-left: 1px solid rgba(255,255,255,0.1); padding-left: 8px;
+  }
+
+  /* 文字剪辑块 */
+  .clip-text-block {
+    position: absolute; top: 10px; height: 28px;
+    background: rgba(245,158,11,0.12);
+    border: 1px dashed rgba(245,158,11,0.45);
+    border-radius: 4px;
+    display: flex; align-items: center;
+    padding: 0 8px; gap: 5px;
+    font-size: 10px; color: #fcd34d;
+  }
+  .clip-sticker-block {
+    position: absolute; top: 10px; height: 28px;
+    background: rgba(236,72,153,0.12);
+    border: 1px dashed rgba(236,72,153,0.4);
+    border-radius: 4px;
+    display: flex; align-items: center;
+    padding: 0 8px; gap: 5px;
+    font-size: 10px; color: #f9a8d4;
+  }
+
+  /* 音频波形 */
+  .clip-audio-block {
+    position: absolute; top: 8px; height: 32px;
+    background: rgba(16,185,129,0.06);
+    border-left: 3px solid #10b981;
+    border-right: 1px solid rgba(16,185,129,0.35);
+    border-radius: 0 4px 4px 0;
+    padding: 3px 6px;
+    display: flex; align-items: center; gap: 1px;
+  }
+  .wave-bar {
+    width: 2px; background: #10b981; border-radius: 1px; opacity: 0.7;
+  }
+
+  /* ============ 底部操作带 ============ */
+  .bottom-operation {
+    background: #181820;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    flex-shrink: 0;
+    display: flex; flex-direction: column;
+  }
+
+  /* 播放控制栏（带撤销/重做） */
+  .playback-bar {
+    height: 48px;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    font-family: monospace;
+    font-size: 12px; color: #a0a0a8;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .pb-side { display: flex; align-items: center; gap: 8px; }
+  .pb-center { display: flex; align-items: center; gap: 14px; }
+  .pb-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #b8b8c0;
+    transition: all 0.15s;
+  }
+  .pb-btn:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .pb-play {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+  }
+  .pb-play:hover { transform: scale(1.05); background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+
+  /* 工具图标条（紧凑版） */
+  .tool-strip {
+    display: flex;
+    padding: 8px 4px;
+    gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tool-strip::-webkit-scrollbar { display: none; }
+
+  .tool-strip-item {
+    min-width: 52px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: #a0a0a8;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .tool-strip-item:hover { background: rgba(255,255,255,0.05); color: #e8e8e8; }
+  .tool-strip-item.active {
+    background: rgba(99,102,241,0.15);
+    color: #a5b4fc;
+  }
+  .tool-icon-wrap {
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tool-strip-label { font-size: 9.5px; white-space: nowrap; font-weight: 500; }
+
+  /* ============ 底部导航（安卓） ============ */
+  .bottom-nav {
+    height: 46px;
+    background: #121216;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 24px;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 2px;
+    font-size: 9.5px;
+    color: #7a7a85;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 7px;
+  }
+  .nav-btn:hover { color: #c8c8d0; }
+  .nav-center-ai {
+    width: 46px; height: 46px; margin-top: -14px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 13px; font-weight: 700;
+    box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+    cursor: pointer;
+  }
+  .nav-home {
+    width: 24px; height: 24px;
+    border: 2px solid #7a7a85;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+  <!-- 顶部状态栏 -->
+  <div class="status-bar">
+    <span>10:37</span>
+    <div class="status-right">
+      <svg width="13" height="10" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 17h4v-4H2v4zm8-3h4v-7h-4v7zm8-2h4v-5h-4v5z"/></svg>
+      <svg width="13" height="10" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13a10 10 0 0 1 14 0M8.5 16.5a5 5 0 0 1 7 0M2 8.82a15 15 0 0 1 20 0M12 20h.01"/></svg>
+      <div class="battery"><div class="battery-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- 应用标题栏 -->
+  <div class="app-header">
+    <div class="app-logo">
+      <div class="logo-icon">N</div>
+      <span>NexClip</span>
+    </div>
+    <div class="header-actions">
+      <div class="icon-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><circle cx="18" cy="6" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9 1.65 1.65 0 0 0 4.27 7.18l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+      <div class="export-pill">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        导出
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑器主体 -->
+  <div class="editor-main">
+
+    <!-- 预览区 -->
+    <div class="preview-section">
+      <div class="preview-box">
+        <span class="preview-meta-top">1920 × 1080 · 30fps</span>
+        <div class="preview-play-overlay">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1.5"><polygon points="7 4 20 12 7 20 7 4"/></svg>
+        </div>
+        <span class="preview-meta-bottom">02:34</span>
+      </div>
+    </div>
+
+    <!-- 时间轴区（现在是主体） -->
+    <div class="timeline-area">
+      <div class="timeline-header">
+        <span class="timeline-area-label">轨道区</span>
+        <div class="timeline-area-actions">
+          <div class="icon-btn" style="width:24px;height:24px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
+          </div>
+          <div class="icon-btn" style="width:24px;height:24px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-body">
+        <!-- 左侧轨道列表 -->
+        <div class="tracks-col">
+          <div class="track-header">
+            <span class="track-header-label">轨道</span>
+            <!-- L S A V 图标列 -->
+          </div>
+
+          <div class="track-label-row active">
+            <div class="track-name-wrap">
+              <span class="track-color-tag t-color-1"></span>
+              <span class="track-label-name">视频1</span>
+            </div>
+            <!-- 🔒 Lock -->
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            </div>
+            <!-- S Solo -->
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="currentColor" stroke="none">S</text></svg>
+            </div>
+            <!-- Audio（占位） -->
+            <div class="track-icon-btn hidden"></div>
+            <!-- 👁️ Video（显示/隐藏） -->
+            <div class="track-icon-btn on">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+          </div>
+
+          <div class="track-label-row">
+            <div class="track-name-wrap">
+              <span class="track-color-tag t-color-2"></span>
+              <span class="track-label-name">视频2</span>
+            </div>
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            </div>
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" stroke="none">S</text></svg>
+            </div>
+            <div class="track-icon-btn hidden"></div>
+            <div class="track-icon-btn on">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+          </div>
+
+          <div class="track-label-row">
+            <div class="track-name-wrap">
+              <span class="track-color-tag t-color-3"></span>
+              <span class="track-label-name">文字</span>
+            </div>
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            </div>
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" stroke="none">S</text></svg>
+            </div>
+            <div class="track-icon-btn hidden"></div>
+            <div class="track-icon-btn on">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+          </div>
+
+          <div class="track-label-row">
+            <div class="track-name-wrap">
+              <span class="track-color-tag t-color-4"></span>
+              <span class="track-label-name">特效</span>
+            </div>
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            </div>
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" stroke="none">S</text></svg>
+            </div>
+            <div class="track-icon-btn hidden"></div>
+            <div class="track-icon-btn on">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+          </div>
+
+          <div class="track-label-row">
+            <div class="track-name-wrap">
+              <span class="track-color-tag t-color-5"></span>
+              <span class="track-label-name">音乐</span>
+            </div>
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            </div>
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" stroke="none">S</text></svg>
+            </div>
+            <!-- 🔊 Audio（音频层有） -->
+            <div class="track-icon-btn on">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+            </div>
+            <div class="track-icon-btn on">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+          </div>
+
+          <div class="track-label-row">
+            <div class="track-name-wrap">
+              <span class="track-color-tag t-color-6"></span>
+              <span class="track-label-name">音效</span>
+            </div>
+            <div class="track-icon-btn locked-on">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            </div>
+            <div class="track-icon-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" stroke="none">S</text></svg>
+            </div>
+            <div class="track-icon-btn on">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </div>
+            <div class="track-icon-btn on">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+          </div>
+
+          <div class="add-track-row">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>添加轨道</span>
+          </div>
+        </div>
+
+        <!-- 右侧时间轴 -->
+        <div class="timeline-ruler-col">
+          <div class="time-ruler">
+            <!-- 主刻度线（长刻度 + 标签） -->
+            <span class="ruler-tick major" style="left: 0px;"></span>
+            <span class="ruler-label" style="left: 2px;">0</span>
+            <span class="ruler-tick major" style="left: 60px;"></span>
+            <span class="ruler-label" style="left: 62px;">1</span>
+            <span class="ruler-tick" style="left: 90px;"></span>
+            <span class="ruler-tick major" style="left: 120px;"></span>
+            <span class="ruler-label" style="left: 122px;">2</span>
+            <span class="ruler-tick" style="left: 150px;"></span>
+            <span class="ruler-tick major" style="left: 180px;"></span>
+            <span class="ruler-label" style="left: 182px;">3</span>
+            <span class="ruler-tick" style="left: 210px;"></span>
+            <span class="ruler-tick major" style="left: 240px;"></span>
+            <span class="ruler-label" style="left: 242px;">4</span>
+            <span class="ruler-tick" style="left: 270px;"></span>
+            <span class="ruler-tick major" style="left: 300px;"></span>
+            <span class="ruler-label" style="left: 302px;">5</span>
+            <span class="ruler-tick" style="left: 330px;"></span>
+            <span class="ruler-tick major" style="left: 360px;"></span>
+            <span class="ruler-label" style="left: 362px;">6</span>
+            <span class="ruler-tick" style="left: 390px;"></span>
+            <span class="ruler-tick major" style="left: 420px;"></span>
+            <span class="ruler-label" style="left: 422px;">7</span>
+            <span class="ruler-tick" style="left: 450px;"></span>
+            <span class="ruler-tick major" style="left: 480px;"></span>
+            <span class="ruler-label" style="left: 482px;">8</span>
+            <span class="ruler-tick" style="left: 510px;"></span>
+            <span class="ruler-tick major" style="left: 540px;"></span>
+            <span class="ruler-label" style="left: 542px;">9</span>
+            <span class="ruler-tick" style="left: 570px;"></span>
+            <span class="ruler-tick major" style="left: 600px;"></span>
+            <span class="ruler-label" style="left: 602px;">10</span>
+            <span class="ruler-tick" style="left: 630px;"></span>
+            <span class="ruler-tick major" style="left: 660px;"></span>
+            <span class="ruler-label" style="left: 662px;">11</span>
+            <span class="ruler-tick" style="left: 690px;"></span>
+            <span class="ruler-tick major" style="left: 720px;"></span>
+            <span class="ruler-label" style="left: 722px;">12</span>
+            <span class="ruler-tick" style="left: 750px;"></span>
+            <span class="ruler-tick major" style="left: 780px;"></span>
+            <span class="ruler-label" style="left: 782px;">13</span>
+            <span class="ruler-tick" style="left: 810px;"></span>
+            <span class="ruler-tick major" style="left: 840px;"></span>
+            <span class="ruler-label" style="left: 842px;">14</span>
+            <span class="ruler-tick" style="left: 870px;"></span>
+            <span class="ruler-tick major" style="left: 900px;"></span>
+            <span class="ruler-label" style="left: 902px;">15s</span>
+          </div>
+
+          <div class="timeline-tracks">
+
+            <div class="playhead" style="left: 380px;"></div>
+
+            <!-- 视频1 -->
+            <div class="track-row">
+              <div class="clip-block selected" style="left: 15px; width: 200px;">
+                <span class="clip-left-mark c-mark-1"></span>
+                <div class="clip-thumb-strip thumb-set-1"><div class="thumb-cell"></div><div class="thumb-cell"></div><div class="thumb-cell"></div></div>
+                <span class="clip-title">Scene_01.mp4</span>
+                <span class="clip-time">02:15</span>
+              </div>
+              <div class="clip-block" style="left: 225px; width: 150px;">
+                <span class="clip-left-mark c-mark-2"></span>
+                <div class="clip-thumb-strip thumb-set-2"><div class="thumb-cell"></div><div class="thumb-cell"></div><div class="thumb-cell"></div></div>
+                <span class="clip-title">Scene_02</span>
+                <span class="clip-time">01:48</span>
+              </div>
+              <div class="clip-block" style="left: 385px; width: 180px;">
+                <span class="clip-left-mark c-mark-1"></span>
+                <div class="clip-thumb-strip thumb-set-3"><div class="thumb-cell"></div><div class="thumb-cell"></div><div class="thumb-cell"></div></div>
+                <span class="clip-title">Scene_03.mp4</span>
+                <span class="clip-time">02:03</span>
+              </div>
+            </div>
+
+            <!-- 视频2 -->
+            <div class="track-row">
+              <div class="clip-block" style="left: 95px; width: 130px;">
+                <span class="clip-left-mark c-mark-2"></span>
+                <div class="clip-thumb-strip thumb-set-2"><div class="thumb-cell"></div><div class="thumb-cell"></div><div class="thumb-cell"></div></div>
+                <span class="clip-title">cutaway</span>
+                <span class="clip-time">01:30</span>
+              </div>
+              <div class="clip-block" style="left: 300px; width: 160px;">
+                <span class="clip-left-mark c-mark-1"></span>
+                <div class="clip-thumb-strip thumb-set-1"><div class="thumb-cell"></div><div class="thumb-cell"></div><div class="thumb-cell"></div></div>
+                <span class="clip-title">B-roll</span>
+                <span class="clip-time">01:50</span>
+              </div>
+            </div>
+
+            <!-- 文字 -->
+            <div class="track-row">
+              <div class="clip-text-block" style="left: 40px; width: 120px;">
+                <span>标题 · 开场</span>
+              </div>
+              <div class="clip-text-block" style="left: 250px; width: 110px;">
+                <span>副标题</span>
+              </div>
+              <div class="clip-text-block" style="left: 450px; width: 95px;">
+                <span>字幕 01</span>
+              </div>
+            </div>
+
+            <!-- 音乐 -->
+            <div class="track-row">
+              <div class="clip-audio-block" style="left: 15px; width: 580px;">
+                <div class="wave-bar" style="height:30%"></div><div class="wave-bar" style="height:60%"></div>
+                <div class="wave-bar" style="height:85%"></div><div class="wave-bar" style="height:45%"></div>
+                <div class="wave-bar" style="height:90%"></div><div class="wave-bar" style="height:70%"></div>
+                <div class="wave-bar" style="height:55%"></div><div class="wave-bar" style="height:85%"></div>
+                <div class="wave-bar" style="height:50%"></div><div class="wave-bar" style="height:75%"></div>
+                <div class="wave-bar" style="height:95%"></div><div class="wave-bar" style="height:60%"></div>
+                <div class="wave-bar" style="height:40%"></div><div class="wave-bar" style="height:70%"></div>
+                <div class="wave-bar" style="height:90%"></div><div class="wave-bar" style="height:55%"></div>
+                <div class="wave-bar" style="height:80%"></div><div class="wave-bar" style="height:65%"></div>
+                <div class="wave-bar" style="height:45%"></div><div class="wave-bar" style="height:75%"></div>
+                <div class="wave-bar" style="height:88%"></div><div class="wave-bar" style="height:50%"></div>
+                <div class="wave-bar" style="height:70%"></div><div class="wave-bar" style="height:95%"></div>
+                <div class="wave-bar" style="height:60%"></div><div class="wave-bar" style="height:40%"></div>
+                <div class="wave-bar" style="height:85%"></div><div class="wave-bar" style="height:55%"></div>
+                <div class="wave-bar" style="height:75%"></div><div class="wave-bar" style="height:90%"></div>
+              </div>
+            </div>
+
+            <!-- 音效 -->
+            <div class="track-row">
+              <div class="clip-audio-block" style="left: 70px; width: 120px;">
+                <div class="wave-bar" style="height:40%"></div><div class="wave-bar" style="height:70%"></div>
+                <div class="wave-bar" style="height:95%"></div><div class="wave-bar" style="height:60%"></div>
+                <div class="wave-bar" style="height:85%"></div><div class="wave-bar" style="height:55%"></div>
+              </div>
+              <div class="clip-audio-block" style="left: 260px; width: 100px;">
+                <div class="wave-bar" style="height:55%"></div><div class="wave-bar" style="height:80%"></div>
+                <div class="wave-bar" style="height:65%"></div><div class="wave-bar" style="height:90%"></div>
+                <div class="wave-bar" style="height:75%"></div>
+              </div>
+              <div class="clip-audio-block" style="left: 430px; width: 130px;">
+                <div class="wave-bar" style="height:50%"></div><div class="wave-bar" style="height:85%"></div>
+                <div class="wave-bar" style="height:65%"></div><div class="wave-bar" style="height:95%"></div>
+                <div class="wave-bar" style="height:70%"></div><div class="wave-bar" style="height:80%"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部操作带：播放控制 + 撤销重做（在上），工具图标条（在下） -->
+    <div class="bottom-operation">
+      <!-- 播放控制栏（带撤销/重做） -->
+      <div class="playback-bar">
+        <div class="pb-side">
+          <span>00:01.10</span>
+        </div>
+        <div class="pb-center">
+          <div class="pb-btn" title="撤销">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+          </div>
+          <div class="pb-btn pb-play">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1.5"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+          </div>
+          <div class="pb-btn" title="重做">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><polyline points="21 3 21 8 16 8"/></svg>
+          </div>
+        </div>
+        <div class="pb-side">
+          <span>00:04.63</span>
+        </div>
+      </div>
+
+      <!-- 工具图标条（紧凑版） -->
+      <div class="tool-strip">
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="3" x2="7" y2="21"/><line x1="17" y1="3" x2="17" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg></div>
+          <span class="tool-strip-label">分割</span>
+        </div>
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 22 9 16 9"/><path d="M21.85 10.64a12.85 12.85 0 0 1-7.72 7.72 12.88 12.88 0 0 1-8.74-.49 12.87 12.87 0 0 1-2.21-1.01 1.1 1.1 0 0 1-.23-1.6c.16-.21.42-.3.68-.19a12.87 12.87 0 0 0 2.3.77 1.1 1.1 0 0 0 1.35-.98c0-.33-.22-.63-.52-.75a12.87 12.87 0 0 1-1.98-.7 1.1 1.1 0 0 1-.42-1.46c.18-.33.52-.47.88-.33a10.92 10.92 0 0 0 2.27 1.16 1.1 1.1 0 0 0 1.4-.58 1.1 1.1 0 0 0-.58-1.4 10.63 10.63 0 0 1-1.54-.98 1.1 1.1 0 0 1-.14-1.57 1.1 1.1 0 0 1 1.57-.14 10.63 10.63 0 0 0 1.54.98l.01.01c.15.1.25.25.31.43.06.17.07.36.02.53a12.85 12.85 0 0 1-1.48 2.8 1.1 1.1 0 0 0 .55 1.46"/></svg></div>
+          <span class="tool-strip-label">裁剪</span>
+        </div>
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></div>
+          <span class="tool-strip-label">滤镜</span>
+        </div>
+        <div class="tool-strip-item active">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="3" r="1.5"/><circle cx="12" cy="21" r="1.5"/><circle cx="3" cy="12" r="1.5"/><circle cx="21" cy="12" r="1.5"/></svg></div>
+          <span class="tool-strip-label">调整</span>
+        </div>
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></div>
+          <span class="tool-strip-label">音量</span>
+        </div>
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></div>
+          <span class="tool-strip-label">文本</span>
+        </div>
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15 9 22 9 17 14 18 21 12 18 6 21 7 14 2 9 9 9 12 2"/></svg></div>
+          <span class="tool-strip-label">特效</span>
+        </div>
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7" x2="12" y2="17"/><line x1="7" y1="12" x2="17" y2="12"/></svg></div>
+          <span class="tool-strip-label">比例</span>
+        </div>
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="10" rx="2"/><rect x="7" y="3" width="10" height="8" rx="2"/></svg></div>
+          <span class="tool-strip-label">画中画</span>
+        </div>
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div>
+          <span class="tool-strip-label">时长</span>
+        </div>
+        <div class="tool-strip-item">
+          <div class="tool-icon-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></div>
+          <span class="tool-strip-label">更多</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部导航（安卓） -->
+  <div class="bottom-nav">
+    <div class="nav-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="15 18 9 12 15 6 15 18"/></svg>
+      <span>返回</span>
+    </div>
+    <div class="nav-center-ai">AI</div>
+    <div class="nav-btn">
+      <span class="nav-home"></span>
+      <span>首页</span>
+    </div>
+  </div>
+
+</body>
+</html>

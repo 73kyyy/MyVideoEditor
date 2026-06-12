@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexClip</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0a0a14;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #fff;
+  }
+
+  /* ===== 手机外框 ===== */
+  .phone-frame {
+    width: 390px;
+    height: 844px;
+    background: #0f0f1e;
+    border-radius: 48px;
+    border: 10px solid #1a1a2e;
+    box-shadow: 0 50px 100px rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 28px;
+    background: #0a0a14;
+    border-radius: 0 0 20px 20px;
+    z-index: 100;
+  }
+
+  /* ===== 状态栏 ===== */
+  .status-bar {
+    height: 44px;
+    padding: 0 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    padding-top: 8px;
+  }
+
+  .status-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ===== 顶部栏 ===== */
+  .top-bar {
+    padding: 8px 16px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* 左上角品牌 Logo */
+  .brand h1 {
+    font-size: 19px;
+    font-weight: 700;
+    color: #e2e8f0;
+    letter-spacing: 0.5px;
+  }
+
+  /* 右侧按钮组 */
+  .top-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .icon-btn:active { background: rgba(255, 255, 255, 0.12); }
+
+  /* ===== 主内容区 ===== */
+  .content-area {
+    height: calc(100% - 44px - 60px - 80px);
+    overflow-y: auto;
+    padding: 0 16px 20px;
+  }
+
+  .content-area::-webkit-scrollbar { display: none; }
+
+  /* ===== 创建项目 - 剪映风格大按钮 ===== */
+  .create-card {
+    background: #1a1a22;
+    border: 1px solid #2d2d38;
+    border-radius: 20px;
+    padding: 24px 20px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .create-card:active { transform: scale(0.98); }
+
+  .create-icon {
+    width: 56px;
+    height: 56px;
+    background: #272731;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .create-text { flex: 1; }
+
+  .create-text h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .create-text p {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .create-arrow {
+    color: #64748b;
+  }
+
+  /* ===== 区块标题 ===== */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .count-badge {
+    font-size: 11px;
+    color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  .view-all {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+  }
+
+  /* ===== 草稿箱 ===== */
+  .drafts-section {
+    margin-bottom: 24px;
+  }
+
+  .drafts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .draft-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .draft-card:active { transform: scale(0.98); border-color: #3a3a48; }
+
+  .draft-thumb {
+    height: 100px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dt-1 { background: linear-gradient(135deg, #312e81 0%, #4c1d95 100%); }
+  .dt-2 { background: linear-gradient(135deg, #1e3a8a 0%, #0c4a6e 100%); }
+  .dt-3 { background: linear-gradient(135deg, #14532d 0%, #064e3b 100%); }
+  .dt-4 { background: linear-gradient(135deg, #7c2d12 0%, #9a3412 100%); }
+
+  .play-btn {
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+  }
+
+  .draft-duration {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .draft-info {
+    padding: 8px 10px 10px;
+  }
+
+  .draft-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .draft-meta {
+    font-size: 10px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .draft-more {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    cursor: pointer;
+  }
+
+  /* 弹出菜单 —— 点击三个点后才显示 */
+  .action-menu {
+    position: absolute;
+    top: 34px;
+    right: 6px;
+    background: rgba(20, 20, 28, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 4px;
+    min-width: 110px;
+    z-index: 10;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    display: none;
+    animation: menuIn 0.18s ease-out;
+  }
+
+  @keyframes menuIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .action-menu.show { display: block; }
+
+  .action-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #cbd5e1;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .action-menu-item:hover { background: rgba(255, 255, 255, 0.06); }
+  .action-menu-item.danger { color: #f87171; }
+  .action-menu-item.danger:hover { background: rgba(248, 113, 113, 0.1); }
+
+  /* ===== 全部草稿视图 ===== */
+  .all-drafts-view {
+    position: absolute;
+    inset: 0;
+    background: #0f0f1e;
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+  }
+  .all-drafts-view.show { display: flex; }
+
+  /* 视图顶部栏 */
+  .view-header {
+    padding: 54px 16px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .back-btn {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .view-header .title-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .view-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+  .view-subtitle {
+    font-size: 12px;
+    color: #64748b;
+  }
+  .select-btn {
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    font-size: 13px;
+    color: #e2e8f0;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* 大网格草稿 */
+  .all-drafts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+    padding-bottom: 120px;
+  }
+
+  /* 选择模式样式 */
+  .select-mode .select-check {
+    display: flex;
+  }
+  .select-check {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 24px; height: 24px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 6;
+  }
+  .select-mode .draft-card.selected .select-check {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+  }
+  .select-mode .draft-card.selected .draft-thumb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(139, 92, 246, 0.25);
+    border-radius: 14px 14px 0 0;
+    z-index: 2;
+  }
+  .select-mode .draft-card.selected {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.08);
+  }
+
+  /* 近期项目的选择 */
+  .recent-select-mode .recent-item .select-check-recent {
+    display: flex;
+  }
+  .select-check-recent {
+    width: 22px; height: 22px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 50%;
+    background: rgba(0,0,0,0.3);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .recent-select-mode .recent-item.selected .select-check-recent {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+  }
+  .recent-select-mode .recent-item.selected {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.08);
+  }
+
+  /* 底部批量操作栏 */
+  .batch-bar {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 82px;
+    background: rgba(15, 15, 30, 0.92);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 12px 16px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    z-index: 180;
+  }
+  .batch-bar.show { display: flex; }
+  .batch-left {
+    flex: 1;
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .select-all-btn {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .batch-btns {
+    display: flex;
+    gap: 8px;
+  }
+  .batch-btn {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    color: #475569;
+    font-size: 13px;
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .batch-btn.active {
+    background: rgba(139, 92, 246, 0.15);
+    color: #e2e8f0;
+    cursor: pointer;
+  }
+  .batch-btn.danger.active {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+  }
+
+  /* ===== 近期项目 ===== */
+  .recent-section {
+    margin-bottom: 20px;
+  }
+
+  .recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .recent-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    cursor: pointer;
+    align-items: center;
+    position: relative;
+  }
+
+  .recent-item:active { background: rgba(255, 255, 255, 0.06); }
+
+  .recent-thumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .rt-1 { background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%); }
+  .rt-2 { background: linear-gradient(135deg, #be185d 0%, #f59e0b 100%); }
+  .rt-3 { background: linear-gradient(135deg, #047857 0%, #0891b2 100%); }
+  .rt-4 { background: linear-gradient(135deg, #b91c1c 0%, #7c2d12 100%); }
+
+  .recent-content { flex: 1; min-width: 0; }
+
+  .recent-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recent-details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+
+  .recent-details .sep { color: #334155; }
+
+  .status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .status-published { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; }
+  .status-editing { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; }
+  .status-exporting { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; }
+
+  .recent-action {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 5;
+    cursor: pointer;
+    position: relative;
+  }
+
+  /* 近期项目的菜单位置 */
+  .recent-item .action-menu {
+    top: 42px;
+    right: 0;
+  }
+
+  /* ===== 底部导航 ===== */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: rgba(15, 15, 30, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding-top: 8px;
+    padding-bottom: 20px;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 20px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    border-radius: 10px;
+  }
+
+  .nav-item.active .nav-label { color: #e2e8f0; }
+
+  .nav-icon { display: flex; align-items: center; justify-content: center; }
+  .nav-icon svg { transition: all 0.2s; }
+  .nav-item.active .nav-icon svg { stroke: #e2e8f0; transform: scale(1.05); }
+
+  .nav-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    transition: color 0.2s;
+  }
+
+  .home-indicator {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 134px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+
+  /* ===== VIP 弹窗覆盖层 ===== */
+  .vip-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 10, 20, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .vip-popup {
+    width: 280px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 24px 20px 20px;
+    position: relative;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: popUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-align: center;
+  }
+
+  @keyframes popUp {
+    0%   { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1);    opacity: 1; }
+  }
+
+  .vip-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 26px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .vip-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #cbd5e1;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .vip-h1 {
+    font-size: 17px;
+    font-weight: 800;
+    color: #e2e8f0;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+
+  .vip-h1 .gold {
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .vip-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 14px;
+  }
+
+  .vip-price {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .vip-price::before {
+    content: '新用户';
+    position: absolute;
+    top: -8px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .vip-price-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .vip-price .cur {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 3px;
+  }
+
+  .vip-price .num {
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1;
+    color: #f1f5f9;
+  }
+
+  .vip-price .per {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 5px;
+    margin-left: 3px;
+  }
+
+  .vip-price .old {
+    font-size: 10px;
+    color: #64748b;
+    text-decoration: line-through;
+    margin-top: 4px;
+  }
+
+  .vip-price .save {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+
+  .vip-cta {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    color: #f1f5f9;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    box-shadow:
+      0 4px 14px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: background 0.2s;
+  }
+
+  .vip-cta:active {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .vip-foot {
+    font-size: 9px;
+    color: #64748b;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  /* 页面说明 */
+  .page-info {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 11px;
+    color: #64748b;
+    max-width: 200px;
+  }
+
+  .page-info strong { color: #cbd5e1; display: block; margin-bottom: 4px; font-size: 12px; }
+
+  @media (max-width: 600px) {
+    .page-info { display: none; }
+    body { padding: 0; align-items: flex-start; }
+    .phone-frame { width: 100%; height: 100vh; border-radius: 0; border: none; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="page-info">
+    <strong>NexClip UI</strong>
+    AE风格线条图标 · 剪映式会员入口
+  </div>
+
+  <div class="phone-frame">
+    <div class="notch"></div>
+
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-right">
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round">
+          <path d="M1 9h2v2H1zM5 6h2v5H5zM9 3h2v8H9zM13 0h2v11h-2z"/>
+        </svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7.5 2c2.5 0 4.5 1 6 2.5M7.5 5c1.5 0 2.8.5 3.8 1.5M7.5 8c.8 0 1.5.2 2 .8M7.5 11v.01"/>
+        </svg>
+        <svg width="25" height="11" viewBox="0 0 25 11" fill="none">
+          <rect x="0.5" y="0.5" width="22" height="10" rx="2.5" stroke="#e2e8f0" stroke-width="1"/>
+          <rect x="2" y="2" width="18" height="7" rx="1" fill="#e2e8f0"/>
+          <rect x="23" y="3.5" width="1.5" height="4" rx="0.5" fill="#e2e8f0"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 顶部栏: 左品牌 Logo + 右操作按钮 -->
+    <div class="top-bar">
+      <!-- 左上角: 品牌 Logo -->
+      <div class="brand">
+        <h1>NexClip</h1>
+      </div>
+
+      <!-- 右上角按钮 -->
+      <div class="top-actions">
+        <!-- 搜索 -->
+        <div class="icon-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <!-- 通知 -->
+        <div class="icon-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主内容滚动区 -->
+    <div class="content-area">
+
+      <!-- 创建项目 -->
+      <div class="create-card">
+        <div class="create-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3" ry="3"></rect>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+        </div>
+        <div class="create-text">
+          <h2>创建新项目</h2>
+          <p>选择视频 · 图片 · 素材开始创作</p>
+        </div>
+        <svg class="create-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </div>
+
+      <!-- 草稿箱 -->
+      <div class="drafts-section">
+        <div class="section-header">
+          <div class="section-title">草稿箱 <span class="count-badge">4</span></div>
+          <div class="view-all" onclick="openAllDrafts()">
+            全部
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </div>
+        </div>
+        <div class="drafts-grid">
+          <div class="draft-card">
+            <div class="draft-thumb dt-1">
+              <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div class="draft-more" onclick="toggleMenu(event, this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="5" r="1.5"></circle>
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="12" cy="19" r="1.5"></circle>
+                </svg>
+              </div>
+              <div class="action-menu">
+                <div class="action-menu-item" onclick="event.stopPropagation(); alert('已复制')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>复制</span>
+                </div>
+                <div class="action-menu-item danger" onclick="event.stopPropagation(); alert('已删除')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                  </svg>
+                  <span>删除</span>
+                </div>
+              </div>
+
+              <div class="play-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linejoin="round">
+                  <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                </svg>
+              </div>
+              <span class="draft-duration">02:34</span>
+            </div>
+            <div class="draft-info">
+              <div class="draft-title">毕业季 vlog</div>
+              <div class="draft-meta">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>昨天</span>
+                <span>·</span>
+                <span>15片段</span>
+              </div>
+            </div>
+          </div>
+          <div class="draft-card">
+            <div class="draft-thumb dt-2">
+              <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div class="draft-more" onclick="toggleMenu(event, this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="5" r="1.5"></circle>
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="12" cy="19" r="1.5"></circle>
+                </svg>
+              </div>
+              <div class="action-menu">
+                <div class="action-menu-item" onclick="event.stopPropagation(); alert('已复制')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>复制</span>
+                </div>
+                <div class="action-menu-item danger" onclick="event.stopPropagation(); alert('已删除')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                  </svg>
+                  <span>删除</span>
+                </div>
+              </div>
+
+              <div class="play-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linejoin="round">
+                  <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                </svg>
+              </div>
+              <span class="draft-duration">00:48</span>
+            </div>
+            <div class="draft-info">
+              <div class="draft-title">周末探店</div>
+              <div class="draft-meta">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>3天前</span>
+                <span>·</span>
+                <span>8片段</span>
+              </div>
+            </div>
+          </div>
+          <div class="draft-card">
+            <div class="draft-thumb dt-3">
+              <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div class="draft-more" onclick="toggleMenu(event, this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="5" r="1.5"></circle>
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="12" cy="19" r="1.5"></circle>
+                </svg>
+              </div>
+              <div class="action-menu">
+                <div class="action-menu-item" onclick="event.stopPropagation(); alert('已复制')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>复制</span>
+                </div>
+                <div class="action-menu-item danger" onclick="event.stopPropagation(); alert('已删除')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                  </svg>
+                  <span>删除</span>
+                </div>
+              </div>
+
+              <div class="play-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linejoin="round">
+                  <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                </svg>
+              </div>
+              <span class="draft-duration">05:12</span>
+            </div>
+            <div class="draft-info">
+              <div class="draft-title">旅行回忆</div>
+              <div class="draft-meta">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>上周</span>
+                <span>·</span>
+                <span>32片段</span>
+              </div>
+            </div>
+          </div>
+          <div class="draft-card">
+            <div class="draft-thumb dt-4">
+              <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div class="draft-more" onclick="toggleMenu(event, this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="5" r="1.5"></circle>
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="12" cy="19" r="1.5"></circle>
+                </svg>
+              </div>
+              <div class="action-menu">
+                <div class="action-menu-item" onclick="event.stopPropagation(); alert('已复制')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>复制</span>
+                </div>
+                <div class="action-menu-item danger" onclick="event.stopPropagation(); alert('已删除')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                  </svg>
+                  <span>删除</span>
+                </div>
+              </div>
+
+              <div class="play-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linejoin="round">
+                  <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                </svg>
+              </div>
+              <span class="draft-duration">01:15</span>
+            </div>
+            <div class="draft-info">
+              <div class="draft-title">生日派对</div>
+              <div class="draft-meta">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>上月</span>
+                <span>·</span>
+                <span>12片段</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 近期项目 -->
+      <div class="recent-section">
+        <div class="section-header">
+          <div class="section-title">近期项目 <span class="count-badge">4</span></div>
+          <div class="select-btn" id="recent-manage-btn" onclick="toggleRecentSelect()">
+            管理
+          </div>
+        </div>
+        <div class="recent-list">
+          <div class="recent-item">
+            <div class="select-check-recent" onclick="toggleSelectRecent(event, this.closest('.recent-item'))">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="recent-thumb rt-1">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+            </div>
+            <div class="recent-content">
+              <div class="recent-title">产品宣传片 Final</div>
+              <div class="recent-details">
+                <span>1080P</span>
+                <span class="sep">·</span>
+                <span>03:24</span>
+                <span class="sep">·</span>
+                <span>2小时前</span>
+              </div>
+              <span class="status-tag status-published">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                已发布
+              </span>
+            </div>
+            <div class="recent-action" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                <circle cx="12" cy="12" r="1.5"></circle>
+                <circle cx="19" cy="12" r="1.5"></circle>
+                <circle cx="5" cy="12" r="1.5"></circle>
+              </svg>
+            </div>
+              <div class="action-menu">
+                <div class="action-menu-item" onclick="event.stopPropagation(); alert('已复制')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>复制</span>
+                </div>
+                <div class="action-menu-item danger" onclick="event.stopPropagation(); alert('已删除')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                  </svg>
+                  <span>删除</span>
+                </div>
+              </div>
+
+          </div>
+          <div class="recent-item">
+            <div class="select-check-recent" onclick="toggleSelectRecent(event, this.closest('.recent-item'))">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="recent-thumb rt-2">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+            </div>
+            <div class="recent-content">
+              <div class="recent-title">美食介绍短视频</div>
+              <div class="recent-details">
+                <span>720P</span>
+                <span class="sep">·</span>
+                <span>00:58</span>
+                <span class="sep">·</span>
+                <span>昨天</span>
+              </div>
+              <span class="status-tag status-editing">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                编辑中
+              </span>
+            </div>
+            <div class="recent-action" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                <circle cx="12" cy="12" r="1.5"></circle>
+                <circle cx="19" cy="12" r="1.5"></circle>
+                <circle cx="5" cy="12" r="1.5"></circle>
+              </svg>
+            </div>
+              <div class="action-menu">
+                <div class="action-menu-item" onclick="event.stopPropagation(); alert('已复制')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>复制</span>
+                </div>
+                <div class="action-menu-item danger" onclick="event.stopPropagation(); alert('已删除')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                  </svg>
+                  <span>删除</span>
+                </div>
+              </div>
+
+          </div>
+          <div class="recent-item">
+            <div class="select-check-recent" onclick="toggleSelectRecent(event, this.closest('.recent-item'))">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="recent-thumb rt-3">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+            </div>
+            <div class="recent-content">
+              <div class="recent-title">公司年会剪辑</div>
+              <div class="recent-details">
+                <span>4K</span>
+                <span class="sep">·</span>
+                <span>12:30</span>
+                <span class="sep">·</span>
+                <span>3天前</span>
+              </div>
+              <span class="status-tag status-exporting">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                导出中 68%
+              </span>
+            </div>
+            <div class="recent-action" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                <circle cx="12" cy="12" r="1.5"></circle>
+                <circle cx="19" cy="12" r="1.5"></circle>
+                <circle cx="5" cy="12" r="1.5"></circle>
+              </svg>
+            </div>
+              <div class="action-menu">
+                <div class="action-menu-item" onclick="event.stopPropagation(); alert('已复制')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>复制</span>
+                </div>
+                <div class="action-menu-item danger" onclick="event.stopPropagation(); alert('已删除')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                  </svg>
+                  <span>删除</span>
+                </div>
+              </div>
+
+          </div>
+          <div class="recent-item">
+            <div class="select-check-recent" onclick="toggleSelectRecent(event, this.closest('.recent-item'))">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="recent-thumb rt-4">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+            </div>
+            <div class="recent-content">
+              <div class="recent-title">家庭聚会视频</div>
+              <div class="recent-details">
+                <span>1080P</span>
+                <span class="sep">·</span>
+                <span>08:45</span>
+                <span class="sep">·</span>
+                <span>上周</span>
+              </div>
+              <span class="status-tag status-published">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                已保存
+              </span>
+            </div>
+            <div class="recent-action" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round">
+                <circle cx="12" cy="12" r="1.5"></circle>
+                <circle cx="19" cy="12" r="1.5"></circle>
+                <circle cx="5" cy="12" r="1.5"></circle>
+              </svg>
+            </div>
+              <div class="action-menu">
+                <div class="action-menu-item" onclick="event.stopPropagation(); alert('已复制')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>复制</span>
+                </div>
+                <div class="action-menu-item danger" onclick="event.stopPropagation(); alert('已删除')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6M14 11v6"></path>
+                  </svg>
+                  <span>删除</span>
+                </div>
+              </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 全部草稿视图 -->
+    <div class="all-drafts-view" id="allDraftsView">
+      <div class="view-header">
+        <div class="back-btn" onclick="closeAllDrafts()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </div>
+        <div class="title-group">
+          <div class="view-title" id="allDraftsTitle">全部草稿</div>
+          <div class="view-subtitle" id="allDraftsSubtitle">共 8 个草稿</div>
+        </div>
+        <div class="select-btn" id="allDraftsSelectBtn" onclick="toggleDraftsSelect()">选择</div>
+      </div>
+
+      <div class="all-drafts-grid" id="allDraftsGrid">
+        <div class="draft-card">
+          <div class="draft-thumb dt-1">
+            <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="draft-more" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+            </div>
+            <div class="play-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+            <span class="draft-duration">02:34</span>
+          </div>
+          <div class="draft-info">
+            <div class="draft-title">毕业季 vlog</div>
+            <div class="draft-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>昨天</span><span>·</span><span>15片段</span></div>
+          </div>
+        </div>
+
+        <div class="draft-card">
+          <div class="draft-thumb dt-2">
+            <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="draft-more" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+            </div>
+            <div class="play-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+            <span class="draft-duration">00:48</span>
+          </div>
+          <div class="draft-info"><div class="draft-title">周末探店</div><div class="draft-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>3天前</span><span>·</span><span>8片段</span></div></div>
+        </div>
+
+        <div class="draft-card">
+          <div class="draft-thumb dt-3">
+            <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="draft-more" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+            </div>
+            <div class="play-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+            <span class="draft-duration">01:15</span>
+          </div>
+          <div class="draft-info"><div class="draft-title">生日聚会</div><div class="draft-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>1周前</span><span>·</span><span>22片段</span></div></div>
+        </div>
+
+        <div class="draft-card">
+          <div class="draft-thumb dt-4">
+            <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="draft-more" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+            </div>
+            <div class="play-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+            <span class="draft-duration">03:20</span>
+          </div>
+          <div class="draft-info"><div class="draft-title">旅行剪辑</div><div class="draft-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>2周前</span><span>·</span><span>30片段</span></div></div>
+        </div>
+
+        <!-- 新的 4 个草稿 -->
+        <div class="draft-card">
+          <div class="draft-thumb dt-1">
+            <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="draft-more" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+            </div>
+            <div class="play-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+            <span class="draft-duration">00:32</span>
+          </div>
+          <div class="draft-info"><div class="draft-title">宠物日常</div><div class="draft-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>3周前</span><span>·</span><span>5片段</span></div></div>
+        </div>
+
+        <div class="draft-card">
+          <div class="draft-thumb dt-2">
+            <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="draft-more" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+            </div>
+            <div class="play-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+            <span class="draft-duration">02:00</span>
+          </div>
+          <div class="draft-info"><div class="draft-title">美食合集</div><div class="draft-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>1月前</span><span>·</span><span>18片段</span></div></div>
+        </div>
+
+        <div class="draft-card">
+          <div class="draft-thumb dt-3">
+            <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="draft-more" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+            </div>
+            <div class="play-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+            <span class="draft-duration">01:40</span>
+          </div>
+          <div class="draft-info"><div class="draft-title">运动记录</div><div class="draft-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>1月前</span><span>·</span><span>12片段</span></div></div>
+        </div>
+
+        <div class="draft-card">
+          <div class="draft-thumb dt-4">
+            <div class="select-check" onclick="toggleSelectCard(event, this.closest('.draft-card'))">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="draft-more" onclick="toggleMenu(event, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+            </div>
+            <div class="play-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+            <span class="draft-duration">00:25</span>
+          </div>
+          <div class="draft-info"><div class="draft-title">随手拍</div><div class="draft-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>2月前</span><span>·</span><span>3片段</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 批量操作栏（草稿选择模式 & 近期项目管理模式共享） -->
+    <div class="batch-bar" id="batchBar">
+      <div class="batch-left">
+        <span id="batchCount">已选 0 项</span>
+        <div class="select-all-btn" onclick="batchSelectAll()">全选</div>
+      </div>
+      <div class="batch-btns">
+        <div class="batch-btn" id="batchCopyBtn" onclick="batchCopy()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>复制</span>
+        </div>
+        <div class="batch-btn danger" id="batchDeleteBtn" onclick="batchDelete()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            <path d="M10 11v6M14 11v6"></path>
+          </svg>
+          <span>删除</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部导航: 剪辑、教程、我的 -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <div class="nav-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3" ry="3"></rect>
+            <line x1="9" y1="12" x2="15" y2="12"></line>
+            <line x1="12" y1="9" x2="12" y2="15"></line>
+          </svg>
+        </div>
+        <span class="nav-label">剪辑</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="9" y1="12" x2="15" y2="12"></line>
+          </svg>
+        </div>
+        <span class="nav-label">教程</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <span class="nav-label">我的</span>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+
+    <!-- VIP 会员弹窗覆盖层 -->
+    <div class="vip-overlay" id="vipOverlay">
+      <div class="vip-popup">
+        <div class="vip-close" onclick="document.getElementById('vipOverlay').style.display='none'">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </div>
+        <div class="vip-tag">新用户专享</div>
+        <div class="vip-h1">开通 <span class="gold">Pro 会员</span></div>
+        <div class="vip-sub">4K 导出 · 无水印 · AI功能</div>
+        <div class="vip-price">
+          <div class="vip-price-row">
+            <span class="cur">¥</span>
+            <span class="num">9</span>
+            <span class="per">/首月</span>
+          </div>
+          <div class="old">原价 ¥29/月  <span class="save">省 69%</span></div>
+        </div>
+        <button class="vip-cta">立即开通</button>
+        <div class="vip-foot">次月起 ¥29/月 · 随时可取消</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ====== 全部草稿视图 ======
+    let draftsSelectMode = false;
+    let recentSelectMode = false;
+    let currentMode = null; // 'drafts' | 'recent'
+
+    function openAllDrafts() {
+      document.getElementById('allDraftsView').classList.add('show');
+    }
+    function closeAllDrafts() {
+      if (draftsSelectMode) {
+        toggleDraftsSelect(); // 退出选择模式
+        return;
+      }
+      document.getElementById('allDraftsView').classList.remove('show');
+    }
+
+    function toggleDraftsSelect() {
+      draftsSelectMode = !draftsSelectMode;
+      const view = document.getElementById('allDraftsView');
+      const grid = document.getElementById('allDraftsGrid');
+      const btn = document.getElementById('allDraftsSelectBtn');
+      const title = document.getElementById('allDraftsTitle');
+      const subtitle = document.getElementById('allDraftsSubtitle');
+      const backBtn = view.querySelector('.back-btn');
+      if (draftsSelectMode) {
+        grid.classList.add('select-mode');
+        view.classList.add('select-mode');
+        btn.textContent = '取消';
+        title.textContent = '已选择 0 项';
+        subtitle.textContent = '点击卡片选择';
+        backBtn.innerHTML = '<span style="font-size:13px;color:#e2e8f0;">取消</span>';
+        currentMode = 'drafts';
+        document.getElementById('batchBar').classList.add('show');
+      } else {
+        grid.classList.remove('select-mode');
+        view.classList.remove('select-mode');
+        btn.textContent = '选择';
+        title.textContent = '全部草稿';
+        subtitle.textContent = '共 8 个草稿';
+        backBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+        // 清除所有选中
+        grid.querySelectorAll('.draft-card.selected').forEach(c => c.classList.remove('selected'));
+        currentMode = null;
+        document.getElementById('batchBar').classList.remove('show');
+      }
+      updateBatchUI();
+    }
+
+    function toggleRecentSelect() {
+      recentSelectMode = !recentSelectMode;
+      const container = document.querySelector('.phone-frame');
+      const btn = document.getElementById('recent-manage-btn');
+      if (recentSelectMode) {
+        container.classList.add('recent-select-mode');
+        btn.textContent = '取消';
+        currentMode = 'recent';
+        document.getElementById('batchBar').classList.add('show');
+      } else {
+        container.classList.remove('recent-select-mode');
+        btn.textContent = '管理';
+        document.querySelectorAll('.recent-item.selected').forEach(c => c.classList.remove('selected'));
+        currentMode = null;
+        document.getElementById('batchBar').classList.remove('show');
+      }
+      updateBatchUI();
+    }
+
+    function toggleSelectCard(event, card) {
+      event.stopPropagation();
+      card.classList.toggle('selected');
+      updateBatchUI();
+    }
+
+    function toggleSelectRecent(event, item) {
+      event.stopPropagation();
+      item.classList.toggle('selected');
+      updateBatchUI();
+    }
+
+    function getSelectedCount() {
+      if (currentMode === 'drafts') {
+        return document.getElementById('allDraftsGrid').querySelectorAll('.draft-card.selected').length;
+      } else if (currentMode === 'recent') {
+        return document.querySelectorAll('.recent-item.selected').length;
+      }
+      return 0;
+    }
+
+    function updateBatchUI() {
+      const count = getSelectedCount();
+      const bar = document.getElementById('batchBar');
+      const countLabel = document.getElementById('batchCount');
+      const copyBtn = document.getElementById('batchCopyBtn');
+      const delBtn = document.getElementById('batchDeleteBtn');
+
+      if (currentMode === 'drafts') {
+        document.getElementById('allDraftsTitle').textContent = count > 0 ? '已选择 ' + count + ' 项' : '已选择 0 项';
+      }
+
+      countLabel.textContent = '已选 ' + count + ' 项';
+      if (count > 0) {
+        copyBtn.classList.add('active');
+        delBtn.classList.add('active');
+      } else {
+        copyBtn.classList.remove('active');
+        delBtn.classList.remove('active');
+      }
+    }
+
+    function batchSelectAll() {
+      if (currentMode === 'drafts') {
+        const grid = document.getElementById('allDraftsGrid');
+        const cards = grid.querySelectorAll('.draft-card');
+        const allSelected = Array.from(cards).every(c => c.classList.contains('selected'));
+        cards.forEach(c => {
+          if (allSelected) c.classList.remove('selected');
+          else c.classList.add('selected');
+        });
+      } else if (currentMode === 'recent') {
+        const items = document.querySelectorAll('.recent-item');
+        const allSelected = Array.from(items).every(i => i.classList.contains('selected'));
+        items.forEach(i => {
+          if (allSelected) i.classList.remove('selected');
+          else i.classList.add('selected');
+        });
+      }
+      updateBatchUI();
+    }
+
+    function batchCopy() {
+      const count = getSelectedCount();
+      if (count === 0) return;
+      alert('已复制 ' + count + ' 项');
+    }
+
+    function batchDelete() {
+      const count = getSelectedCount();
+      if (count === 0) return;
+      if (confirm('确定删除选中的 ' + count + ' 项？')) {
+        if (currentMode === 'drafts') {
+          document.getElementById('allDraftsGrid').querySelectorAll('.draft-card.selected').forEach(c => c.remove());
+        } else if (currentMode === 'recent') {
+          document.querySelectorAll('.recent-item.selected').forEach(c => c.remove());
+        }
+        updateBatchUI();
+      }
+    }
+
+    function toggleMenu(event, btn) {
+      event.stopPropagation();
+      const card = btn.closest('.draft-card, .recent-item');
+      const menu = card.querySelector('.action-menu');
+      // 先关闭其他所有菜单
+      document.querySelectorAll('.action-menu.show').forEach(m => {
+        if (m !== menu) m.classList.remove('show');
+      });
+      // 切换当前菜单
+      if (menu) menu.classList.toggle('show');
+    }
+    // 点击空白处关闭菜单
+    document.addEventListener('click', function() {
+      document.querySelectorAll('.action-menu.show').forEach(m => {
+        m.classList.remove('show');
+      });
+    });
+  </script>
+</body>
+</html>
