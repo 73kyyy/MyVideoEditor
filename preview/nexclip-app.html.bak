@@ -124,12 +124,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .proj-create-btn:active{transform:scale(.97)}
 .login-ov{position:fixed;inset:0;background:rgba(10,10,20,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;justify-content:flex-end;flex-direction:column;z-index:110}
 .login-ov.show{display:flex}
-.login-sheet{background:var(--bg0);border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,.1);padding:0;max-height:90vh;overflow-y:auto;transform:translateY(0);transition:transform .3s cubic-bezier(.4,0,.2,1)}
-.login-sheet::-webkit-scrollbar{display:none}
-.login-handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:10px auto 0}
-.login-hdr{padding:clamp(12px,2vh,20px) clamp(16px,3vw,24px) clamp(8px,1vh,12px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.05)}
-.login-title{font-size:var(--f-lg);font-weight:700;color:var(--t1)}
-.login-body{padding:clamp(20px,3vh,32px) clamp(20px,3vw,28px) clamp(24px,4vh,40px)}
+.login-sheet{background:var(--bg0);border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,.1);padding:clamp(20px,3vh,32px) clamp(20px,3vw,28px) clamp(24px,4vh,40px)}
+.login-handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto clamp(16px,2vh,24px)}
+.login-title{font-size:var(--f-xl);font-weight:700;color:var(--t1);text-align:center;margin-bottom:clamp(16px,2vh,24px)}
 .login-btns{display:flex;flex-direction:column;gap:clamp(8px,1vh,12px)}
 .login-btn{display:flex;align-items:center;gap:clamp(10px,1.5vw,14px);padding:clamp(12px,1.5vh,16px) clamp(14px,2vw,18px);border-radius:12px;cursor:pointer;transition:all .2s;font-size:var(--f-md);font-weight:600;color:#fff;border:none;width:100%}
 .login-btn:active{transform:scale(.98)}
@@ -301,7 +298,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <div class="brand"><h1>NexClip</h1></div>
 <div class="top-actions">
 <div class="ibtn" onclick="showVip()"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
-<div class="ibtn" onclick="showVip()"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></div>
+<div class="ibtn"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
 </div>
 </div>
 <div class="home-content">
@@ -448,9 +445,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <!-- 隐私政策弹窗 -->
 <div class="modal-ov" id="privModal" onclick="if(event.target===this)closeModal('privModal')">
-<div class="modal-sheet" id="privSheet" style="max-height:90vh">
-<div class="modal-handle"></div>
-<div class="modal-hdr"><div class="modal-title">隐私政策</div><div class="modal-x" onclick="closeModal('privModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
+<div class="modal-sheet" id="privSheet" style="max-height:90vh"><div class="modal-x" onclick="closeModal('privModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
 <div class="modal-body" style="font-size:var(--f-sm);color:var(--t2);line-height:1.8;white-space:pre-wrap"><b>NexClip 隐私政策</b>
 
 更新日期：2026年6月15日  生效日期：2026年6月15日
@@ -528,7 +523,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <!-- 用户协议弹窗 -->
 <div class="modal-ov" id="termsModal" onclick="if(event.target===this)closeModal('termsModal')">
-<div class="modal-sheet" id="termsSheet" style="max-height:90vh">
+<div class="modal-sheet" style="max-height:90vh">
 <div class="modal-handle"></div>
 <div class="modal-hdr"><div class="modal-title">用户协议</div><div class="modal-x" onclick="closeModal('termsModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
 <div class="modal-body" style="font-size:var(--f-sm);color:var(--t2);line-height:1.8;white-space:pre-wrap"><b>NexClip 用户服务协议</b>
@@ -629,7 +624,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <!-- 开源许可弹窗 -->
 <div class="modal-ov" id="licModal" onclick="if(event.target===this)closeModal('licModal')">
-<div class="modal-sheet" id="licSheet" style="max-height:90vh">
+<div class="modal-sheet" style="max-height:90vh">
 <div class="modal-handle"></div>
 <div class="modal-hdr"><div class="modal-title">开源许可</div><div class="modal-x" onclick="closeModal('licModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
 <div class="modal-body" style="font-size:var(--f-sm);color:var(--t2);line-height:1.8">
@@ -653,11 +648,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 </div>
 
 <!-- 登录弹窗 -->
-<div class="login-ov" id="loginOv" onclick="if(event.target===this)closeModal('loginOv')">
+<div class="login-ov" id="loginOv" onclick="if(event.target===this)hideLoginSheet()">
 <div class="login-sheet" id="loginSheet">
 <div class="login-handle"></div>
-<div class="login-hdr"><div class="login-title">登录 NexClip</div><div class="modal-x" onclick="closeModal('loginOv')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
-<div class="login-body">
+<div class="login-title">登录 NexClip</div>
 <div class="login-btns">
 <button class="login-btn phone" onclick="doLogin('phone')"><div class="login-btn-icon">📱</div>手机号登录</button>
 <button class="login-btn wechat" onclick="doLogin('wechat')"><div class="login-btn-icon" style="background:rgba(0,0,0,.2);border-radius:6px;font-size:12px">微</div>微信登录</button>
@@ -665,8 +659,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 </div>
 <div class="login-agree">
 <div class="login-chk" id="agreeChk" onclick="this.classList.toggle('checked');updateLoginBtns()"></div>
-<span>登录即表示同意 <a href="#" onclick="event.preventDefault();event.stopPropagation();closeModal('loginOv');openModal('termsModal')">用户协议</a> 和 <a href="#" onclick="event.preventDefault();event.stopPropagation();closeModal('loginOv');openModal('privModal')">隐私政策</a></span>
-</div>
+<span>登录即表示同意 <a href="#" onclick="event.preventDefault();event.stopPropagation();hideLoginSheet();openModal('termsModal')">用户协议</a> 和 <a href="#" onclick="event.preventDefault();event.stopPropagation();hideLoginSheet();openModal('privModal')">隐私政策</a></span>
 </div>
 </div>
 </div>
@@ -683,8 +676,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <div class="ben-item"><div class="ben-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2 7h7l-5.5 4 2 7-5.5-4-5.5 4 2-7L2 9h7z"></path></svg></div><div class="ben-text"><div class="bt">AI 智能剪辑</div><div class="bd">一键成片 · 智能配文</div></div><div class="chk"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
 <div class="ben-item"><div class="ben-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.5 0 4.77 1.02 6.36 2.64"></path></svg></div><div class="ben-text"><div class="bt">云端项目同步</div><div class="bd">多端无缝 · 100GB 云空间</div></div><div class="chk"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
 </div></div>
-<div class="cta-sec"><button class="cta-btn" onclick="hideVip();toast('功能开发中，敬请期待')">立即开通 · 仅 ¥9</button><div class="cta-sub">🔒 随时可取消 · 安全支付</div></div>
-<div class="countdown"><div class="cd-text">距活动结束还剩</div><div class="cd-nums"><div class="tblk"><span class="tnum" id="cdD">02</span><span class="tlab">天</span></div><span class="tsep">:</span><div class="tblk"><span class="tnum" id="cdH">14</span><span class="tlab">时</span></div><span class="tsep">:</span><div class="tblk"><span class="tnum" id="cdM">36</span><span class="tlab">分</span></div><span class="tsep">:</span><div class="tblk"><span class="tnum" id="cdS">48</span><span class="tlab">秒</span></div></div></div>
+<div class="cta-sec"><button class="cta-btn">立即开通 · 仅 ¥9</button><div class="cta-sub">🔒 随时可取消 · 安全支付</div></div>
+<div class="countdown"><div class="cd-text">距活动结束还剩</div><div class="cd-nums"><div class="tblk"><span class="tnum">02</span><span class="tlab">天</span></div><span class="tsep">:</span><div class="tblk"><span class="tnum">14</span><span class="tlab">时</span></div><span class="tsep">:</span><div class="tblk"><span class="tnum">36</span><span class="tlab">分</span></div><span class="tsep">:</span><div class="tblk"><span class="tnum">48</span><span class="tlab">秒</span></div></div></div>
 </div>
 </div>
 
@@ -706,7 +699,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <!-- 教程详情弹窗 -->
 <div class="modal-ov" id="tutModal" onclick="if(event.target===this)closeModal('tutModal')">
-<div class="modal-sheet" id="tutSheet" style="max-height:90vh">
+<div class="modal-sheet" id="tutSheet">
 <div class="modal-handle"></div>
 <div class="modal-hdr"><div class="modal-title" id="tutModalTitle">教程详情</div><div class="modal-x" onclick="closeModal('tutModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
 <div class="modal-body" id="tutModalBody"></div>
@@ -715,7 +708,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <!-- 模板预览弹窗 -->
 <div class="modal-ov" id="tmplModal" onclick="if(event.target===this)closeModal('tmplModal')">
-<div class="modal-sheet" id="tmplSheet" style="max-height:90vh">
+<div class="modal-sheet" id="tmplSheet">
 <div class="modal-handle"></div>
 <div class="modal-hdr"><div class="modal-title" id="tmplModalTitle">模板预览</div><div class="modal-x" onclick="closeModal('tmplModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
 <div class="modal-body" id="tmplModalBody"></div>
@@ -724,7 +717,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <!-- 上传模板弹窗 -->
 <div class="modal-ov" id="uploadModal" onclick="if(event.target===this)closeModal('uploadModal')">
-<div class="modal-sheet" id="uploadSheet" style="max-height:90vh">
+<div class="modal-sheet">
 <div class="modal-handle"></div>
 <div class="modal-hdr"><div class="modal-title">上传我的模板</div><div class="modal-x" onclick="closeModal('uploadModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
 <div class="modal-body" style="text-align:center;padding:20px">
@@ -754,7 +747,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <!-- Toast -->
 <div class="toast" id="toastEl"></div>
 
-</div>
 </div>
 
 <script>
@@ -810,19 +802,19 @@ function checkLandscape(){const m=document.getElementById('edMain');if(window.in
 window.addEventListener('resize',checkLandscape);
 
 // 弹窗
-function openModal(id){const el=document.getElementById(id);if(el)el.classList.add('show');}
-function closeModal(id){const el=document.getElementById(id);if(el)el.classList.remove('show');}
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
 
 // VIP
 function showVip(){document.getElementById('vipOv').classList.add('show');}
 function hideVip(){document.getElementById('vipOv').classList.remove('show');}
 
 // 登录
-function showLoginSheet(){openModal('loginOv');}
-function hideLoginSheet(){closeModal('loginOv');}
+function showLoginSheet(){document.getElementById('loginOv').classList.add('show');}
+function hideLoginSheet(){document.getElementById('loginOv').classList.remove('show');}
 function updateLoginBtns(){const c=document.getElementById('agreeChk').classList.contains('checked');document.querySelectorAll('.login-btn').forEach(b=>b.style.opacity=c?'1':'.5');}
 function doLogin(type){if(!document.getElementById('agreeChk').classList.contains('checked')){toast('请先同意用户协议和隐私政策');return;}
-  isLoggedIn=true;closeModal('loginOv');
+  isLoggedIn=true;hideLoginSheet();
   document.getElementById('profileName').textContent=type==='phone'?'用户_'+Math.floor(Math.random()*9000+1000):type==='wechat'?'微信用户':'QQ用户';
   document.getElementById('profileHint').textContent='已登录';
   document.getElementById('logoutSec').style.display='block';
@@ -860,9 +852,9 @@ function renderRuler(){const r=document.getElementById('timeRuler');if(!r)return
 
 // 下拉关闭弹窗（触摸拖拽）
 function addSwipeClose(ovId,sheetId){const ov=document.getElementById(ovId);const sheet=document.getElementById(sheetId);if(!ov||!sheet)return;let startY=0,currentY=0,dragging=false;
-  sheet.addEventListener('touchstart',e=>{const h=sheet.querySelector('.modal-handle,.login-handle');if(h&&h.contains(e.target)){startY=e.touches[0].clientY;dragging=true;}else{startY=e.touches[0].clientY;dragging=true;}},{passive:true});
+  sheet.addEventListener('touchstart',e=>{const h=sheet.querySelector('.modal-handle');if(h&&h.contains(e.target)){startY=e.touches[0].clientY;dragging=true;}},{passive:true});
   sheet.addEventListener('touchmove',e=>{if(!dragging)return;currentY=e.touches[0].clientY-startY;if(currentY>0)sheet.style.transform=`translateY(${currentY}px)`;},{passive:true});
-  sheet.addEventListener('touchend',()=>{if(!dragging)return;dragging=false;if(currentY>100){if(ovId==='loginOv'){closeModal('loginOv');}else if(ovId==='aiOv'){hideAiPanel();}else{closeModal(ovId);}}sheet.style.transform='';currentY=0;},{passive:true});
+  sheet.addEventListener('touchend',()=>{if(!dragging)return;dragging=false;if(currentY>100){closeModal(ovId);}sheet.style.transform='';currentY=0;},{passive:true});
 }
 
 // VIP弹窗下拉关闭
@@ -872,29 +864,18 @@ function addSwipeClose(ovId,sheetId){const ov=document.getElementById(ovId);cons
   pop.addEventListener('touchend',()=>{if(!dragging)return;dragging=false;if(currentY>150){hideVip();}pop.style.transform='';currentY=0;},{passive:true});
 })();
 
-// 登录弹窗下拉关闭 — 在初始化中统一调用
-// AI面板下拉关闭 — 在初始化中统一调用
+// 登录弹窗下拉关闭
+(function(){const sheet=document.getElementById('loginSheet');const ov=document.getElementById('loginOv');if(!sheet||!ov)return;let startY=0,currentY=0,dragging=false;
+  sheet.addEventListener('touchstart',e=>{startY=e.touches[0].clientY;dragging=true;},{passive:true});
+  sheet.addEventListener('touchmove',e=>{if(!dragging)return;currentY=e.touches[0].clientY-startY;if(currentY>0)sheet.style.transform=`translateY(${currentY}px)`;},{passive:true});
+  sheet.addEventListener('touchend',()=>{if(!dragging)return;dragging=false;if(currentY>100){hideLoginSheet();}sheet.style.transform='';currentY=0;},{passive:true});
+})();
 
-// VIP倒计时
-(function(){
-  let total=2*86400+14*3600+36*60+48;
-  function tick(){
-    if(total<=0)return;
-    total--;
-    const d=Math.floor(total/86400);
-    const h=Math.floor((total%86400)/3600);
-    const m=Math.floor((total%3600)/60);
-    const s=total%60;
-    const cdD=document.getElementById('cdD');
-    const cdH=document.getElementById('cdH');
-    const cdM=document.getElementById('cdM');
-    const cdS=document.getElementById('cdS');
-    if(cdD)cdD.textContent=String(d).padStart(2,'0');
-    if(cdH)cdH.textContent=String(h).padStart(2,'0');
-    if(cdM)cdM.textContent=String(m).padStart(2,'0');
-    if(cdS)cdS.textContent=String(s).padStart(2,'0');
-  }
-  setInterval(tick,1000);
+// AI面板下拉关闭
+(function(){const panel=document.getElementById('aiPanel');const ov=document.getElementById('aiOv');if(!panel||!ov)return;let startY=0,currentY=0,dragging=false;
+  panel.addEventListener('touchstart',e=>{startY=e.touches[0].clientY;dragging=true;},{passive:true});
+  panel.addEventListener('touchmove',e=>{if(!dragging)return;currentY=e.touches[0].clientY-startY;if(currentY>0)panel.style.transform=`translateY(${currentY}px)`;},{passive:true});
+  panel.addEventListener('touchend',()=>{if(!dragging)return;dragging=false;if(currentY>100){hideAiPanel();}panel.style.transform='';currentY=0;},{passive:true});
 })();
 
 // 初始化
@@ -911,7 +892,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   addSwipeClose('termsModal','termsSheet');
   addSwipeClose('licModal','licSheet');
   addSwipeClose('loginOv','loginSheet');
-  addSwipeClose('aiOv','aiPanel');
   updateLoginBtns();
   // 首次打开自动弹出VIP弹窗
   setTimeout(()=>showVip(), 800);
