@@ -1024,12 +1024,6 @@ document.addEventListener('DOMContentLoaded',function(){
   // Login button state
   updateLoginBtns();
 
-  // Populate privacy policy and terms text
-  const privBody=document.getElementById('privBody');
-  if(privBody)privBody.innerHTML=privText;
-  const termsBody=document.getElementById('termsBody');
-  if(termsBody)termsBody.innerHTML=termsText;
-
   // Auto show VIP popup after 800ms
   setTimeout(()=>showVip(),800);
 
