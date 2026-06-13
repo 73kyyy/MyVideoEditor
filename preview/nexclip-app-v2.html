@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexClip Test</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,sans-serif;background:#0f0f1e;color:#fff;height:100vh;overflow:hidden}
+.app{width:100%;height:100%;display:flex;flex-direction:column}
+.page{display:none;flex-direction:column;height:100%}.page.active{display:flex}
+.top-bar{padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.top-bar h1{font-size:20px;font-weight:700}
+.btn{padding:10px 20px;background:#8b5cf6;border:none;border-radius:12px;color:#fff;font-size:14px;cursor:pointer;margin:10px}
+.btn:active{opacity:.7}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+/* 弹窗 */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:100}
+.overlay.show{display:flex}
+.sheet{background:#1a1a22;border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px}
+.sheet-handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-size:18px;font-weight:700;margin-bottom:16px}
+.sheet-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer}
+/* VIP弹窗 */
+.vip-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:120}
+.vip-overlay.show{display:flex}
+.vip-box{background:linear-gradient(180deg,#1e1e30,#15151f);border-radius:28px;width:min(90vw,400px);padding:28px 24px;text-align:center;position:relative}
+.vip-badge{display:inline-block;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a1a2e;font-size:12px;font-weight:700;padding:4px 12px;border-radius:8px;margin-bottom:12px}
+.vip-title{font-size:22px;font-weight:700;margin-bottom:8px}
+.vip-price{font-size:36px;font-weight:700;color:#ffd700;margin:16px 0}
+.vip-price small{font-size:14px;color:#ff8c00}
+.vip-btn{width:100%;padding:16px;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:14px;color:#1a1a2e;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px}
+.vip-close{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.1);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px}
+/* 底部导航 */
+.bnav{height:60px;display:flex;background:#0f0f1e;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:#64748b;font-size:10px}
+.bnav-item.active{color:#8b5cf6}
+.bnav-item svg{width:20px;height:20px}
+/* Toast */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#2c2c2e;color:#e0e0e0;font-size:13px;padding:10px 24px;border-radius:20px;opacity:0;transition:opacity .3s;z-index:200;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- 首页 -->
+<div class="page active" id="pg-home">
+<div class="top-bar"><h1>NexClip</h1></div>
+<div class="center">
+<p style="color:#64748b">暂无草稿</p>
+<button class="btn" onclick="openModal('projOv')">创建新项目</button>
+<button class="btn" onclick="showVip()">开通会员 ¥9/月</button>
+</div>
+<div class="bnav" id="nav1"></div>
+</div>
+
+<!-- 教程 -->
+<div class="page" id="pg-tutorial">
+<div class="top-bar"><h1>教程</h1></div>
+<div class="center"><p style="color:#64748b">教程内容</p></div>
+<div class="bnav" id="nav2"></div>
+</div>
+
+<!-- 模板 -->
+<div class="page" id="pg-template">
+<div class="top-bar"><h1>模板</h1></div>
+<div class="center"><p style="color:#64748b">模板内容</p></div>
+<div class="bnav" id="nav3"></div>
+</div>
+
+<!-- 我的 -->
+<div class="page" id="pg-profile">
+<div class="top-bar"><h1>我的</h1></div>
+<div style="flex:1;overflow-y:auto;padding:0 20px">
+<div style="text-align:center;padding:20px;cursor:pointer" onclick="openModal('loginOv')">
+<div style="width:64px;height:64px;border-radius:50%;background:#1a1a22;margin:0 auto 8px;display:flex;align-items:center;justify-content:center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8"><circle cx="12" cy="7" r="4"></circle><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg></div>
+<div id="profileName">点击登录</div>
+<div id="profileHint" style="color:#64748b;font-size:12px">登录后享受更多功能</div>
+</div>
+<div style="background:#1a1a22;border-radius:14px;padding:16px;margin-bottom:12px;cursor:pointer" onclick="showVip()">
+<div style="display:flex;align-items:center;gap:10px"><span style="color:#ffd700;font-size:18px">★</span><div><div style="font-weight:600">开通 Pro 会员</div><div style="color:#64748b;font-size:12px">¥9/月 · 4K导出 · AI功能</div></div></div>
+</div>
+<div style="background:#1a1a22;border-radius:14px;overflow:hidden;margin-bottom:12px">
+<div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer" onclick="openModal('privOv')">隐私政策</div>
+<div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer" onclick="openModal('termsOv')">用户协议</div>
+<div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer" onclick="openModal('licOv')">开源许可</div>
+<div style="padding:14px 16px;cursor:pointer" onclick="toast('已是最新版本')">检查更新</div>
+</div>
+<div id="logoutBtn" style="display:none"><button class="btn" style="width:100%;background:rgba(248,113,113,.1);color:#f87171" onclick="doLogout()">退出登录</button></div>
+</div>
+<div class="bnav" id="nav4"></div>
+</div>
+
+<!-- 项目设置弹窗 -->
+<div class="overlay" id="projOv" onclick="if(event.target===this)closeModal('projOv')">
+<div class="sheet">
+<div class="sheet-handle"></div>
+<div class="sheet-title">新建项目</div>
+<div style="margin-bottom:16px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">项目名称</div><input style="width:100%;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-size:14px;outline:none" placeholder="未命名项目"></div>
+<div style="margin-bottom:16px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">画面比例</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="background:#8b5cf6;padding:8px 14px;font-size:12px" onclick="this.parentElement.querySelectorAll('.btn').forEach(b=>b.style.background='rgba(255,255,255,.06)');this.style.background='#8b5cf6'">16:9</button><button class="btn" style="background:rgba(255,255,255,.06);padding:8px 14px;font-size:12px" onclick="this.parentElement.querySelectorAll('.btn').forEach(b=>b.style.background='rgba(255,255,255,.06)');this.style.background='#8b5cf6'">9:16</button><button class="btn" style="background:rgba(255,255,255,.06);padding:8px 14px;font-size:12px" onclick="this.parentElement.querySelectorAll('.btn').forEach(b=>b.style.background='rgba(255,255,255,.06)');this.style.background='#8b5cf6'">1:1</button><button class="btn" style="background:rgba(255,255,255,.06);padding:8px 14px;font-size:12px" onclick="this.parentElement.querySelectorAll('.btn').forEach(b=>b.style.background='rgba(255,255,255,.06)');this.style.background='#8b5cf6'">4:3</button></div></div>
+<div style="margin-bottom:16px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">画质</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="background:rgba(255,255,255,.06);padding:8px 14px;font-size:12px" onclick="this.parentElement.querySelectorAll('.btn').forEach(b=>b.style.background='rgba(255,255,255,.06)');this.style.background='#8b5cf6'">4K</button><button class="btn" style="background:#8b5cf6;padding:8px 14px;font-size:12px" onclick="this.parentElement.querySelectorAll('.btn').forEach(b=>b.style.background='rgba(255,255,255,.06)');this.style.background='#8b5cf6'">1080P</button><button class="btn" style="background:rgba(255,255,255,.06);padding:8px 14px;font-size:12px" onclick="this.parentElement.querySelectorAll('.btn').forEach(b=>b.style.background='rgba(255,255,255,.06)');this.style.background='#8b5cf6'">720P</button></div></div>
+<button class="btn" style="width:100%;background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:14px;font-size:16px;font-weight:700" onclick="closeModal('projOv');toast('项目已创建')">创建项目</button>
+</div>
+</div>
+
+<!-- 隐私政策弹窗 -->
+<div class="overlay" id="privOv" onclick="if(event.target===this)closeModal('privOv')">
+<div class="sheet" style="max-height:90vh;overflow-y:auto">
+<div class="sheet-handle"></div>
+<div class="sheet-title">隐私政策</div>
+<div style="font-size:13px;color:#cbd5e1;line-height:1.8;white-space:pre-wrap">
+<b>NexClip 隐私政策</b>
+
+更新日期：2026年6月15日  生效日期：2026年6月15日
+
+<b>NexClip 是一款 AI 视频编辑应用（以下简称"本应用"），由 NexClip 及其关联方合法拥有并运营。</b>
+
+<b>我们将按照法律法规的规定，保护您的个人信息及隐私安全。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+一、概要
+
+<b>请您在使用我们的产品与/或服务前，仔细阅读并充分理解本政策的全部内容。</b>
+
+我们仅会收集和使用实现本应用功能所必需的个人信息。
+
+━━━━━━━━━━━━━━━━━━
+
+二、我们如何收集和使用个人信息
+
+2.1 账号服务：手机号/微信/QQ登录所需信息
+2.2 视频编辑服务：项目文件、素材信息（本地处理）
+2.3 AI功能服务：<b>AI 推理计算在您的设备本地完成，我们不会将您的媒体文件上传至服务器</b>
+2.4 会员订阅与支付：订单信息、支付凭证
+2.5 使用数据：设备信息、崩溃日志、功能使用统计
+
+━━━━━━━━━━━━━━━━━━
+
+三、数据使用过程中涉及的合作方以及转移、公开个人信息
+
+<b>我们不会将您的个人信息转让给任何公司、组织和个人。</b>但以下情况除外：
+3.1 在获取明确同意的情况下
+3.2 <b>获得您的明确同意</b>后进行的转让
+3.3 <b>涉及合并、收购或破产清算时，我们将要求新的持有您个人信息的公司继续受本政策约束。</b>
+3.4 <b>基于法律法规、法律程序、诉讼或政府主管部门强制性要求。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+四、管理您的个人信息
+
+您有权访问、更正、删除您的个人信息，可通过 privacy@nexclip.app 联系我们。
+
+━━━━━━━━━━━━━━━━━━
+
+五、我们如何保护个人信息的安全
+
+我们采用业界通行的安全技术手段保护您的个人信息。
+
+━━━━━━━━━━━━━━━━━━
+
+六、我们如何存储个人信息
+
+您的个人信息存储在中华人民共和国境内。<b>如需跨境传输，我们将按照法律法规的要求进行安全评估并征得您的同意。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+七、我们如何保护未成年人
+
+我们非常重视对未成年人个人信息的保护。
+
+━━━━━━━━━━━━━━━━━━
+
+八、隐私政策的查阅和修订
+
+本政策可能适时修订，修订后的政策将在应用内公告。
+
+━━━━━━━━━━━━━━━━━━
+
+九、联系我们
+
+如您有任何疑问，可通过 privacy@nexclip.app 与我们联系。
+</div>
+</div>
+</div>
+
+<!-- 用户协议弹窗 -->
+<div class="overlay" id="termsOv" onclick="if(event.target===this)closeModal('termsOv')">
+<div class="sheet" style="max-height:90vh;overflow-y:auto">
+<div class="sheet-handle"></div>
+<div class="sheet-title">用户协议</div>
+<div style="font-size:13px;color:#cbd5e1;line-height:1.8;white-space:pre-wrap">
+<b>NexClip 用户服务协议</b>
+
+更新日期：2026年6月15日  生效日期：2026年6月15日
+
+<b>请您仔细阅读本协议，特别是加粗条款，在确认充分理解并同意后再开始使用。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+一、导言
+
+1.1 <b>本协议是您与 NexClip 之间关于使用本应用的法律协议。</b>
+1.2 <b>如您不同意本协议的任何内容，请立即停止使用本应用。</b>
+1.3 我们有权依运营需要修改本协议，<b>继续使用即视为接受修改后的协议。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+二、NexClip产品及服务
+
+2.1 本应用为AI视频编辑工具
+2.2 <b>我们许可您一项个人的、非排他的、不可转让的、可撤销的许可</b>
+
+━━━━━━━━━━━━━━━━━━
+
+三、用户账号
+
+3.1 您应提供真实、准确的注册信息
+3.2 <b>您应对您账号项下的所有活动行为承担法律责任</b>
+3.3 账号注销后数据不可恢复
+
+━━━━━━━━━━━━━━━━━━
+
+四、用户行为规范
+
+4.1 <b>您不得利用本应用从事任何违反法律法规的活动</b>
+4.2 禁止对应用进行反编译、反汇编、修改、逆向工程
+
+━━━━━━━━━━━━━━━━━━
+
+五、内容与知识产权
+
+5.1 <b>NexClip 对本应用的所有内容享有知识产权</b>
+5.2 <b>您使用本应用创作的作品，其知识产权归您所有</b>
+
+━━━━━━━━━━━━━━━━━━
+
+六、付费服务
+
+6.1 会员权益：4K导出、AI功能、无水印、云端同步
+6.2 价格方案：月付¥29/月、季付¥76/季（省13%）、年付¥228/年（省35%推荐）
+6.3 <b>自动续费：会员到期前24小时自动扣费，取消后权益到期终止</b>
+6.4 <b>虚拟商品不支持无理由退款</b>
+
+━━━━━━━━━━━━━━━━━━
+
+七、免责声明
+
+7.1 <b>本应用按"现状"和"现有"的状态提供</b>
+7.2 <b>NexClip 不承担任何赔偿责任</b>（除故意或重大过失外）
+7.3 AI处理结果不保证完全准确
+
+━━━━━━━━━━━━━━━━━━
+
+八、违约处理
+
+<b>如您违反本协议的规定，NexClip 有权采取警告、限制功能、封禁账号等措施。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+九、未成年人条款
+
+<b>未成年人应在监护人指导下使用本应用。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+十、法律适用与争议解决
+
+本协议适用中华人民共和国法律，争议由 NexClip 所在地法院管辖。
+
+━━━━━━━━━━━━━━━━━━
+
+十一、其他
+
+11.1 本协议构成您与 NexClip 之间的完整协议
+11.2 <b>继续使用本应用即视为接受本协议</b>
+
+如有疑问请联系 support@nexclip.app
+</div>
+</div>
+</div>
+
+<!-- 开源许可弹窗 -->
+<div class="overlay" id="licOv" onclick="if(event.target===this)closeModal('licOv')">
+<div class="sheet" style="max-height:90vh;overflow-y:auto">
+<div class="sheet-handle"></div>
+<div class="sheet-title">开源许可</div>
+<div style="font-size:13px;color:#cbd5e1;line-height:2">
+<div style="font-weight:600;color:#e2e8f0;margin:8px 0">AI 框架</div>
+<div style="padding:4px 0"><span style="color:#34C759;font-size:10px;font-weight:600;background:rgba(52,199,89,.12);padding:2px 6px;border-radius:4px;margin-right:6px">MIT</span>ONNX Runtime — 跨平台AI推理引擎</div>
+<div style="padding:4px 0"><span style="color:#34C759;font-size:10px;font-weight:600;background:rgba(52,199,89,.12);padding:2px 6px;border-radius:4px;margin-right:6px">MIT</span>NCNN — 高性能神经网络推理框架</div>
+<div style="font-weight:600;color:#e2e8f0;margin:12px 0 8px">AI 模型</div>
+<div style="padding:4px 0"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>Real-ESRGAN — 图像超分辨率模型</div>
+<div style="padding:4px 0"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>RIFE — 视频插帧模型</div>
+<div style="padding:4px 0"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>MODNet — 人像抠图模型</div>
+<div style="padding:4px 0"><span style="color:#34C759;font-size:10px;font-weight:600;background:rgba(52,199,89,.12);padding:2px 6px;border-radius:4px;margin-right:6px">MIT</span>Whisper.cpp — 语音识别引擎</div>
+<div style="font-weight:600;color:#e2e8f0;margin:12px 0 8px">多媒体处理</div>
+<div style="padding:4px 0"><span style="color:#FF9F0A;font-size:10px;font-weight:600;background:rgba(255,159,10,.12);padding:2px 6px;border-radius:4px;margin-right:6px">LGPL</span>FFmpeg — 音视频处理库</div>
+<div style="padding:4px 0"><span style="color:#34C759;font-size:10px;font-weight:600;background:rgba(52,199,89,.12);padding:2px 6px;border-radius:4px;margin-right:6px">MIT</span>libyuv — YUV格式转换库</div>
+<div style="font-weight:600;color:#e2e8f0;margin:12px 0 8px">Android 框架</div>
+<div style="padding:4px 0"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>Kotlin — 编程语言</div>
+<div style="padding:4px 0"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>Jetpack Compose — UI框架</div>
+<div style="padding:4px 0"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>ML Kit — Google机器学习SDK</div>
+</div>
+</div>
+</div>
+
+<!-- 登录弹窗 -->
+<div class="overlay" id="loginOv" onclick="if(event.target===this)closeModal('loginOv')">
+<div class="sheet">
+<div class="sheet-handle"></div>
+<div class="sheet-title" style="text-align:center">登录 NexClip</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<button class="btn" style="width:100%;background:#6366f1;padding:14px" onclick="doLogin('phone')">📱 手机号登录</button>
+<button class="btn" style="width:100%;background:#07C160;padding:14px" onclick="doLogin('wechat')">💬 微信登录</button>
+<button class="btn" style="width:100%;background:#12B7F5;padding:14px" onclick="doLogin('qq')">🐧 QQ登录</button>
+</div>
+<div style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-size:11px;color:#64748b">
+<div id="agreeChk" style="width:16px;height:16px;border:1.5px solid #64748b;border-radius:3px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="this.classList.toggle('checked');if(this.classList.contains('checked')){this.style.background='#8b5cf6';this.style.borderColor='#8b5cf6';this.innerHTML='✓'}else{this.style.background='';this.style.borderColor='#64748b';this.innerHTML=''}"></div>
+<span>登录即表示同意 <a href="#" style="color:#a5b4fc" onclick="event.preventDefault();closeModal('loginOv');openModal('termsOv')">用户协议</a> 和 <a href="#" style="color:#a5b4fc" onclick="event.preventDefault();closeModal('loginOv');openModal('privOv')">隐私政策</a></span>
+</div>
+</div>
+</div>
+
+<!-- VIP弹窗 -->
+<div class="vip-overlay" id="vipOv" onclick="if(event.target===this)hideVip()">
+<div class="vip-box">
+<button class="vip-close" onclick="hideVip()">✕</button>
+<div class="vip-badge">限时特惠</div>
+<div class="vip-title">解锁 NexClip 会员</div>
+<div style="color:#94a3b8;font-size:13px">畅享全部AI功能与4K超清导出</div>
+<div class="vip-price">¥9<small>/月</small></div>
+<div style="text-align:left;margin:16px 0">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:#ffd700">✦</span><div><div style="font-size:13px;font-weight:600">4K超清导出</div><div style="font-size:11px;color:#64748b">无损画质，专业级输出</div></div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:#ffd700">✦</span><div><div style="font-size:13px;font-weight:600">全网素材库</div><div style="font-size:11px;color:#64748b">海量模板/音乐/特效免费使用</div></div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span style="color:#ffd700">✦</span><div><div style="font-size:13px;font-weight:600">AI智能剪辑</div><div style="font-size:11px;color:#64748b">抠图/超分/插帧/降噪/语音识别</div></div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0"><span style="color:#ffd700">✦</span><div><div style="font-size:13px;font-weight:600">云端项目同步</div><div style="font-size:11px;color:#64748b">多设备无缝衔接</div></div></div>
+</div>
+<button class="vip-btn" onclick="hideVip();toast('功能开发中，敬请期待')">立即开通</button>
+<div style="font-size:10px;color:#4a4a55;margin-top:10px">自动续费 · 可随时取消</div>
+</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toastEl"></div>
+
+</div>
+
+<script>
+// Toast
+var toastTimer=null;
+function toast(msg){var el=document.getElementById('toastEl');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show')},2000)}
+
+// 弹窗
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+
+// VIP
+function showVip(){document.getElementById('vipOv').classList.add('show')}
+function hideVip(){document.getElementById('vipOv').classList.remove('show')}
+
+// 登录
+var isLoggedIn=false;
+function doLogin(type){
+  var chk=document.getElementById('agreeChk');
+  if(!chk.classList.contains('checked')){toast('请先同意用户协议和隐私政策');return}
+  isLoggedIn=true;
+  closeModal('loginOv');
+  document.getElementById('profileName').textContent=type==='phone'?'手机用户':type==='wechat'?'微信用户':'QQ用户';
+  document.getElementById('profileHint').textContent='已登录';
+  document.getElementById('logoutBtn').style.display='block';
+  toast('登录成功');
+}
+function doLogout(){
+  isLoggedIn=false;
+  document.getElementById('profileName').textContent='点击登录';
+  document.getElementById('profileHint').textContent='登录后享受更多功能';
+  document.getElementById('logoutBtn').style.display='none';
+  toast('已退出登录');
+}
+
+// 底部导航
+var tabs=[
+  {id:'home',label:'首页',icon:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'},
+  {id:'tutorial',label:'教程',icon:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'},
+  {id:'template',label:'模板',icon:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'},
+  {id:'profile',label:'我的',icon:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'}
+];
+var currentTab='home';
+function switchTab(id){
+  currentTab=id;
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  document.getElementById('pg-'+id).classList.add('active');
+  buildAllNavs();
+}
+function buildNav(cid){
+  var c=document.getElementById(cid);
+  if(!c)return;
+  c.innerHTML=tabs.map(function(n){return '<div class="bnav-item'+(n.id===currentTab?' active':'')+'" onclick="switchTab(\''+n.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+n.icon+'</svg><span>'+n.label+'</span></div>'}).join('');
+}
+function buildAllNavs(){['nav1','nav2','nav3','nav4'].forEach(buildNav)}
+
+// 初始化
+buildAllNavs();
+// 首次打开自动弹出VIP弹窗
+setTimeout(showVip, 800);
+</script>
+</body>
+</html>
