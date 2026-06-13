@@ -107,6 +107,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .slabel{flex:1;font-size:var(--f-md);color:var(--t1)}
 .sarrow{color:var(--t3)}
 
+/* 设置分组 */
+.sgroup{margin:clamp(8px,1vh,16px) clamp(16px,3vw,24px)}
+.sgroup-title{font-size:var(--f-xs);color:var(--t5);font-weight:600;letter-spacing:.5px;margin-bottom:clamp(6px,1vh,10px);padding-left:4px;text-transform:uppercase}
+
+/* 开关 */
+.stoggle{width:clamp(36px,5vw,44px);height:clamp(20px,3vw,24px);background:rgba(255,255,255,.1);border-radius:12px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.stoggle.on{background:var(--acc)}
+.stoggle-dot{width:clamp(16px,2.2vw,20px);height:clamp(16px,2.2vw,20px);background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s}
+.stoggle.on .stoggle-dot{left:calc(100% - 2px - clamp(16px,2.2vw,20px))}
+
+/* 退出按钮 */
+.logout-btn{width:100%;padding:clamp(10px,1.5vh,14px);background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.15);border-radius:12px;color:#f87171;font-size:var(--f-md);font-weight:600;cursor:pointer;transition:all .2s}
+.logout-btn:active{background:rgba(248,113,113,.15)}
+
+/* 登录弹窗 */
+.login-ov{position:fixed;inset:0;background:rgba(10,10,20,.6);backdrop-filter:blur(8px);display:none;justify-content:flex-end;flex-direction:column;z-index:190}
+.login-ov.show{display:flex}
+.login-sheet{background:var(--bg0);border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,.1);padding:clamp(20px,3vh,32px) clamp(20px,3vw,28px) clamp(24px,4vh,40px)}
+.login-handle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto clamp(16px,2vh,24px)}
+.login-title{font-size:var(--f-xl);font-weight:700;color:var(--t1);text-align:center;margin-bottom:clamp(16px,2vh,24px)}
+.login-btns{display:flex;flex-direction:column;gap:clamp(8px,1vh,12px)}
+.login-btn{display:flex;align-items:center;gap:clamp(10px,1.5vw,14px);padding:clamp(12px,1.5vh,16px) clamp(14px,2vw,18px);border-radius:12px;cursor:pointer;transition:all .2s;font-size:var(--f-md);font-weight:600;color:#fff;border:none;width:100%}
+.login-btn:active{transform:scale(.98)}
+.login-btn.phone{background:#6366f1}
+.login-btn.wechat{background:#07C160}
+.login-btn.qq{background:#12B7F5}
+.login-btn-icon{width:clamp(28px,4vw,36px);height:clamp(28px,4vw,36px);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:clamp(14px,2vw,18px);font-weight:700;color:#fff}
+.login-btn.phone .login-btn-icon{background:rgba(255,255,255,.15)}
+.login-btn.wechat .login-btn-icon{background:rgba(255,255,255,.15)}
+.login-btn.qq .login-btn-icon{background:rgba(255,255,255,.15)}
+.login-agree{display:flex;align-items:flex-start;gap:8px;margin-top:clamp(12px,1.5vh,16px);font-size:var(--f-xs);color:var(--t3)}
+.login-chk{width:16px;height:16px;border:1.5px solid var(--t5);border-radius:3px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s}
+.login-chk.checked{background:var(--acc);border-color:var(--acc)}
+.login-chk.checked::after{content:'✓';color:#fff;font-size:10px;font-weight:700}
+.login-agree a{color:var(--acc2);text-decoration:none}
+
 /* ===== 编辑器 ===== */
 .ed-page{display:none;flex-direction:column;height:100%}.ed-page.active{display:flex}
 .ed-header{height:clamp(40px,6vh,52px);background:var(--bg2);border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(10px,1.5vw,14px);flex-shrink:0}
@@ -372,24 +408,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <!-- ===== 我的 ===== -->
 <div class="page" id="pg-profile">
 <div class="top-bar"><div class="brand"><h1>我的</h1></div></div>
-<div class="tab-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-<div class="profile-sec">
-<div class="pavatar" onclick="alert('登录功能开发中')"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
-<div class="pname">点击登录</div>
-<div class="phint">登录后享受更多功能</div>
-</div>
+<div class="tab-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:20px">
+
+<!-- VIP会员卡 -->
 <div class="vipcard" onclick="showVip()">
 <div class="vipcard-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
 <div class="vipcard-text"><div class="vipcard-title">开通 Pro 会员</div><div class="vipcard-desc">¥9/月 · 4K导出 · AI功能 · 无水印</div></div>
 <svg class="vipcard-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
 </div>
-<div class="slist">
-<div class="sitem" onclick="alert('功能开发中')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></div><span class="slabel">导出记录</span><svg class="sarrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
-<div class="sitem" onclick="alert('功能开发中')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div><span class="slabel">我的素材</span><svg class="sarrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
-<div class="sitem" onclick="alert('功能开发中')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div><span class="slabel">设置</span><svg class="sarrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
-<div class="sitem" onclick="alert('功能开发中')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div><span class="slabel">帮助与反馈</span><svg class="sarrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
-<div class="sitem" onclick="alert('功能开发中')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div><span class="slabel">隐私政策</span><svg class="sarrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+
+<!-- 用户头像区 -->
+<div class="profile-sec" onclick="showLoginSheet()">
+<div class="pavatar"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+<div class="pname">点击登录</div>
+<div class="phint">登录后享受更多功能</div>
 </div>
+
+<!-- 安全与隐私 -->
+<div class="sgroup">
+<div class="sgroup-title">安全与隐私</div>
+<div class="slist">
+<div class="sitem" onclick="openModal('privModal')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div><span class="slabel">隐私政策</span><svg class="sarrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+<div class="sitem" onclick="openModal('termsModal')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg></div><span class="slabel">用户协议</span><svg class="sarrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+<div class="sitem" onclick="toast('已开启')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></div><span class="slabel">使用数据统计</span><div class="stoggle on" onclick="event.stopPropagation();this.classList.toggle('on')"><div class="stoggle-dot"></div></div></div>
+<div class="sitem" onclick="openModal('licModal')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></div><span class="slabel">开源许可</span><svg class="sarrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+</div>
+</div>
+
+<!-- 关于 -->
+<div class="sgroup">
+<div class="sgroup-title">关于</div>
+<div class="slist">
+<div class="sitem"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></div><span class="slabel">版本号</span><span style="font-size:var(--f-sm);color:var(--t5)">1.0.0</span></div>
+<div class="sitem" onclick="toast('已是最新版本')"><div class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></div><span class="slabel">检查更新</span><svg class="sarrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+</div>
+</div>
+
+<!-- 退出登录 -->
+<div style="padding:clamp(12px,2vh,20px) clamp(16px,3vw,24px)">
+<button class="logout-btn" onclick="toast('已退出登录')">退出登录</button>
+</div>
+
 </div>
 <div class="bnav" id="bnav-profile"></div>
 </div>
@@ -460,6 +519,236 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <div class="ed-nbtn" onclick="closeEditor()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg><span>返回</span></div>
 <div class="ai-btn" onclick="showAiPanel()">AI</div>
 <div class="ed-nbtn" onclick="switchTab('home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span>首页</span></div>
+</div>
+</div>
+
+<!-- 隐私政策弹窗 -->
+<div class="modal-ov" id="privModal">
+<div class="modal-sheet" style="max-height:90vh">
+<div class="modal-handle"></div>
+<div class="modal-hdr"><div class="modal-title">隐私政策</div><div class="modal-x" onclick="closeModal('privModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
+<div class="modal-body" style="font-size:var(--f-sm);color:var(--t2);line-height:1.8;white-space:pre-wrap">
+<b>NexClip 隐私政策</b>
+
+更新日期：2026年6月15日  生效日期：2026年6月15日
+
+<b>NexClip 是一款 AI 视频编辑应用（以下简称"本应用"），由 NexClip 及其关联方合法拥有并运营。</b>
+
+<b>我们将按照法律法规的规定，保护您的个人信息及隐私安全。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+一、概要
+
+<b>请您在使用我们的产品与/或服务前，仔细阅读并充分理解本政策的全部内容。此类条款已以加粗形式提示您注意。</b>
+
+我们仅会收集和使用实现本应用功能所必需的个人信息。<b>除实现本应用基本功能所需的信息外，您可以拒绝我们处理其他信息，但这可能导致我们无法提供对应功能。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+二、我们如何收集和使用个人信息
+
+2.1 账号服务：手机号/微信/QQ登录所需信息
+2.2 视频编辑服务：项目文件、素材信息（本地处理）
+2.3 AI功能服务：<b>AI 推理计算在您的设备本地完成，我们不会将您的媒体文件上传至服务器</b>
+2.4 会员订阅与支付：订单信息、支付凭证
+2.5 使用数据：设备信息、崩溃日志、功能使用统计
+
+━━━━━━━━━━━━━━━━━━
+
+三、数据使用过程中涉及的合作方以及转移、公开个人信息
+
+<b>我们不会将您的个人信息转让给任何公司、组织和个人。</b>但以下情况除外：
+3.1 在获取明确同意的情况下
+3.2 <b>获得您的明确同意</b>后进行的转让
+3.3 <b>涉及合并、收购或破产清算时，我们将要求新的持有您个人信息的公司继续受本政策约束。</b>
+3.4 公开披露仅会在<b>获得您的明确同意</b>后进行
+3.5 <b>基于法律法规、法律程序、诉讼或政府主管部门强制性要求。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+四、管理您的个人信息
+
+您有权访问、更正、删除您的个人信息，具体方式可通过应用内设置或联系 privacy@nexclip.app。
+
+━━━━━━━━━━━━━━━━━━
+
+五、我们如何保护个人信息的安全
+
+我们采用业界通行的安全技术手段保护您的个人信息。
+
+━━━━━━━━━━━━━━━━━━
+
+六、我们如何存储个人信息
+
+您的个人信息存储在中华人民共和国境内。<b>如需跨境传输，我们将按照法律法规的要求进行安全评估并征得您的同意。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+七、我们如何保护未成年人
+
+我们非常重视对未成年人个人信息的保护。
+
+━━━━━━━━━━━━━━━━━━
+
+八、隐私政策的查阅和修订
+
+本政策可能适时修订，修订后的政策将在应用内公告。
+
+━━━━━━━━━━━━━━━━━━
+
+九、联系我们
+
+如您有任何疑问，可通过 privacy@nexclip.app 与我们联系。
+</div>
+</div>
+</div>
+
+<!-- 用户协议弹窗 -->
+<div class="modal-ov" id="termsModal">
+<div class="modal-sheet" style="max-height:90vh">
+<div class="modal-handle"></div>
+<div class="modal-hdr"><div class="modal-title">用户协议</div><div class="modal-x" onclick="closeModal('termsModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
+<div class="modal-body" style="font-size:var(--f-sm);color:var(--t2);line-height:1.8;white-space:pre-wrap">
+<b>NexClip 用户服务协议</b>
+
+更新日期：2026年6月15日  生效日期：2026年6月15日
+
+<b>请您仔细阅读本协议，特别是加粗条款，在确认充分理解并同意后再开始使用。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+一、导言
+
+1.1 <b>本协议是您与 NexClip 之间关于使用本应用的法律协议。</b>
+1.2 <b>如您不同意本协议的任何内容，请立即停止使用本应用。</b>
+1.3 我们有权依运营需要修改本协议，<b>继续使用即视为接受修改后的协议。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+二、NexClip产品及服务
+
+2.1 本应用为AI视频编辑工具
+2.2 <b>我们许可您一项个人的、非排他的、不可转让的、可撤销的许可</b>
+2.3 <b>本许可不包括将本应用用于商业再分发或反向工程的权利</b>
+
+━━━━━━━━━━━━━━━━━━
+
+三、用户账号
+
+3.1 您应提供真实、准确的注册信息
+3.2 <b>您应对您账号项下的所有活动行为承担法律责任</b>
+3.3 账号注销后数据不可恢复
+
+━━━━━━━━━━━━━━━━━━
+
+四、用户行为规范
+
+4.1 <b>您不得利用本应用从事任何违反法律法规的活动</b>
+4.2 禁止对应用进行反编译、反汇编、修改、逆向工程
+4.3 您因违规行为造成的损失由您自行承担
+
+━━━━━━━━━━━━━━━━━━
+
+五、内容与知识产权
+
+5.1 <b>NexClip 对本应用的所有内容享有知识产权</b>
+5.2 <b>您使用本应用创作的作品，其知识产权归您所有</b>
+
+━━━━━━━━━━━━━━━━━━
+
+六、付费服务
+
+6.1 会员权益：4K导出、AI功能、无水印、云端同步
+6.2 价格方案：月付¥29/月、季付¥76/季（省13%）、年付¥228/年（省35%推荐）
+6.3 <b>自动续费：会员到期前24小时自动扣费，取消后权益到期终止</b>
+6.4 <b>虚拟商品不支持无理由退款</b>
+6.5 会员权益变更将提前通知
+6.6 终止会员服务不退费
+
+━━━━━━━━━━━━━━━━━━
+
+七、免责声明
+
+7.1 <b>本应用按"现状"和"现有"的状态提供</b>
+7.2 <b>NexClip 不承担任何赔偿责任</b>（除故意或重大过失外）
+7.3 因不可抗力导致的服务中断不承担责任
+7.4 AI处理结果不保证完全准确
+
+━━━━━━━━━━━━━━━━━━
+
+八、违约处理
+
+<b>如您违反本协议的规定，NexClip 有权采取警告、限制功能、封禁账号等措施。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+九、未成年人条款
+
+<b>未成年人应在监护人指导下使用本应用。</b>
+
+━━━━━━━━━━━━━━━━━━
+
+十、法律适用与争议解决
+
+本协议适用中华人民共和国法律，争议由 NexClip 所在地法院管辖。
+
+━━━━━━━━━━━━━━━━━━
+
+十一、其他
+
+11.1 本协议构成您与 NexClip 之间的完整协议
+11.2 部分条款无效不影响其他条款效力
+11.3 未行使权利不构成放弃
+11.4 <b>继续使用本应用即视为接受本协议</b>
+
+如有疑问请联系 support@nexclip.app
+</div>
+</div>
+</div>
+
+<!-- 开源许可弹窗 -->
+<div class="modal-ov" id="licModal">
+<div class="modal-sheet" style="max-height:90vh">
+<div class="modal-handle"></div>
+<div class="modal-hdr"><div class="modal-title">开源许可</div><div class="modal-x" onclick="closeModal('licModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div>
+<div class="modal-body" style="font-size:var(--f-sm);color:var(--t2);line-height:1.8">
+<div style="margin-bottom:16px;font-weight:600;color:var(--t1)">AI 框架</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#34C759;font-size:10px;font-weight:600;background:rgba(52,199,89,.12);padding:2px 6px;border-radius:4px;margin-right:6px">MIT</span>ONNX Runtime — 跨平台AI推理引擎</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#34C759;font-size:10px;font-weight:600;background:rgba(52,199,89,.12);padding:2px 6px;border-radius:4px;margin-right:6px">MIT</span>NCNN — 高性能神经网络推理框架</div>
+
+<div style="margin:16px 0 8px;font-weight:600;color:var(--t1)">AI 模型</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>Real-ESRGAN — 图像超分辨率模型</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>RIFE — 视频插帧模型</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>MODNet — 人像抠图模型</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#34C759;font-size:10px;font-weight:600;background:rgba(52,199,89,.12);padding:2px 6px;border-radius:4px;margin-right:6px">MIT</span>Whisper.cpp — 语音识别引擎</div>
+
+<div style="margin:16px 0 8px;font-weight:600;color:var(--t1)">多媒体处理</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#FF9F0A;font-size:10px;font-weight:600;background:rgba(255,159,10,.12);padding:2px 6px;border-radius:4px;margin-right:6px">LGPL</span>FFmpeg — 音视频处理库</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#34C759;font-size:10px;font-weight:600;background:rgba(52,199,89,.12);padding:2px 6px;border-radius:4px;margin-right:6px">MIT</span>libyuv — YUV格式转换库</div>
+
+<div style="margin:16px 0 8px;font-weight:600;color:var(--t1)">Android 框架</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>Kotlin — 编程语言</div>
+<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>Jetpack Compose — UI框架</div>
+<div style="padding:8px 0"><span style="color:#0A84FF;font-size:10px;font-weight:600;background:rgba(10,132,255,.12);padding:2px 6px;border-radius:4px;margin-right:6px">Apache 2.0</span>ML Kit — Google机器学习SDK</div>
+</div>
+</div>
+</div>
+
+<!-- 登录弹窗 -->
+<div class="login-ov" id="loginOv">
+<div class="login-sheet" id="loginSheet">
+<div class="login-handle"></div>
+<div class="login-title">登录 NexClip</div>
+<div class="login-btns">
+<button class="login-btn phone" onclick="doLogin('phone')"><div class="login-btn-icon">📱</div>手机号登录</button>
+<button class="login-btn wechat" id="wxLoginBtn" onclick="doLogin('wechat')"><div class="login-btn-icon" style="background:rgba(0,0,0,.2);border-radius:6px;font-size:12px">微</div>微信登录</button>
+<button class="login-btn qq" id="qqLoginBtn" onclick="doLogin('qq')"><div class="login-btn-icon" style="background:rgba(0,0,0,.2);border-radius:6px;font-size:12px">Q</div>QQ登录</button>
+</div>
+<div class="login-agree">
+<div class="login-chk" id="agreeChk" onclick="this.classList.toggle('checked');updateLoginBtns()"></div>
+<span>登录即表示同意 <a href="#" onclick="event.preventDefault();hideLoginSheet();openModal('termsModal')">用户协议</a> 和 <a href="#" onclick="event.preventDefault();hideLoginSheet();openModal('privModal')">隐私政策</a></span>
+</div>
 </div>
 </div>
 
@@ -651,7 +940,7 @@ function openEditor() {
 }
 function createProject() {
   closeModal('projModal');
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page,.ed-page').forEach(p => p.classList.remove('active'));
   document.getElementById('pg-editor').classList.add('active');
   checkLandscape();
   toast('项目已创建');
@@ -729,6 +1018,27 @@ function buildRuler() {
 
 // ===== VIP弹窗 =====
 function showVip() { document.getElementById('vipOv').classList.add('show'); }
+
+// ===== 登录弹窗 =====
+function showLoginSheet() {
+  document.getElementById('loginOv').classList.add('show');
+  setupSheetSwipe('loginOv');
+  updateLoginBtns();
+}
+function hideLoginSheet() { document.getElementById('loginOv').classList.remove('show'); }
+function updateLoginBtns() {
+  const agreed = document.getElementById('agreeChk').classList.contains('checked');
+  document.querySelectorAll('.login-btn').forEach(b => { b.style.opacity = agreed ? '1' : '0.4'; b.style.pointerEvents = agreed ? 'auto' : 'none'; });
+}
+function doLogin(type) {
+  const agreed = document.getElementById('agreeChk').classList.contains('checked');
+  if (!agreed) { toast('请先同意用户协议和隐私政策'); return; }
+  hideLoginSheet();
+  toast('登录成功');
+  // 更新UI
+  document.querySelector('.pname').textContent = 'NexClip 用户';
+  document.querySelector('.phint').textContent = type === 'phone' ? '手机号登录' : type === 'wechat' ? '微信登录' : 'QQ登录';
+}
 function hideVip() { document.getElementById('vipOv').classList.remove('show'); }
 
 // VIP弹窗下拉关闭
